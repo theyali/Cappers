@@ -1,3 +1,4 @@
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 from datetime import timedelta
 from decimal import Decimal
 
@@ -33,6 +34,7 @@ from django.utils.dateparse import parse_datetime
 from django.utils.formats import date_format
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
+from django.views.decorators.cache import never_cache
 
 from game.models import Country, Prediction, PredictionCoupon, Sport
 from game.views import _delete_expired_draft_coupons
@@ -79,7 +81,7 @@ from .paid_predictions import (
     build_paid_subscriptions_preview,
     build_paid_checkout_context,
     get_active_paid_plans,
-    profile_paid_predictions_enabled,
+    profile_paid_subscriptions_enabled,
     paid_subscription_display,
     subscribe_to_paid_predictions,
 )
@@ -961,6 +963,7 @@ def _profile_coupons_queryset(user):
         .select_related("metrics")
         .annotate(
             predictions_count=Count("predictions", distinct=True),
+            unique_opens_count=Coalesce(F("metrics__unique_opens_count"), Value(0), output_field=IntegerField()),
             likes_count=Coalesce(
                 F("metrics__likes_count"),
                 Value(0),
@@ -1133,6 +1136,7 @@ def _expert_mobile_coupon_cards(coupons) -> list[dict]:
                 "created_at": coupon.created_at,
                 "total_stake": coupon.total_stake,
                 "possible_payout": coupon.possible_payout,
+                "unique_opens_count": coupon.unique_opens_count,
                 "likes_count": coupon.likes_count,
                 "comments_count": coupon.comments_count,
                 "favorites_count": coupon.favorites_count,
@@ -1378,6 +1382,13 @@ def profile(request):
             if paid_plan_form is not None and paid_predictions_enabled
             else True
         )
+
+        if paid_plans_are_valid and paid_plan_form is not None and analyst_is_valid:
+            paid_plans_are_valid = paid_plan_form.validate_sales_options(
+                paid_enabled=paid_predictions_enabled,
+                single_enabled=analyst_form.cleaned_data.get("single_coupon_sales_enabled"),
+                single_price=analyst_form.cleaned_data.get("single_coupon_price"),
+            )
 
         if user_is_valid and analyst_is_valid and focus_is_valid and paid_plans_are_valid:
             with transaction.atomic():
@@ -1938,6 +1949,7 @@ def decline_paid_predictions_view(request, user_id):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@never_cache
 def subscribe_paid_predictions_view(request, user_id):
     analyst = get_object_or_404(
         User.objects.select_related("analyst_profile"),
@@ -1958,14 +1970,26 @@ def subscribe_paid_predictions_view(request, user_id):
     ):
         raw_next_url = expert_url
 
-    if not profile or not profile_paid_predictions_enabled(analyst):
+    if not profile or not profile_paid_subscriptions_enabled(analyst):
         messages.error(request, "Этот эксперт не публикует платные прогнозы.")
         return redirect(expert_url)
+
+    wants_json = request.headers.get("x-requested-with") == "XMLHttpRequest"
+    if request.method == "GET" and not wants_json:
+        if urlsplit(raw_next_url).path == request.path:
+            raw_next_url = expert_url
+        target = urlsplit(raw_next_url)
+        query = [(key, value) for key, value in parse_qsl(target.query) if key != "paid_subscribe"]
+        query.append(("paid_subscribe", str(analyst.pk)))
+        if request.GET.get("plan_id", "").isdigit():
+            query = [(key, value) for key, value in query if key != "paid_plan"]
+            query.append(("paid_plan", request.GET["plan_id"]))
+        return redirect(urlunsplit(target._replace(query=urlencode(query))))
 
     if request.method == "GET":
         return render(
             request,
-            "cabinet/paid_predictions_checkout.html",
+            "cabinet/includes/_subscription_checkout.html",
             {
                 "expert": analyst,
                 "analyst_profile": profile,
@@ -1976,18 +2000,25 @@ def subscribe_paid_predictions_view(request, user_id):
                     profile,
                     list(get_active_paid_plans(analyst)),
                     in_telegram_app=in_telegram_app(request),
+                    selected_plan_id=request.GET.get("plan_id"),
                 ),
             },
         )
 
+    if request.user.role != User.Role.ANALYST:
+        if wants_json:
+            return JsonResponse({"ok": False, "message": "Выберите способ прямой оплаты."}, status=403)
+        messages.error(request, "Выберите способ прямой оплаты.")
+        return redirect(request.path)
     try:
         plan_id = request.POST.get("plan_id") or None
         subscription = subscribe_to_paid_predictions(request.user, analyst, plan_id)
     except (ValueError, ValidationError, InsufficientBalance) as exc:
+        if wants_json:
+            return JsonResponse({"ok": False, "message": _error_message(exc)}, status=400)
         messages.error(request, _error_message(exc))
     else:
-        messages.success(
-            request,
-            f"Платная подписка активна до {subscription.expires_at:%d.%m.%Y}.",
-        )
+        messages.success(request, f"Платная подписка активна до {subscription.expires_at:%d.%m.%Y}.")
+        if wants_json:
+            return JsonResponse({"ok": True, "return_url": raw_next_url})
     return redirect(raw_next_url)

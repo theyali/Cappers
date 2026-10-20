@@ -1,8 +1,14 @@
 <div class="profile-email-modal expert-public-details-modal copybetting-how-modal" id="copybetting-limits-modal" data-expert-public-modal="copybetting-limits" aria-hidden="true">
     <button type="button" class="profile-email-modal-backdrop expert-public-details-backdrop" data-expert-public-details-close tabindex="-1" aria-label="Закрыть"></button>
     <section class="profile-email-modal-card expert-public-details-card copybetting-how-dialog" role="dialog" aria-modal="true" aria-labelledby="copybetting-limits-title" tabindex="-1" data-expert-public-details-dialog>
-        <header class="copybetting-how-head"><div><h2 id="copybetting-limits-title">Общие лимиты</h2><p>Каждая стратегия имеет собственные настройки</p></div><button class="copybetting-how-close" type="button" data-expert-public-details-close aria-label="Закрыть">×</button></header>
-        <div class="copybetting-how-body expert-public-details-body"><p>Банк для копирования, процент на ставку, максимальную сумму и стоп-лосс вы задаёте отдельно для каждого каппера.</p><p>Единого лимита на все стратегии сейчас нет. Чтобы изменить действующие ограничения, нажмите на значок настроек в строке нужного каппера.</p></div>
-        <footer class="copybetting-how-footer"><button class="copybetting-button is-primary" type="button" data-expert-public-details-close>Понятно</button></footer>
+        <header class="copybetting-how-head"><div><h2 id="copybetting-limits-title">Общие лимиты</h2><p>Действуют на копии всех капперов вместе</p></div><button class="copybetting-how-close" type="button" data-expert-public-details-close aria-label="Закрыть">×</button></header>
+        <form class="copybetting-how-body expert-public-details-body" method="post" action="{% url 'cabinet:copybetting_limits' %}" data-copy-limits-form data-no-transition>
+            {% csrf_token %}
+            <label class="copybetting-setup-field"><span>Дневной бюджет, коины</span><span class="copybetting-setup-input"><input type="number" min="0" max="1000000000" step="1" name="daily_budget" value="{{ copybetting_limits.daily_budget|default:0 }}" required></span><small>Общая сумма новых копий за день по всем стратегиям. 0 — без ограничения.</small></label>
+            <label class="copybetting-setup-field"><span>Дневной стоп-лосс, коины</span><span class="copybetting-setup-input"><input type="number" min="0" max="1000000000" step="1" name="daily_stop_loss" value="{{ copybetting_limits.daily_stop_loss|default:0 }}" required></span><small>Новые копии не создаются, если чистый убыток по рассчитанным сегодня копиям достиг этой суммы. 0 — выключен.</small></label>
+            <p>День считается по времени сайта. Лимиты не меняют уже принятые ставки, не резервируют коины и не отменяют ограничения отдельных стратегий. После полуночи дневные счётчики обнуляются. Максимум — 30 активных стратегий и стратегий на паузе вместе.</p>
+            <p data-copy-limits-feedback role="status" aria-live="polite"></p>
+            <button class="copybetting-button is-primary" type="submit">Сохранить лимиты</button>
+        </form>
     </section>
 </div>

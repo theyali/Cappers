@@ -22,6 +22,7 @@ from django.http import Http404, HttpResponsePermanentRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.http import require_POST
 
@@ -36,7 +37,7 @@ from cabinet.models import AnalystFollow, DailyTask
 from cabinet.services.daily_tasks import record_daily_task_action
 from cabinet.paid_predictions import (
     get_active_paid_plans,
-    user_can_view_paid_predictions,
+    user_can_view_paid_coupon,
 )
 from cabinet.vip import annotate_vip_status, attach_vip_status_to_user
 from game.cover_images import active_cover_ids
@@ -138,8 +139,10 @@ def _paid_prediction_paywall_context(request, coupon: PredictionCoupon) -> dict:
     else:
         checkout_url = reverse("front:expert_profile", kwargs={"username": author.username})
 
+    from cabinet.paid_prediction_purchases import single_coupon_offer
     roi = getattr(coupon, "paywall_author_roi", Decimal("0")) or Decimal("0")
     return {
+        **single_coupon_offer(coupon),
         "page_class": "paid-coupon-paywall-body",
         "breadcrumbs": [],
         "coupon": coupon,
@@ -269,6 +272,7 @@ def _published_queryset(*, include_paid: bool = False):
                 Value(0),
                 output_field=IntegerField(),
             ),
+            unique_opens_count=Coalesce(F("metrics__unique_opens_count"), Value(0), output_field=IntegerField()),
             views_count=Coalesce(
                 F("metrics__views_count"),
                 Value(0),
@@ -328,6 +332,7 @@ def _prediction_card(coupon: PredictionCoupon):
         likes_count=getattr(coupon, "likes_count", 0),
         favorites_count=getattr(coupon, "favorites_count", 0),
         comments_count=getattr(coupon, "comments_count", 0),
+        unique_opens_count=getattr(coupon, "unique_opens_count", 0),
         views_count=getattr(coupon, "views_count", 0),
         shares_count=getattr(coupon, "shares_count", 0),
         is_rich=coupon.prediction_format == PredictionCoupon.PredictionFormat.RICH,
@@ -1004,6 +1009,7 @@ def predictions(request, sport_code: str | None = None):
     )
 
 
+@never_cache
 @ensure_csrf_cookie
 def prediction_detail(request, prediction_id: int):
     from .expert_awards import leader_badges_for_users
@@ -1032,6 +1038,7 @@ def prediction_detail(request, prediction_id: int):
                 Value(0),
                 output_field=IntegerField(),
             ),
+            unique_opens_count=Coalesce(F("metrics__unique_opens_count"), Value(0), output_field=IntegerField()),
             views_count=Coalesce(
                 F("metrics__views_count"),
                 Value(0),
@@ -1058,7 +1065,7 @@ def prediction_detail(request, prediction_id: int):
     attach_vip_status_to_user(coupon.author, coupon)
     if (
         coupon.audience == PredictionCoupon.Audience.PAID
-        and not user_can_view_paid_predictions(request.user, coupon.author)
+        and not user_can_view_paid_coupon(request.user, coupon)
     ):
         return render(
             request,
@@ -1224,7 +1231,7 @@ def _accessible_published_prediction(user, prediction_id: int) -> PredictionCoup
     prediction = _published_prediction(prediction_id)
     if (
         prediction.audience == PredictionCoupon.Audience.PAID
-        and not user_can_view_paid_predictions(user, prediction.author)
+        and not user_can_view_paid_coupon(user, prediction)
     ):
         raise Http404("Прогноз не найден.")
     return prediction

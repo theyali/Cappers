@@ -3,6 +3,6 @@
         <svg aria-hidden="true" fill="none" width="26" height="26" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24"><rect width="15" height="10" x="4.5" y="10.5" rx="3"/><path d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/></svg>
     </span>
     <h2>Этот прогноз платный</h2>
-    <p>{% if prediction.is_paid_purchase_closed %}Купон #{{ prediction.coupon.id }} уже рассчитан. Покупка этого прогноза закрыта.{% else %}Чтобы увидеть исходы и аналитику купона #{{ prediction.coupon.id }}, подпишитесь на автора.{% endif %}</p>
+    <p>{% if prediction.is_paid_purchase_closed %}Купон #{{ prediction.coupon.id }} уже рассчитан. Покупка этого прогноза закрыта.{% else %}Чтобы увидеть исходы и аналитику купона #{{ prediction.coupon.id }}, выберите разовую покупку или подписку на автора.{% endif %}</p>
 </header>
 {% include "front/includes/_paid_prediction_locked_body.html" with prediction=prediction in_modal=True only %}

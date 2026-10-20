@@ -1,0 +1,9 @@
+<div class="single-coupon-success">
+    <div class="single-coupon-success-banner">
+        <span aria-hidden="true">✓</span>
+        <div><h2 tabindex="-1" data-purchase-success>Прогноз открыт</h2><p>Купон #{{ coupon.id }} доступен вашему аккаунту</p></div>
+    </div>
+    <p>Откройте купон, чтобы посмотреть исходы и разбор автора.</p>
+    <a class="subscription-primary" href="{% url 'front:prediction_detail' prediction_id=coupon.id %}">Открыть прогноз</a>
+    <a class="single-coupon-purchases-link" href="{% url 'cabinet:coupon_purchases' %}">Мои покупки</a>
+</div>

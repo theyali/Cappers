@@ -13,7 +13,7 @@ from django.urls import reverse
 from cabinet.comments.models import Comment, CommentMetrics, CommentReaction
 from cabinet.comments.services.anti_spam import check_comment_spam
 from cabinet.comments.services.moderation import validate_comment_text
-from cabinet.paid_predictions import user_can_view_paid_predictions
+from cabinet.paid_predictions import user_can_view_paid_coupon
 from front.metrics import get_prediction_metrics
 from game.models import PredictionCoupon
 
@@ -36,7 +36,7 @@ def get_accessible_prediction(user: Any, prediction_id: int) -> PredictionCoupon
     )
     if (
         prediction.audience == PredictionCoupon.Audience.PAID
-        and not user_can_view_paid_predictions(user, prediction.author)
+        and not user_can_view_paid_coupon(user, prediction)
     ):
         raise Http404("Прогноз не найден.")
     return prediction
@@ -467,7 +467,7 @@ def _ensure_comment_target_access(comment: Comment, user: Any) -> None:
     )
     if (
         prediction.audience == PredictionCoupon.Audience.PAID
-        and not user_can_view_paid_predictions(user, prediction.author)
+        and not user_can_view_paid_coupon(user, prediction)
     ):
         raise Http404("Комментарий не найден.")
 

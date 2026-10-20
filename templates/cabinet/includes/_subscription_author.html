@@ -1,0 +1,5 @@
+<div class="subscription-author">
+        {% if expert.avatar %}<img src="{{ expert.avatar.url }}" width="38" height="38" alt="">{% else %}<span class="subscription-avatar" aria-hidden="true">{{ expert_name|first }}</span>{% endif %}
+        <div><strong>{{ expert_name }}</strong><span>@{{ expert.username }}</span></div>
+        <small>{{ author_caption|default:"продаёт прогнозы" }}</small>
+    </div>

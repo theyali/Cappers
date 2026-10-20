@@ -7,7 +7,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from front.popular_matches import build_popular_matches
-from cabinet.paid_predictions import profile_paid_predictions_enabled
+from cabinet.paid_predictions import profile_paid_predictions_enabled, profile_single_coupon_sales_enabled
 from game.services.coupon_draft import CouponDraftConflict, check_draft_revision, serialize_draft_coupon
 from game.cover_images import prediction_editor_covers
 from game.models import Match, Prediction, PredictionCoupon, PredictionCoverImage
@@ -40,7 +40,7 @@ def can_use_rich_prediction_fields(user) -> bool:
 def validate_paid_prediction_settings(user, coupon=None):
     existing_paid = coupon is not None and _is_published(coupon) and coupon.audience == PredictionCoupon.Audience.PAID
     if not existing_paid and not profile_paid_predictions_enabled(user):
-        raise ValidationError({"is_paid": "Включите платные прогнозы и настройте тариф в настройках профиля."})
+        raise ValidationError({"is_paid": "Включите платные прогнозы и настройте подписку или разовую покупку в профиле."})
 
 
 def validate_paid_prediction_content(headline, description):
@@ -104,6 +104,11 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
         "coupon": coupon,
         "draft_coupon": serialize_draft_coupon(coupon) if coupon and coupon.prediction_format == PredictionCoupon.PredictionFormat.QUICK else None,
         "can_publish_paid": can_use_rich_fields and profile_paid_predictions_enabled(request.user),
+        "single_purchase_price": (
+            coupon.single_purchase_price if coupon is not None and _is_published(coupon)
+            else request.user.analyst_profile.single_coupon_price if profile_single_coupon_sales_enabled(request.user)
+            else None
+        ),
         "paid_settings_url": reverse("cabinet:profile") + "?tab=settings#paid-predictions-settings",
         "shared_coupon_draft": coupon is None or coupon.prediction_format == PredictionCoupon.PredictionFormat.QUICK,
         "rich_prediction_timing": prediction_timing,
@@ -448,6 +453,13 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
         elif _as_bool(data.get("clear_custom_cover_image")):
             coupon.custom_cover_image = ""
 
+    if status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published:
+        coupon.single_purchase_enabled = (audience == PredictionCoupon.Audience.PAID
+                                          and profile_single_coupon_sales_enabled(user))
+        coupon.single_purchase_price = user.analyst_profile.single_coupon_price if coupon.single_purchase_enabled else None
+    elif audience != PredictionCoupon.Audience.PAID:
+        coupon.single_purchase_enabled = False
+        coupon.single_purchase_price = None
     coupon.save()
     if status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published:
         charge_prediction_stake(user, coupon, total_stake)

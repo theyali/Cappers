@@ -1,0 +1,61 @@
+{% load money %}
+<form class="subscription-form single-coupon-form" method="post" action="{% url 'cabinet:single_coupon_checkout' coupon_id=coupon.id %}" data-single-coupon-form data-no-transition novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="coupon_id" value="{{ coupon.id }}">
+    <header class="subscription-head">
+        <div>
+            <span class="subscription-kicker">ПОДТВЕРЖДЕНИЕ ПОКУПКИ</span>
+            <h2>Покупка прогноза</h2>
+            <p>Разовая покупка — купон останется у вас навсегда</p>
+        </div>
+    </header>
+    {% include "cabinet/includes/_subscription_author.html" with author_caption="автор прогноза" %}
+    <section class="single-coupon-preview" aria-label="Купон #{{ coupon.id }}">
+        <div class="single-coupon-preview-head"><span>Купон #{{ coupon.id }}</span><div><small>ОБЩИЙ КФ</small><strong>{{ total_coefficient }}</strong></div></div>
+        {% for item in coupon_preview %}
+        <div class="single-coupon-event">
+            <strong>{{ item.title }}</strong>
+            <small>{{ item.league }}{% if item.league and item.starts_label %} · {% endif %}{{ item.starts_label }}</small>
+            <span class="single-coupon-hidden-pick"><span aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="lock-bold" %}</span> Исход скрыт</span>
+        </div>
+        {% endfor %}
+        <p>Исход и обоснование откроются после оплаты</p>
+    </section>
+    {% if sale_blocker %}
+    <p class="subscription-unavailable" role="status">{{ sale_blocker }}</p>
+    {% else %}
+    <fieldset class="subscription-options">
+        <legend class="sr-only">Выберите способ оплаты</legend>
+        {% if can_use_coupon_balance %}
+        <label class="subscription-option">
+            <input type="radio" name="payment_method" value="balance"{% if can_pay %} checked{% else %} disabled{% endif %}>
+            <span class="subscription-radio" aria-hidden="true"></span>
+            <span class="subscription-option-copy"><strong>Баланс КапперХаб</strong><small>Доступно {{ real_balance_display }} ₽{% if can_pay %} · останется {{ balance_after_display }} ₽{% else %} · Недостаточно средств{% endif %}</small></span>
+        </label>
+        {% if not can_pay %}<a class="subscription-top-up" href="{% url 'wallets:top_up' %}">Пополнить баланс</a>{% endif %}
+        {% endif %}
+        {% for option in payment_options %}
+        <label class="subscription-option">
+            <input type="radio" name="payment_method" value="{{ option.code }}"{% if not can_pay and forloop.first %} checked{% endif %}>
+            <span class="subscription-radio" aria-hidden="true"></span>
+            <span class="subscription-option-copy"><strong>{{ option.label }}</strong><small>{% if option.code == 'cloudpayments' %}Банковская карта · CloudPayments{% elif option.code == 'nowpayments' %}Криптовалюта · NOWPayments{% elif option.code == 'telegram_stars' %}Telegram Stars{% endif %}</small></span>
+        </label>
+        {% endfor %}
+    </fieldset>
+    {% if not can_pay and not payment_options %}<p class="subscription-unavailable" role="status">Для этого купона сейчас нет доступных способов оплаты.</p>{% endif %}
+    {% endif %}
+    {% if subscription_offer %}
+    <a class="single-coupon-subscription" href="{{ subscription_offer.url }}">
+        <div><strong>Подписка — {{ subscription_offer.price_label }} ₽ за {{ subscription_offer.period }}</strong><small>Все платные прогнозы автора в период подписки</small></div>
+        <span>Взять подписку <span aria-hidden="true">→</span></span>
+    </a>
+    {% endif %}
+    {% if not sale_blocker %}
+    <footer class="subscription-plan-footer">
+        <div><small>К оплате</small><strong>{{ price|money }} ₽</strong></div>
+        <button class="subscription-primary" type="submit" data-checkout-pay data-provider-action="{% url 'payments:checkout' purpose='single_coupon_purchase' %}"{% if not can_pay and not payment_options %} disabled{% endif %}>Оплатить {{ price|money }} ₽</button>
+    </footer>
+    <p class="subscription-terms">Разовая покупка открывает только этот купон. Нажимая «Оплатить», вы соглашаетесь с <a href="{% url 'front:rules' %}" target="_blank" rel="noopener">правилами платформы</a>.</p>
+    {% endif %}
+    <p class="subscription-error" role="alert" tabindex="-1" data-checkout-error{% if not purchase_error %} hidden{% endif %}>{{ purchase_error }}</p>
+</form>

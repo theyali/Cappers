@@ -12,7 +12,9 @@ from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 from cabinet.models import AnalystPaidPlan
-from cabinet.paid_predictions import active_paid_subscription_analyst_ids
+from cabinet.paid_predictions import (
+    active_paid_subscription_analyst_ids, accessible_paid_coupon_ids, paid_coupon_purchases,
+)
 from cabinet.vip import annotate_vip_status
 from game.models import Prediction, PredictionCoupon
 
@@ -231,7 +233,7 @@ def _attach_paid_catalog_access(cards, request) -> None:
     if not paid_cards:
         return
 
-    accessible_analyst_ids = active_paid_subscription_analyst_ids(request.user)
+    accessible_coupon_ids = accessible_paid_coupon_ids(request.user, [card.coupon for card in paid_cards])
     author_ids = {card.coupon.author_id for card in paid_cards}
     first_plan_by_author = {}
     for plan in AnalystPaidPlan.objects.filter(
@@ -242,15 +244,12 @@ def _attach_paid_catalog_access(cards, request) -> None:
     ).order_by("analyst_id", "order", "duration_days", "id"):
         first_plan_by_author.setdefault(plan.analyst_id, plan)
 
+    from cabinet.paid_prediction_purchases import single_coupon_offer
     for card in paid_cards:
+        for key, value in single_coupon_offer(card.coupon).items():
+            setattr(card, key, value)
         author = card.coupon.author
-        card.is_paid_locked = not (
-            getattr(request.user, "is_authenticated", False)
-            and (
-                request.user.pk == author.pk
-                or author.pk in accessible_analyst_ids
-            )
-        )
+        card.is_paid_locked = card.coupon.pk not in accessible_coupon_ids
         card.is_paid_purchase_closed = (
             card.coupon.state_status != PredictionCoupon.StateStatus.PENDING
         )
@@ -297,6 +296,7 @@ def get_rich_predictions_queryset(user=None):
     return queryset.filter(
         Q(audience=PredictionCoupon.Audience.FREE)
         | Q(author_id=user.pk)
+        | Q(pk__in=paid_coupon_purchases(user).values("coupon_id"))
         | Q(
             audience=PredictionCoupon.Audience.PAID,
             author_id__in=paid_analyst_ids,

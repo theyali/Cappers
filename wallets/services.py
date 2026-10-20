@@ -4,10 +4,13 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any
 from types import SimpleNamespace
 
+from django.conf import settings
+from zoneinfo import ZoneInfo
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import IntegrityError, transaction
 from django.db.models import F, Q, Sum
 from django.utils import timezone
+from django.urls import reverse
 
 from back.models import WebsiteSettings
 from cabinet.models import User
@@ -20,6 +23,7 @@ from .models import (
     CoinWallet,
     CopiedBet,
     CopyBettingSubscription,
+    CopyBettingBlock, CopyBettingLimits,
     RealBalanceTransaction,
 )
 
@@ -280,6 +284,7 @@ def credit_real_balance(
     *,
     related_obj: Any | None = None,
     note: str = "",
+    hold_days: int | None = None,
 ) -> CapperRealBalance:
     _validate_analyst(user)
     amount = _money(amount)
@@ -287,7 +292,8 @@ def credit_real_balance(
         raise ValidationError("Сумма зачисления должна быть больше нуля.")
     related_model, related_id = _related_subject(related_obj) if related_obj is not None else ("", None)
 
-    hold_days = WebsiteSettings.load().income_hold_days if kind in HELD_INCOME_KINDS else 0
+    if hold_days is None:
+        hold_days = WebsiteSettings.load().income_hold_days if kind in HELD_INCOME_KINDS else 0
 
     with transaction.atomic():
         balance = _real_balance_for_update(user)
@@ -318,6 +324,36 @@ def credit_real_balance(
         )
 
 
+def reverse_paid_coupon_money(purchase, *, refund_to_balance):
+    """Reverse saved amounts, including held/spent income; caller locks the purchase."""
+    with transaction.atomic():
+        wallets = {user_id: _real_balance_for_update(user) for user_id, user in sorted(
+            [(purchase.buyer_id, purchase.buyer), (purchase.analyst_id, purchase.analyst)]
+        )}
+        model, pk = _related_subject(purchase)
+        if refund_to_balance and not _has_real_transaction(purchase.buyer, RealBalanceTransaction.Kind.COUPON_REFUND, model, pk):
+            _apply_real_locked(wallets[purchase.buyer_id], purchase.price,
+                RealBalanceTransaction.Kind.COUPON_REFUND, related_model=model, related_id=pk)
+        if purchase.capper_income and not _has_real_transaction(purchase.analyst, RealBalanceTransaction.Kind.COUPON_INCOME_REVERSAL, model, pk):
+            original = RealBalanceTransaction.objects.select_for_update().get(
+                user=purchase.analyst, kind=RealBalanceTransaction.Kind.COUPON_INCOME,
+                related_model=model, related_id=pk,
+            )
+            wallet = wallets[purchase.analyst_id]
+            if original.status == RealBalanceTransaction.Status.HELD:
+                wallet.held = _money(wallet.held - purchase.capper_income)
+                wallet.save(update_fields=["held", "updated_at"])
+                original.status = RealBalanceTransaction.Status.CANCELED
+                original.save(update_fields=["status"])
+                RealBalanceTransaction.objects.create(user=purchase.analyst,
+                    kind=RealBalanceTransaction.Kind.COUPON_INCOME_REVERSAL, amount=-purchase.capper_income,
+                    status=RealBalanceTransaction.Status.CANCELED, balance_after=wallet.balance, related_model=model, related_id=pk)
+            else:
+                # A negative balance records the debt when the author already withdrew it.
+                _apply_real_locked(wallet, -purchase.capper_income,
+                    RealBalanceTransaction.Kind.COUPON_INCOME_REVERSAL, related_model=model, related_id=pk)
+
+
 def release_held_real_income(limit: int = 1000) -> int:
     """Move income whose hold is over to the available balance."""
     held_ids = list(
@@ -331,10 +367,11 @@ def release_held_real_income(limit: int = 1000) -> int:
     released = 0
     for held_id in held_ids:
         with transaction.atomic():
+            held = RealBalanceTransaction.objects.select_related("user").get(pk=held_id)
+            balance = _real_balance_for_update(held.user)
             held = RealBalanceTransaction.objects.select_for_update().get(pk=held_id)
             if held.status != RealBalanceTransaction.Status.HELD:
                 continue
-            balance = _real_balance_for_update(held.user)
             balance.held = max(Decimal("0.00"), _money(balance.held - held.amount))
             balance.balance = _money(balance.balance + held.amount)
             balance.save(update_fields=["balance", "held", "updated_at"])
@@ -356,7 +393,8 @@ def request_real_withdrawal(
     amount = _money(amount)
     if amount <= 0:
         raise ValidationError("Сумма вывода должна быть больше нуля.")
-    min_amount = _money(WebsiteSettings.load().min_withdrawal_amount)
+    config = WebsiteSettings.load()
+    min_amount = _money(config.min_withdrawal_amount)
     if amount < min_amount:
         raise ValidationError(f"Минимальная сумма вывода — {format_money(min_amount)} ₽.")
     payout_details = (payout_details or "").strip()
@@ -371,6 +409,15 @@ def request_real_withdrawal(
             status=RealBalanceTransaction.Status.PENDING,
         ).exists():
             raise ValidationError("У вас уже есть заявка на вывод. Дождитесь её обработки.")
+        local_now = timezone.now().astimezone(ZoneInfo(settings.TIME_ZONE))
+        week_start = (local_now - timedelta(days=local_now.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+        requests_count = RealBalanceTransaction.objects.filter(
+            user=user, kind=RealBalanceTransaction.Kind.WITHDRAWAL_REQUEST,
+            status__in=[RealBalanceTransaction.Status.PENDING, RealBalanceTransaction.Status.COMPLETED],
+            created_at__gte=week_start,
+        ).count()
+        if requests_count >= config.withdrawal_requests_per_week:
+            raise ValidationError(f"Можно создать не более {config.withdrawal_requests_per_week} заявок на вывод за неделю.")
         if balance.balance < amount:
             raise InsufficientBalance(
                 f"Недостаточно средств на реальном балансе. Доступно {balance.balance} ₽, нужно {amount} ₽."
@@ -700,6 +747,8 @@ def activate_copybetting(
     ensure_coin_wallet(user)
     active_since = timezone.now()
     with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=user.pk)
+        validate_copybetting_access(user.pk, analyst.pk, activating=True)
         subscription, _ = CopyBettingSubscription.objects.select_for_update().get_or_create(
             user=user,
             analyst=analyst,
@@ -724,6 +773,7 @@ def activate_copybetting(
         subscription.min_total_coefficient = min_total_coefficient
         subscription.copy_regular_coupons = copy_regular_coupons
         subscription.copy_tournament_coupons = copy_tournament_coupons
+        subscription._transition_actor = user
         subscription.status = CopyBettingSubscription.Status.ACTIVE
         subscription.pending_status = ""
         subscription.pending_status_requested_at = None
@@ -761,7 +811,11 @@ def pause_copybetting(subscription: CopyBettingSubscription) -> CopyBettingSubsc
 
 def resume_copybetting(subscription: CopyBettingSubscription) -> CopyBettingSubscription:
     with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=subscription.user_id)
+        validate_copybetting_access(subscription.user_id, subscription.analyst_id, activating=True)
+        validate_copybetting_stake(bank_amount=subscription.bank_amount, stake_percent=subscription.stake_percent, max_single_stake=subscription.max_single_stake)
         locked_subscription = CopyBettingSubscription.objects.select_for_update().get(pk=subscription.pk)
+        locked_subscription._transition_actor = User(pk=subscription.user_id)
         if locked_subscription.status == CopyBettingSubscription.Status.ACTIVE:
             if locked_subscription.pending_status:
                 locked_subscription.pending_status = ""
@@ -810,7 +864,10 @@ def _request_copybetting_status(
         raise ValidationError("Некорректный статус копибеттинга.")
 
     with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=subscription.user_id)
+        validate_copybetting_access(subscription.user_id, subscription.analyst_id)
         locked_subscription = CopyBettingSubscription.objects.select_for_update().get(pk=subscription.pk)
+        locked_subscription._transition_actor = User(pk=subscription.user_id)
         if locked_subscription.status == target_status and not locked_subscription.pending_status:
             return locked_subscription
 
@@ -899,8 +956,11 @@ def _copy_coupon_for_subscription(
         return None
 
     with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=subscription.user_id)
+        if CopyBettingBlock.objects.filter(user_id=subscription.user_id, analyst_id=coupon.author_id, revoked_at__isnull=True).exists():
+            return None
         locked_subscription = (
-            CopyBettingSubscription.objects.select_for_update()
+            CopyBettingSubscription.objects.select_for_update(of=("self",))
             .select_related("user", "analyst")
             .get(pk=subscription.pk)
         )
@@ -914,6 +974,8 @@ def _copy_coupon_for_subscription(
         stake = _copy_stake(locked_subscription)
         from game.services.coupon_validation import PREDICTION_STAKE_MIN_COINS
         if stake < PREDICTION_STAKE_MIN_COINS:
+            return None
+        if not copybetting_within_global_limits(locked_subscription.user_id, stake):
             return None
         if not _copybetting_allows_coupon(locked_subscription, coupon):
             return None
@@ -1102,11 +1164,12 @@ def settle_copied_bets_for_coupon(
     change_subjects = _result_change_subjects(coupon)
 
     settled: list[CopiedBet] = []
-    for copied_bet_id in copied_bets.order_by("id").values_list("pk", flat=True):
+    for copied_bet_id, reader_id in copied_bets.order_by("id").values_list("pk", "user_id"):
         try:
             with transaction.atomic():
+                User.objects.select_for_update(no_key=True).get(pk=reader_id)
                 locked_bet = (
-                    CopiedBet.objects.select_for_update()
+                    CopiedBet.objects.select_for_update(of=("self",))
                     .select_related("user")
                     .get(pk=copied_bet_id)
                 )
@@ -1213,7 +1276,8 @@ def settle_copied_bets_for_coupon(
 
 
 def _coin_wallet_for_update(user) -> CoinWallet:
-    locked_user = User.objects.select_for_update().get(pk=user.pk)
+    # Serialize wallet/copy operations without blocking foreign-key references.
+    locked_user = User.objects.select_for_update(no_key=True).get(pk=user.pk)
     wallet, _ = CoinWallet.objects.get_or_create(user=locked_user)
     return CoinWallet.objects.select_for_update().get(pk=wallet.pk)
 
@@ -1347,7 +1411,8 @@ def _real_balance_for_update(user) -> CapperRealBalance:
     if balance is not None:
         return balance
     try:
-        return CapperRealBalance.objects.create(user=user, balance=Decimal("0.00"))
+        with transaction.atomic():
+            return CapperRealBalance.objects.create(user=user, balance=Decimal("0.00"))
     except IntegrityError:
         return CapperRealBalance.objects.select_for_update().get(user=user)
 
@@ -1498,3 +1563,96 @@ def _validate_real_balance_user(user) -> None:
         raise ValidationError("Пользователь не найден.")
     if not getattr(user, "is_active", False):
         raise ValidationError("Пользователь не активен.")
+
+
+MAX_COPYBETTING_CAPPERS = 30
+
+
+def validate_copybetting_access(user_id, analyst_id, *, activating=False):
+    if CopyBettingBlock.objects.filter(user_id=user_id, analyst_id=analyst_id, revoked_at__isnull=True).exists():
+        raise ValidationError("Автор запретил вам копировать его прогнозы.")
+    if activating:
+        existing = CopyBettingSubscription.objects.filter(user_id=user_id, analyst_id=analyst_id, status__in=["active", "paused"]).exists()
+        count = CopyBettingSubscription.objects.filter(user_id=user_id, status__in=["active", "paused"]).count()
+        if not existing and count >= MAX_COPYBETTING_CAPPERS:
+            raise ValidationError(f"Можно копировать не более {MAX_COPYBETTING_CAPPERS} капперов одновременно. Остановите одну из стратегий.")
+
+
+def copybetting_day_start():
+    from datetime import datetime, time
+    site_timezone = timezone.get_default_timezone()
+    return timezone.make_aware(datetime.combine(timezone.localdate(timezone=site_timezone), time.min), site_timezone)
+
+
+def copybetting_within_global_limits(user_id, stake):
+    limits = CopyBettingLimits.objects.filter(user_id=user_id).first()
+    if not limits or not (limits.daily_budget or limits.daily_stop_loss):
+        return True
+    start = copybetting_day_start()
+    if limits.daily_budget:
+        spent = CopiedBet.objects.filter(user_id=user_id, created_at__gte=start).aggregate(total=Sum("stake"))["total"] or 0
+        if spent + stake > limits.daily_budget:
+            return False
+    if limits.daily_stop_loss:
+        profit = CopiedBet.objects.filter(user_id=user_id, settled_at__gte=start).aggregate(total=Sum("profit"))["total"] or 0
+        if -profit >= limits.daily_stop_loss:
+            return False
+    return True
+
+
+def block_copybetting_user(*, analyst, user, reason=""):
+    if not analyst.is_analyst or analyst.pk == user.pk or user.is_analyst:
+        raise PermissionDenied("Запрет доступен только автору для копирующего пользователя.")
+    with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=user.pk)
+        block, created = CopyBettingBlock.objects.get_or_create(analyst=analyst, user=user, revoked_at__isnull=True, defaults={"reason": str(reason)[:300]})
+        if created:
+            subscription = CopyBettingSubscription.objects.select_for_update().filter(analyst=analyst, user=user).first()
+            if subscription:
+                subscription.status = CopyBettingSubscription.Status.STOPPED
+                subscription.pending_status = ""
+                subscription.pending_status_requested_at = None
+                subscription.stopped_at = timezone.now()
+                subscription._transition_actor = analyst
+                subscription._transition_reason = "Запрет автора"
+                subscription.save(update_fields=["status", "pending_status", "pending_status_requested_at", "stopped_at", "updated_at"])
+            notify_copybetting_block(block, revoked=False)
+        return block
+
+
+def unblock_copybetting_user(*, analyst, user):
+    if not analyst.is_analyst or analyst.pk == user.pk:
+        raise PermissionDenied
+    with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=user.pk)
+        block = CopyBettingBlock.objects.select_for_update().filter(analyst=analyst, user=user, revoked_at__isnull=True).first()
+        if block:
+            block.revoked_at = timezone.now()
+            block.save(update_fields=["revoked_at"])
+            notify_copybetting_block(block, revoked=True)
+        return block
+
+
+def notify_copybetting_block(block, *, revoked):
+    from notifications.models import Notification
+    from notifications.services import create_notification
+    for recipient, actor in ((block.user, block.analyst), (block.analyst, block.user)):
+        create_notification(recipient=recipient, actor=actor, kind=Notification.Kind.COPYBETTING,
+                            title="Копирование снова разрешено" if revoked else "Копирование запрещено автором",
+                            message="Можно повторно настроить копирование. Оно не включается автоматически." if revoked else "Новые копии не создаются. Уже принятые ставки будут рассчитаны.",
+                            url=reverse("cabinet:profile") + "?tab=copybetting",
+                            event_key=f"copybetting-block:{block.pk}:{'revoked' if revoked else 'created'}:{recipient.pk}")
+
+
+def stop_copybetting_after_role_change(user):
+    """Keep accepted bets and record why a newly promoted author stopped copying."""
+    with transaction.atomic():
+        User.objects.select_for_update(no_key=True).get(pk=user.pk)
+        for subscription in CopyBettingSubscription.objects.select_for_update().filter(user=user).exclude(status="stopped"):
+            subscription.status = CopyBettingSubscription.Status.STOPPED
+            subscription.pending_status = ""
+            subscription.pending_status_requested_at = None
+            subscription.stopped_at = timezone.now()
+            subscription._transition_actor = user
+            subscription._transition_reason = "Пользователь стал каппером"
+            subscription.save(update_fields=["status", "pending_status", "pending_status_requested_at", "stopped_at", "updated_at"])

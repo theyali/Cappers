@@ -272,17 +272,125 @@ class PayButtonTests(TestCase):
         User.objects.filter(pk=self.user.pk).update(is_staff=True)
         self.assertContains(self.client.get(reverse("wallets:top_up")), "Оплатить картой")
 
-    def test_plans_the_balance_does_not_cover_can_be_paid_by_card(self):
+    def test_subscription_modal_reader_pays_directly_without_balance_option(self):
         plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
         self.client.force_login(self.user)
-
-        page = self.client.get(reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]))
-
+        page = self.client.get(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
         self.assertContains(page, f'name="plan_id" value="{plan.pk}" checked>')
-        self.assertContains(page, "Недостаточно средств на балансе")
-        self.assertContains(page, "Оплатить с баланса</button>")
-        self.assertContains(page, 'formaction="/payments/checkout/paid_subscription/"')
+        self.assertContains(page, 'data-subscription-provider="cloudpayments"')
+        self.assertContains(page, 'data-provider-action="/payments/checkout/paid_subscription/"')
         self.assertContains(page, f'name="analyst_id" value="{self.analyst.pk}"')
+        self.assertNotContains(page, 'value="balance"')
+        self.assertNotContains(page, "Реальный баланс")
+        self.assertNotContains(page, "<html")
+        self.assertIn("no-store", page.headers["Cache-Control"])
+
+    def test_old_subscription_link_opens_modal_on_next_page(self):
+        AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
+        self.client.force_login(self.user)
+        page = self.client.get(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            {"next": "/predictions/?prediction_type=paid"},
+        )
+        self.assertRedirects(page, f"/predictions/?prediction_type=paid&paid_subscribe={self.analyst.pk}", fetch_redirect_response=False)
+
+    def test_subscription_next_url_cannot_redirect_offsite(self):
+        AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
+        self.client.force_login(self.user)
+        page = self.client.get(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            {"next": "https://example.com/pay"},
+        )
+        self.assertRedirects(page, reverse("front:expert_profile", kwargs={"username": self.analyst.username}) + f"?paid_subscribe={self.analyst.pk}", fetch_redirect_response=False)
+
+    def test_subscription_reader_cannot_force_balance_post(self):
+        from cabinet.models import AnalystPaidSubscription
+        from wallets.services import ensure_real_balance
+        plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
+        wallet = ensure_real_balance(self.user)
+        wallet.balance = Decimal("5000")
+        wallet.save(update_fields=["balance"])
+        self.client.force_login(self.user)
+        response = self.client.post(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            {"plan_id": plan.pk}, HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(AnalystPaidSubscription.objects.filter(subscriber=self.user).exists())
+        wallet.refresh_from_db()
+        self.assertEqual(wallet.balance, Decimal("5000"))
+
+    def test_capper_can_buy_subscription_with_balance(self):
+        from cabinet.models import AnalystPaidSubscription
+        from wallets.services import ensure_real_balance
+        buyer = User.objects.create_user(username="balance-capper", role=User.Role.ANALYST)
+        plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
+        wallet = ensure_real_balance(buyer)
+        wallet.balance = Decimal("1500")
+        wallet.save(update_fields=["balance"])
+        self.client.force_login(buyer)
+        url = reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk])
+        fragment = self.client.get(url, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertContains(fragment, 'value="balance"')
+        self.assertContains(fragment, 'data-subscription-provider="cloudpayments"')
+        response = self.client.post(url, {"plan_id": plan.pk, "next": "/predictions/"}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {"ok": True, "return_url": "/predictions/"})
+        self.assertTrue(AnalystPaidSubscription.objects.filter(subscriber=buyer, analyst=self.analyst).exists())
+        wallet.refresh_from_db()
+        self.assertEqual(wallet.balance, Decimal("510.00"))
+
+    def test_subscription_balance_error_stays_in_modal(self):
+        plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("990.00"))
+        buyer = User.objects.create_user(username="empty-balance-capper", role=User.Role.ANALYST)
+        self.client.force_login(buyer)
+        response = self.client.post(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            {"plan_id": plan.pk}, HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(response.json()["ok"])
+        self.assertTrue(response.json()["message"])
+
+    def test_legacy_monthly_subscription_is_available_in_modal(self):
+        AnalystProfile.objects.filter(user=self.analyst).update(paid_predictions_price=Decimal("550"))
+        self.client.force_login(self.user)
+        page = self.client.get(
+            reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk]),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest",
+        )
+        self.assertContains(page, 'name="plan_id" value="" checked>')
+        self.assertContains(page, '550 ₽')
+        self.assertContains(page, 'data-subscription-provider="cloudpayments"')
+        self.assertNotContains(page, 'value="balance"')
+
+    def test_renewal_summary_starts_after_existing_access_and_uses_local_timezone(self):
+        from cabinet.models import AnalystPaidSubscription
+        from cabinet.paid_predictions import build_paid_checkout_context
+        from django.utils.formats import date_format
+        expires_at = timezone.now() + timedelta(days=10)
+        AnalystPaidSubscription.objects.create(
+            analyst=self.analyst, subscriber=self.user, price=Decimal("100"),
+            starts_at=timezone.now() - timedelta(days=20), expires_at=expires_at,
+        )
+        plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("2000"))
+        context = build_paid_checkout_context(self.user, self.analyst.analyst_profile, [plan])
+        expected = date_format(timezone.localtime(expires_at + timedelta(days=30)), "j E Y, H:i")
+        self.assertEqual(context["subscription_default"]["expires_label"], expected)
+
+    def test_subscription_provider_availability_is_per_plan_price(self):
+        from cabinet.paid_predictions import build_paid_checkout_context
+        short = AnalystPaidPlan.objects.create(analyst=self.analyst, title="День", duration_days=1, price=Decimal("100"))
+        monthly = AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("2000"))
+        with patch("payments.utils.build_payment_options", side_effect=lambda price, *_args, **_kwargs: [{"code": "cloudpayments", "label": "Оплатить картой"}] if price < 1000 else []):
+            context = build_paid_checkout_context(self.user, self.analyst.analyst_profile, [short, monthly])
+        self.assertEqual(context["subscription_choices"][0]["providers"], ["cloudpayments"])
+        self.assertEqual(context["subscription_choices"][1]["providers"], [])
+        self.assertEqual(context["subscription_default"]["id"], str(monthly.pk))
+        self.assertFalse(context["can_use_subscription_balance"])
 
     def test_vip_switch_by_card_goes_through_the_warning_dialog(self):
         monthly = VipPlan.objects.create(title="VIP 30", duration_days=30, price_rub=Decimal("300"))

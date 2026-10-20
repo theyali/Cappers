@@ -15,6 +15,17 @@
 
     const $ = window.jQuery;
     if (!$) return;
+    $(document).on('submit', '[data-copy-limits-form]', function (event) {
+        event.preventDefault();
+        const form = this, button = form.querySelector('button[type="submit"]'), status = form.querySelector('[data-copy-limits-feedback]');
+        if (button.disabled) return;
+        button.disabled = true;
+        status.textContent = 'Сохраняем…';
+        $.ajax({ url: form.action, type: 'POST', data: $(form).serializeArray(), dataType: 'json', timeout: 15000 })
+            .done((payload) => { status.textContent = payload.message; })
+            .fail((xhr) => { status.textContent = xhr.responseJSON?.error || 'Не удалось сохранить лимиты. Повторите действие.'; })
+            .always(() => { button.disabled = false; });
+    });
     const pending = new Set();
     $(document).on('submit', '[data-copy-status-form]', function (event) {
         event.preventDefault();

@@ -18,6 +18,7 @@ from .models import (
 
 
 CATEGORY_FIELD_BY_KIND = {
+    Notification.Kind.DIRECT_MESSAGE: "direct_messages",
     Notification.Kind.PREDICTION_LIKE: "prediction_like",
     Notification.Kind.PREDICTION_FAVORITE: "prediction_favorite",
     Notification.Kind.PREDICTION_COMMENT: "prediction_comment",
@@ -25,6 +26,7 @@ CATEGORY_FIELD_BY_KIND = {
     Notification.Kind.COPYBETTING: "copybetting",
     Notification.Kind.NEW_FOLLOWER: "new_follower",
     Notification.Kind.PAID_SUBSCRIPTION: "paid_subscription",
+    Notification.Kind.COUPON_PURCHASE: "paid_subscription",
     Notification.Kind.NEW_PREDICTION: "new_prediction",
     Notification.Kind.REQUESTED_MATCH_PREDICTION: "requested_match_prediction",
     Notification.Kind.MATCH_PREDICTION: "match_prediction",
@@ -43,6 +45,7 @@ CATEGORY_FIELD_BY_KIND = {
 
 
 SECTION_BY_KIND = {
+    Notification.Kind.DIRECT_MESSAGE: NotificationSectionState.Section.MESSAGES,
     Notification.Kind.PREDICTION_LIKE: NotificationSectionState.Section.PREDICTIONS,
     Notification.Kind.PREDICTION_FAVORITE: NotificationSectionState.Section.PREDICTIONS,
     Notification.Kind.PREDICTION_COMMENT: NotificationSectionState.Section.PREDICTIONS,
@@ -51,6 +54,7 @@ SECTION_BY_KIND = {
     Notification.Kind.COPYBETTING: NotificationSectionState.Section.COPYBETTING,
     Notification.Kind.NEW_FOLLOWER: NotificationSectionState.Section.FOLLOWERS,
     Notification.Kind.PAID_SUBSCRIPTION: NotificationSectionState.Section.EARNINGS,
+    Notification.Kind.COUPON_PURCHASE: NotificationSectionState.Section.EARNINGS,
     Notification.Kind.ACHIEVEMENT: NotificationSectionState.Section.ACHIEVEMENTS,
     Notification.Kind.BONUS_DAILY_TASK: NotificationSectionState.Section.BONUS_TASKS,
     Notification.Kind.BONUS_STREAK: NotificationSectionState.Section.BONUS_LEVELS,

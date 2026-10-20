@@ -1,0 +1,1 @@
+{% load prediction_reactions %}<span class="coupon-open-count" data-coupon-open-count="{{ coupon_id }}"{% if show_zero %} data-show-zero="true"{% elif not count %} hidden{% endif %}>{{ count|default:0|coupon_opens_label }}</span>

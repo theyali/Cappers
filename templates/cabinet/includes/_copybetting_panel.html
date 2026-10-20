@@ -1,31 +1,13 @@
 <div class="copybetting-panel" data-copybetting-panel data-url="{% url 'cabinet:copybetting_audience' %}" data-owner="{{ request.user.pk }}" data-share-path="{{ copybetting_share_path }}">
     <header class="copybetting-heading">
         <div><h2>Копибеттинг</h2><p>Кто копирует вашу стратегию и сколько на этом заработал</p></div>
-        <div class="copybetting-heading-actions">
+        <div class="copybetting-heading-actions"><a class="copybetting-button" href="{% url 'cabinet:inbox' %}" aria-label="Личные сообщения">{% include "cabinet/includes/_copybetting_icon.html" with name="message" only %}<span>Сообщения</span></a>
             <button type="button" class="copybetting-button" data-copy-share>{% include "cabinet/includes/_copybetting_icon.html" with name="share" only %}<span>Поделиться профилем</span></button>
             <button type="button" class="copybetting-button is-quiet" data-expert-public-modal-open="copybetting-how" aria-haspopup="dialog" aria-controls="copybetting-how-modal">{% include "cabinet/includes/_copybetting_icon.html" with name="info" only %}<span>Как это работает</span></button>
         </div>
     </header>
     <div class="copybetting-summary">
-        <article class="copybetting-summary-card is-active">
-            <span class="copybetting-summary-icon">{% include "cabinet/includes/_copybetting_icon.html" with name="copy" only %}</span>
-            <span class="copybetting-summary-label">Копируют сейчас</span>
-            <strong>{{ copybetting_audience_active_count }}</strong>
-            {% if copybetting_new_count %}<small class="copybetting-summary-growth">{{ copybetting_new_count }} новых за неделю</small>{% endif %}
-            <p>Активные настройки копирования вашей стратегии</p>
-        </article>
-        <article class="copybetting-summary-card">
-            <span class="copybetting-summary-icon">{% include "cabinet/includes/_copybetting_icon.html" with name="users" only %}</span>
-            <span class="copybetting-summary-label">Пользователей всего</span>
-            <strong>{{ copybetting_audience_total_count }}</strong>
-            <p>Все пользователи, которые запускали копирование</p>
-        </article>
-        <article class="copybetting-summary-card {% if copybetting_audience_profit >= 0 %}is-profit{% else %}is-loss{% endif %}">
-            <span class="copybetting-summary-icon">{% include "cabinet/includes/_copybetting_icon.html" with name="profit" only %}</span>
-            <span class="copybetting-summary-label">Прибыль аудитории</span>
-            <strong>{{ copybetting_audience_profit_display }}</strong>
-            <p>Суммарный результат пользователей по копибеттингу</p>
-        </article>
+        {% include "cabinet/includes/_copybetting_author_summary.html" %}
     </div>
     <p class="copybetting-feedback" data-copy-feedback role="status" aria-live="polite"></p>
     <div data-copy-content data-skeleton-block>{% include "cabinet/includes/_copybetting_content.html" %}</div>

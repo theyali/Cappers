@@ -16,7 +16,7 @@
 <section class="copybetting-surface" aria-label="{% if copybetting_view == 'bets' %}Скопированные ставки{% else %}История аудитории{% endif %}">
     <header class="copybetting-surface-head"><h3>{% if copybetting_view == 'bets' %}Скопированные с вас ставки{% else %}История аудитории{% endif %}</h3><span>{{ copybetting_end }} из {{ copybetting_filtered_count }} записей</span></header>
     <form class="copybetting-filters" method="get" action="{% url 'cabinet:profile' %}" data-copy-filters>
-        <input type="hidden" name="tab" value="copybetting"><input type="hidden" name="copy_view" value="{{ copybetting_view }}"><input type="hidden" name="copy_status" value="{{ copybetting_filters.copy_status }}">
+        <input type="hidden" name="copy_show_hidden" value="{{ copybetting_filters.copy_show_hidden }}"><input type="hidden" name="tab" value="copybetting"><input type="hidden" name="copy_view" value="{{ copybetting_view }}"><input type="hidden" name="copy_status" value="{{ copybetting_filters.copy_status }}">
         {% if copybetting_filters.copy_user %}<input type="hidden" name="copy_user" value="{{ copybetting_filters.copy_user }}">{% endif %}
         <label class="copybetting-search"><span class="sr-only">Поиск по нику</span><input type="search" name="copy_q" placeholder="Поиск по нику" value="{{ copybetting_filters.copy_q }}" maxlength="100" autocomplete="off"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="10" cy="10" r="6"/><path d="m15 15 5 5"/></svg></label>
         <div class="copybetting-state-filters" role="group" aria-label="Статус копирования">
@@ -55,4 +55,4 @@
 </section>
 {% if copybetting_view == 'bets' %}<aside class="copybetting-surface copybetting-top"><header class="copybetting-surface-head"><h3>Топ аудитории</h3><a href="{{ copybetting_reset_url }}" data-copy-nav>Все {{ copybetting_audience_total_count }} →</a></header>{% for person in copybetting_top %}{% include "cabinet/includes/_copybetting_person.html" with person=person compact=True only %}{% empty %}<p class="copybetting-no-results">Аудитория появится после первого копирования.</p>{% endfor %}</aside>{% endif %}
 </div>
-<div class="copybetting-hidden-note" data-copy-hidden-note hidden><span>Часть пользователей скрыта в этом браузере. Общая статистика сохранена.</span><button type="button" data-copy-show-hidden>Показать скрытых</button></div>
+<div class="copybetting-hidden-note" data-copy-hidden-note{% if not copybetting_hidden_count %} hidden{% endif %}><span>Скрыто пользователей: {{ copybetting_hidden_count }}. Общая статистика сохранена.</span><button type="button" data-copy-show-hidden data-show="{% if copybetting_filters.copy_show_hidden %}0{% else %}1{% endif %}">{% if copybetting_filters.copy_show_hidden %}Скрыть скрытых{% else %}Показать скрытых{% endif %}</button></div>

@@ -1,0 +1,19 @@
+<article class="copybetting-summary-card is-active">
+            <span class="copybetting-summary-icon">{% include "cabinet/includes/_copybetting_icon.html" with name="copy" only %}</span>
+            <span class="copybetting-summary-label">Копируют сейчас</span>
+            <strong>{{ copybetting_audience_active_count }}</strong>
+            {% if copybetting_new_count %}<small class="copybetting-summary-growth">{{ copybetting_new_count }} новых за неделю</small>{% endif %}
+            <p>Активные настройки копирования вашей стратегии</p>
+        </article>
+        <article class="copybetting-summary-card">
+            <span class="copybetting-summary-icon">{% include "cabinet/includes/_copybetting_icon.html" with name="users" only %}</span>
+            <span class="copybetting-summary-label">Пользователей всего</span>
+            <strong>{{ copybetting_audience_total_count }}</strong>
+            <p>Все пользователи, которые запускали копирование</p>
+        </article>
+        <article class="copybetting-summary-card {% if copybetting_audience_profit >= 0 %}is-profit{% else %}is-loss{% endif %}">
+            <span class="copybetting-summary-icon">{% include "cabinet/includes/_copybetting_icon.html" with name="profit" only %}</span>
+            <span class="copybetting-summary-label">Прибыль аудитории</span>
+            <strong>{{ copybetting_audience_profit_display }}</strong>
+            <p>Суммарный результат пользователей по копибеттингу</p>
+        </article>

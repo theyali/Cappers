@@ -189,6 +189,10 @@ class AnalystProfile(models.Model):
         decimal_places=2,
         default=0,
     )
+    single_coupon_sales_enabled = models.BooleanField("Разовая покупка купона", default=False)
+    single_coupon_price = models.DecimalField(
+        "Стоимость одного купона, ₽", max_digits=10, decimal_places=2, null=True, blank=True,
+    )
     trust_index = models.DecimalField(
         "Индекс доверия",
         max_digits=3,
@@ -212,12 +216,26 @@ class AnalystProfile(models.Model):
         verbose_name = "Профиль аналитика"
         verbose_name_plural = "Профили аналитиков"
         ordering = ("-created_at",)
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(single_coupon_sales_enabled=False)
+                | models.Q(single_coupon_price__isnull=False, single_coupon_price__gt=0),
+                name="profile_single_coupon_price_valid",
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.display_name or self.user.get_full_name() or self.user.username
 
     def clean(self) -> None:
         super().clean()
+        if self.single_coupon_sales_enabled and (self.single_coupon_price is None or self.single_coupon_price <= 0):
+            raise ValidationError({"single_coupon_price": "Укажите положительную стоимость одного купона."})
+        if self.single_coupon_sales_enabled and self.single_coupon_price is not None:
+            from back.models import WebsiteSettings
+            config = WebsiteSettings.load()
+            if not config.single_coupon_min_price <= self.single_coupon_price <= config.single_coupon_max_price:
+                raise ValidationError({"single_coupon_price": f"Укажите цену от {config.single_coupon_min_price} до {config.single_coupon_max_price} ₽."})
         if self.paid_predictions_price is None:
             self.paid_predictions_price = 0
 
@@ -475,6 +493,55 @@ class AnalystPaidPlan(models.Model):
 
     def __str__(self) -> str:
         return f"{self.analyst} · {self.title} · {self.price} за {self.period_label}"
+
+
+class PaidPredictionPurchase(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "pending", "Ожидает оплаты"
+        PAID = "paid", "Оплачен"
+        FAILED = "failed", "Ошибка оплаты"
+        REFUNDED = "refunded", "Возвращён"
+
+    buyer = models.ForeignKey(User, on_delete=models.PROTECT, related_name="paid_coupon_purchases")
+    analyst = models.ForeignKey(User, on_delete=models.PROTECT, related_name="paid_coupon_sales")
+    coupon = models.ForeignKey("game.PredictionCoupon", on_delete=models.PROTECT, related_name="purchases")
+    status = models.CharField(max_length=16, choices=Status.choices, default=Status.PENDING)
+    price = models.DecimalField(max_digits=10, decimal_places=2)
+    currency = models.CharField(max_length=3, default="RUB")
+    income_hold_days = models.PositiveSmallIntegerField(default=0)
+    platform_fee_percent = models.DecimalField(max_digits=5, decimal_places=2)
+    platform_fee_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    capper_income = models.DecimalField(max_digits=10, decimal_places=2)
+    payment = models.OneToOneField(
+        "payments.Payment", on_delete=models.PROTECT, null=True, blank=True,
+        related_name="coupon_purchase",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    refunded_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        verbose_name = "Разовая покупка купона"
+        verbose_name_plural = "Разовые покупки купонов"
+        constraints = [
+            models.UniqueConstraint(fields=["buyer", "coupon"], name="unique_paid_coupon_purchase"),
+            models.CheckConstraint(condition=models.Q(price__gt=0), name="coupon_purchase_price_positive"),
+            models.CheckConstraint(condition=models.Q(platform_fee_percent__gte=0, platform_fee_percent__lte=100), name="coupon_purchase_fee_range"),
+            models.CheckConstraint(condition=models.Q(platform_fee_amount__gte=0, capper_income__gte=0) & models.Q(price=models.F("platform_fee_amount") + models.F("capper_income")), name="coupon_purchase_amounts_match"),
+            models.CheckConstraint(condition=~models.Q(buyer=models.F("analyst")), name="coupon_purchase_not_self"),
+            models.CheckConstraint(condition=~models.Q(status="paid") | models.Q(paid_at__isnull=False, refunded_at__isnull=True), name="coupon_purchase_paid_dates"),
+            models.CheckConstraint(condition=~models.Q(status="refunded") | models.Q(paid_at__isnull=False, refunded_at__isnull=False), name="coupon_purchase_refund_dates"),
+        ]
+        indexes = [
+            models.Index(fields=["buyer", "status", "created_at"], name="coupon_purchase_buyer_idx"),
+            models.Index(fields=["analyst", "status", "created_at"], name="coupon_purchase_seller_idx"),
+            models.Index(fields=["coupon", "status"], name="coupon_purchase_status_idx"),
+        ]
+
+    def clean(self):
+        super().clean()
+        if self.coupon_id and self.analyst_id != self.coupon.author_id:
+            raise ValidationError({"analyst": "Продавец должен совпадать с автором купона."})
 
 
 class AnalystPaidSubscription(models.Model):
@@ -1182,3 +1249,17 @@ class ReferralBonusSettings(models.Model):
 
     def __str__(self) -> str:
         return "Реферальные бонусы"
+
+
+class DirectMessage(models.Model):
+    sender = models.ForeignKey(User, on_delete=models.CASCADE, related_name="sent_direct_messages")
+    recipient = models.ForeignKey(User, on_delete=models.CASCADE, related_name="received_direct_messages")
+    client_id = models.UUIDField()
+    body = models.TextField(max_length=2000)
+    created_at = models.DateTimeField(auto_now_add=True)
+    read_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["sender", "client_id"], name="unique_direct_message_request"), models.CheckConstraint(condition=~models.Q(sender=models.F("recipient")), name="direct_message_distinct_users")]
+        indexes = [models.Index(fields=["sender", "recipient", "created_at"]), models.Index(fields=["recipient", "read_at"])]
+        ordering = ["-created_at", "-id"]

@@ -60,6 +60,8 @@ if PAYMENTS_MERCHANT_TYPE not in {"ip", "ooo", "self_employed"}:
     raise ImproperlyConfigured("PAYMENTS_MERCHANT_TYPE must be ip, ooo or self_employed.")
 # Test payments (a CloudPayments test terminal) are refused unless this is on.
 PAYMENTS_ALLOW_TEST_PAYMENTS = env_bool("PAYMENTS_ALLOW_TEST_PAYMENTS", DEBUG)
+# New sales stay off until single-coupon financial terms and checkout are ready.
+SINGLE_COUPON_SALES_ENABLED = env_bool("SINGLE_COUPON_SALES_ENABLED", False)
 # Only staff see the pay buttons, e.g. while the terminal is still in test mode.
 PAYMENTS_STAFF_ONLY = env_bool("PAYMENTS_STAFF_ONLY", False)
 

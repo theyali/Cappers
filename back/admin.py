@@ -214,8 +214,12 @@ class WebsiteSettingsAdmin(admin.ModelAdmin):
             },
         ),
         (
+            "Разовая покупка купонов",
+            {"fields": ("single_coupon_min_price", "single_coupon_max_price", "single_coupon_fee_percent", "single_coupon_income_hold_days")},
+        ),
+        (
             "Вывод средств",
-            {"fields": ("income_hold_days", "min_withdrawal_amount")},
+            {"fields": ("income_hold_days", "min_withdrawal_amount", "withdrawal_requests_per_week", "withdrawal_schedule")},
         ),
         (
             "Главная страница — О нас",

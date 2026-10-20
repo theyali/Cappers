@@ -217,119 +217,10 @@
             </div>
         </article>
 
-        {% if expert_latest_articles %}
-        <div class="expert-public-latest-articles" aria-labelledby="expert-public-latest-articles-title">
-            <div class="expert-public-latest-articles-head">
-                <div class="expert-public-latest-articles-heading">
-                    <span class="expert-public-latest-articles-label">Последние публикации</span>
-                    <h2 id="expert-public-latest-articles-title">Статьи эксперта</h2>
-                </div>
-                <a class="expert-public-latest-articles-all" href="#articles" data-expert-public-open-tab="articles">Все статьи <span aria-hidden="true">→</span></a>
-            </div>
-            <div class="expert-public-latest-articles-grid">
-                {% for article in expert_latest_articles %}
-                <a class="expert-public-latest-article" href="{{ article.get_absolute_url }}">
-                    <div class="expert-public-latest-article-cover">
-                        <div class="expert-public-latest-article-visual is-art-{{ forloop.counter }}">
-                            {% if article.cover_image %}
-                                <img src="{{ article.cover_image.url }}" width="357" height="148" alt="" loading="lazy">
-                            {% elif forloop.first %}
-                                <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
-                                    <path d="M-192 158L120 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M-148 158L164 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M-104 158L208 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M-60 158L252 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M-16 158L296 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M28 158L340 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M72 158L384 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M116 158L428 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M160 158L472 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M204 158L516 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M248 158L560 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M292 158L604 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M336 158L648 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M380 158L692 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                <path d="M424 158L736 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
-                                </svg>
-                                <div class="expert-public-latest-article-sport-icon">
-                                    <svg viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
-                                        <defs><clipPath id="expert-article-ball"><circle cx="100" cy="100" r="90"></circle></clipPath></defs>
-                                        <circle cx="100" cy="100" r="90" fill="#ffffff"></circle>
-                                        <g clip-path="url(#expert-article-ball)" fill="#141519">
-                                            <polygon points="100,72 126.6,91.3 116.5,122.7 83.5,122.7 73.4,91.3"></polygon>
-                                            <polygon points="100,2 126,20 116,46 84,46 74,20"></polygon>
-                                            <polygon points="182,72 205,90 196,118 168,112 162,86"></polygon>
-                                            <polygon points="18,72 38,86 32,112 4,118 -5,90"></polygon>
-                                            <polygon points="150,170 174,160 186,184 166,206 140,196"></polygon>
-                                            <polygon points="50,170 60,196 34,206 14,184 26,160"></polygon>
-                                        </g>
-                                        <path d="M100 72V46M126.6 91.3L162 86M116.5 122.7L150 170M83.5 122.7L50 170M73.4 91.3L38 86" stroke="#141519" stroke-width="3" fill="none"></path>
-                                        <circle cx="100" cy="100" r="89" fill="none" stroke="#141519" stroke-width="3"></circle>
-                                    </svg>
-                                </div>
-                            {% elif forloop.counter == 2 %}
-                                <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
-                                    <rect x="0" y="-10" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
-                                <rect x="0" y="26" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
-                                <rect x="0" y="62" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
-                                <rect x="0" y="98" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
-                                <rect x="0" y="134" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
-                                </svg>
-                                <div class="expert-public-latest-article-sport-icon">
-                                    <svg viewBox="0 0 200 200" width="155" height="155" aria-hidden="true">
-                                        <path d="M150 18L96 138Q90 152 76 152L24 152" fill="none" stroke="#EEF3F9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
-                                        <path d="M34 152H62" stroke="#14161B" stroke-width="14"></path>
-                                        <ellipse cx="112" cy="180" rx="44" ry="14" fill="#05070B"></ellipse>
-                                        <rect x="68" y="160" width="88" height="20" fill="#05070B"></rect>
-                                        <ellipse cx="112" cy="160" rx="44" ry="14" fill="#2D3140"></ellipse>
-                                    </svg>
-                                </div>
-                            {% else %}
-                                <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
-                                    <path d="M15 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M45 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M75 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M105 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M135 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M165 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M195 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M225 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M255 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M285 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M315 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M345 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M0 15H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M0 45H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M0 75H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M0 105H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                <path d="M0 135H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
-                                </svg>
-                                <div class="expert-public-latest-article-sport-icon">
-                                    <svg viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
-                                        <circle cx="100" cy="100" r="90" fill="#F0862A"></circle>
-                                        <path d="M100 10v180M10 100h180M38 35c30 30 30 100 0 130M162 35c-30 30-30 100 0 130" fill="none" stroke="#2A1607" stroke-width="5"></path>
-                                    </svg>
-                                </div>
-                            {% endif %}
-                        </div>
-                        <span class="expert-public-latest-article-category">Статья</span>
-                        <span class="expert-public-latest-article-time">{{ article.reading_minutes }} мин</span>
-                    </div>
-                    <div class="expert-public-latest-article-copy">
-                        <strong>{{ article.title }}</strong>
-                        <p>{{ article.excerpt }}</p>
-                        <div class="expert-public-latest-article-footer">
-                            <div class="expert-public-latest-article-details">
-                                <span>{{ article.published_at|date:"j E" }}</span>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
+
     </section>
+
+    {% if expert_paid_tariffs %}{% include "cabinet/includes/_expert_paid_tariffs.html" %}{% endif %}
 
     <section class="expert-public-analytics" aria-label="Подробная статистика эксперта">
         <div class="expert-public-kpi-grid">
@@ -559,7 +450,7 @@
                     <button
                         class="expert-public-paid-action"
                         type="button"
-                        data-expert-public-modal-open="paid-subscribe"
+                        data-subscription-url="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}?next={{ request.get_full_path|urlencode }}"
                         aria-controls="expert-paid-subscribe-modal"
                         aria-haspopup="dialog"
                     >
@@ -586,6 +477,119 @@
         <a class="expert-mobile-feed-all" href="#predictions" data-expert-public-open-tab="predictions">Все прогнозы каппера <span aria-hidden="true">→</span></a>
     </section>
 
+    {% if expert_latest_articles %}
+    <div class="expert-public-latest-articles" aria-labelledby="expert-public-latest-articles-title">
+        <div class="expert-public-latest-articles-head">
+            <div class="expert-public-latest-articles-heading">
+                <span class="expert-public-latest-articles-label">Последние публикации</span>
+                <h2 id="expert-public-latest-articles-title">Статьи эксперта</h2>
+            </div>
+            <a class="expert-public-latest-articles-all" href="#articles" data-expert-public-open-tab="articles">Все статьи <span aria-hidden="true">→</span></a>
+        </div>
+        <div class="expert-public-latest-articles-grid">
+            {% for article in expert_latest_articles %}
+            <a class="expert-public-latest-article" href="{{ article.get_absolute_url }}">
+                <div class="expert-public-latest-article-cover">
+                    <div class="expert-public-latest-article-visual is-art-{{ forloop.counter }}">
+                        {% if article.cover_image %}
+                            <img src="{{ article.cover_image.url }}" width="357" height="148" alt="" loading="lazy">
+                        {% elif forloop.first %}
+                            <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
+                                <path d="M-192 158L120 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M-148 158L164 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M-104 158L208 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M-60 158L252 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M-16 158L296 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M28 158L340 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M72 158L384 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M116 158L428 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M160 158L472 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M204 158L516 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M248 158L560 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M292 158L604 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M336 158L648 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M380 158L692 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            <path d="M424 158L736 -10" stroke="#ffffff" stroke-opacity="0.08" stroke-width="16"></path>
+                            </svg>
+                            <div class="expert-public-latest-article-sport-icon">
+                                <svg viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
+                                    <defs><clipPath id="expert-article-ball"><circle cx="100" cy="100" r="90"></circle></clipPath></defs>
+                                    <circle cx="100" cy="100" r="90" fill="#ffffff"></circle>
+                                    <g clip-path="url(#expert-article-ball)" fill="#141519">
+                                        <polygon points="100,72 126.6,91.3 116.5,122.7 83.5,122.7 73.4,91.3"></polygon>
+                                        <polygon points="100,2 126,20 116,46 84,46 74,20"></polygon>
+                                        <polygon points="182,72 205,90 196,118 168,112 162,86"></polygon>
+                                        <polygon points="18,72 38,86 32,112 4,118 -5,90"></polygon>
+                                        <polygon points="150,170 174,160 186,184 166,206 140,196"></polygon>
+                                        <polygon points="50,170 60,196 34,206 14,184 26,160"></polygon>
+                                    </g>
+                                    <path d="M100 72V46M126.6 91.3L162 86M116.5 122.7L150 170M83.5 122.7L50 170M73.4 91.3L38 86" stroke="#141519" stroke-width="3" fill="none"></path>
+                                    <circle cx="100" cy="100" r="89" fill="none" stroke="#141519" stroke-width="3"></circle>
+                                </svg>
+                            </div>
+                        {% elif forloop.counter == 2 %}
+                            <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
+                                <rect x="0" y="-10" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                            <rect x="0" y="26" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                            <rect x="0" y="62" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                            <rect x="0" y="98" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                            <rect x="0" y="134" width="357" height="16" fill="#ffffff" fill-opacity="0.07"></rect>
+                            </svg>
+                            <div class="expert-public-latest-article-sport-icon">
+                                <svg viewBox="0 0 200 200" width="155" height="155" aria-hidden="true">
+                                    <path d="M150 18L96 138Q90 152 76 152L24 152" fill="none" stroke="#EEF3F9" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"></path>
+                                    <path d="M34 152H62" stroke="#14161B" stroke-width="14"></path>
+                                    <ellipse cx="112" cy="180" rx="44" ry="14" fill="#05070B"></ellipse>
+                                    <rect x="68" y="160" width="88" height="20" fill="#05070B"></rect>
+                                    <ellipse cx="112" cy="160" rx="44" ry="14" fill="#2D3140"></ellipse>
+                                </svg>
+                            </div>
+                        {% else %}
+                            <svg class="expert-public-latest-article-pattern" width="357" height="148" viewBox="0 0 357 148" aria-hidden="true">
+                                <path d="M15 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M45 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M75 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M105 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M135 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M165 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M195 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M225 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M255 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M285 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M315 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M345 0V148" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M0 15H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M0 45H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M0 75H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M0 105H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            <path d="M0 135H357" stroke="#ffffff" stroke-opacity="0.09" stroke-width="2"></path>
+                            </svg>
+                            <div class="expert-public-latest-article-sport-icon">
+                                <svg viewBox="0 0 200 200" width="140" height="140" aria-hidden="true">
+                                    <circle cx="100" cy="100" r="90" fill="#F0862A"></circle>
+                                    <path d="M100 10v180M10 100h180M38 35c30 30 30 100 0 130M162 35c-30 30-30 100 0 130" fill="none" stroke="#2A1607" stroke-width="5"></path>
+                                </svg>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <span class="expert-public-latest-article-category">Статья</span>
+                    <span class="expert-public-latest-article-time">{{ article.reading_minutes }} мин</span>
+                </div>
+                <div class="expert-public-latest-article-copy">
+                    <strong>{{ article.title }}</strong>
+                    <p>{{ article.excerpt }}</p>
+                    <div class="expert-public-latest-article-footer">
+                        <div class="expert-public-latest-article-details">
+                            <span>{{ article.published_at|date:"j E" }}</span>
+                        </div>
+                    </div>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
     {% include "cabinet/_expert_recommendations.html" %}
 
 
@@ -593,7 +597,6 @@
 
 {% if public_copybetting.visible %}{% include "modals/copybetting_how.html" with copybetting_reader_help=True %}{% endif %}
 {% include "modals/expert_public_details.html" %}
-{% include "modals/expert_paid_subscribe.html" %}
 {% endblock %}
 
 {% block extra_js %}
@@ -605,5 +608,4 @@
 <script src="{% static 'front/js/expert-stats.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
 <script src="{% static 'front/js/prediction-follow.js' %}" defer></script>
-<script src="{% static 'front/js/expert-public-details.js' %}" defer></script>
 {% endblock %}

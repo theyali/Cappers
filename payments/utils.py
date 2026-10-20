@@ -8,6 +8,7 @@ from payments.services.checkout import can_pay_with_providers
 from payments.services.providers.factory import PaymentProviderFactory
 
 DONE_TEXTS = {
+    Payment.Purpose.SINGLE_COUPON_PURCHASE: "Купон оплачен и доступен для просмотра.",
     Payment.Purpose.COIN_PACKAGE: "Коины зачислены на баланс.",
     Payment.Purpose.PAID_SUBSCRIPTION: "Подписка активна: закрытые прогнозы каппера уже доступны.",
     Payment.Purpose.VIP_PLAN: "VIP-тариф активирован.",
@@ -40,7 +41,9 @@ def build_payment_status(payment: Payment) -> dict:
         "text": "Срок оплаты истёк. Оформите покупку заново.",
         "retry_url": "",
     }
-    if status == Payment.Status.SUCCEEDED and payment.fulfilled_at:
+    if payment.requires_review:
+        status_context.update(state="failed", title="Платёж на проверке", text="Оплата получена. Требуется проверка срока или повторной оплаты. Поддержка поможет с возвратом.")
+    elif status == Payment.Status.SUCCEEDED and payment.fulfilled_at:
         status_context.update(state="done", title="Оплата прошла", text=DONE_TEXTS[payment.purpose])
     elif status == Payment.Status.SUCCEEDED:
         status_context.update(state="pending", title="Оплата получена", text="Зачисляем покупку, это займёт несколько секунд.")
@@ -79,7 +82,9 @@ def build_payment_status(payment: Payment) -> dict:
 
 def build_payment_return_context(payment: Payment) -> dict:
     back_url, back_label = reverse("wallets:top_up"), "К пакетам коинов"
-    if payment.purpose == Payment.Purpose.VIP_PLAN:
+    if payment.purpose == Payment.Purpose.SINGLE_COUPON_PURCHASE:
+        back_url, back_label = reverse("front:prediction_detail", args=[payment.product_snapshot["coupon_id"]]), "Открыть купон"
+    elif payment.purpose == Payment.Purpose.VIP_PLAN:
         back_url, back_label = reverse("cabinet:vip_plans"), "К VIP-тарифам"
     elif payment.purpose == Payment.Purpose.PAID_SUBSCRIPTION:
         username = (

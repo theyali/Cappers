@@ -105,6 +105,7 @@
                     <span>Доступно к выводу</span>
                     <strong>{{ real_balance_display }} ₽</strong>
                 </div>
+                <small>{{ withdrawal_schedule }} Не более {{ withdrawal_requests_per_week }} заявок в неделю.</small>
                 <small>Минимум {{ min_withdrawal_display }} ₽ · ожидает вывода {{ pending_withdrawal_display }} ₽</small>
                 {% if held_display %}<small>В холде: {{ held_display }} ₽ — доход с оплат станет доступен после окончания холда.</small>{% endif %}
             </div>

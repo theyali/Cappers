@@ -57,7 +57,13 @@ def fulfill_vip_plan(payment: Payment) -> None:
     )
 
 
+def fulfill_single_coupon(payment):
+    from cabinet.paid_prediction_purchases import fulfill_coupon_purchase
+    fulfill_coupon_purchase(payment)
+
+
 FULFILLERS = {
+    Payment.Purpose.SINGLE_COUPON_PURCHASE: fulfill_single_coupon,
     Payment.Purpose.COIN_PACKAGE: fulfill_coin_package,
     Payment.Purpose.PAID_SUBSCRIPTION: fulfill_paid_subscription,
     Payment.Purpose.VIP_PLAN: fulfill_vip_plan,
@@ -67,10 +73,12 @@ FULFILLERS = {
 def fulfill_payment(payment_id: int) -> Payment:
     """Deliver what a succeeded payment bought, exactly once."""
     with transaction.atomic():
-        payment = Payment.objects.select_for_update().select_related("user").get(pk=payment_id)
-        if payment.status != Payment.Status.SUCCEEDED or payment.fulfilled_at:
+        payment = Payment.objects.select_for_update(of=("self",)).select_related("user").get(pk=payment_id)
+        if payment.status != Payment.Status.SUCCEEDED or payment.fulfilled_at or payment.requires_review:
             return payment
         FULFILLERS[payment.purpose](payment)
+        if payment.requires_review:
+            return payment
         payment.fulfilled_at = timezone.now()
         payment.save(update_fields=["fulfilled_at", "updated_at"])
     logger.info("Payment %s fulfilled: %s", payment.public_id, payment.purpose)
@@ -81,6 +89,16 @@ def delivery_blocker(payment: Payment) -> str:
     """Why the product can no longer be delivered; asked before the money is taken."""
     if not payment.user.is_active:
         return "Аккаунт покупателя удалён."
+    if payment.purpose == Payment.Purpose.SINGLE_COUPON_PURCHASE:
+        from cabinet.paid_prediction_purchases import single_coupon_sale_blocker
+        from cabinet.paid_predictions import user_can_view_paid_coupon
+        from game.models import PredictionCoupon
+        coupon = PredictionCoupon.objects.select_related("author__analyst_profile").filter(pk=payment.product_snapshot.get("coupon_id")).first()
+        if coupon is None:
+            return "Купон недоступен."
+        if user_can_view_paid_coupon(payment.user, coupon):
+            return "Купон уже доступен без повторной оплаты."
+        return single_coupon_sale_blocker(coupon)
     if payment.purpose == Payment.Purpose.PAID_SUBSCRIPTION:
         selling = AnalystProfile.objects.filter(
             user_id=payment.product_snapshot.get("analyst_id"),

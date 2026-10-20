@@ -12,7 +12,7 @@ from django.views.decorators.http import require_GET, require_POST
 from cabinet.services.registration_guard import client_ip
 from cappers.ratelimit import rate_limited
 from payments.models import Payment
-from payments.services.checkout import coin_package_order, paid_subscription_order, start_checkout, vip_plan_order
+from payments.services.checkout import coin_package_order, paid_subscription_order, single_coupon_order, start_checkout, vip_plan_order
 from payments.services.processing import apply_provider_event
 from payments.services.providers.base import InvalidSignature, PaymentProviderError
 from payments.services.providers.factory import PaymentProviderFactory
@@ -29,7 +29,9 @@ CHECKOUT_ATTEMPTS_LIMIT = 10
 def checkout(request, purpose: str):
     data = request.POST
     analyst_id = data.get("analyst_id", "")
+    coupon_id = data.get("coupon_id", "")
     back_urls = {
+        Payment.Purpose.SINGLE_COUPON_PURCHASE: reverse("cabinet:single_coupon_checkout", args=[coupon_id]) if coupon_id.isdigit() else reverse("front:predictions"),
         Payment.Purpose.COIN_PACKAGE: reverse("wallets:top_up"),
         Payment.Purpose.VIP_PLAN: reverse("cabinet:vip_plans"),
         Payment.Purpose.PAID_SUBSCRIPTION: (
@@ -56,6 +58,8 @@ def checkout(request, purpose: str):
     try:
         if purpose == Payment.Purpose.COIN_PACKAGE:
             order = coin_package_order(data.get("package_id"))
+        elif purpose == Payment.Purpose.SINGLE_COUPON_PURCHASE:
+            order = single_coupon_order(request.user, coupon_id)
         elif purpose == Payment.Purpose.PAID_SUBSCRIPTION:
             order = paid_subscription_order(request.user, analyst_id, data.get("plan_id") or None)
         else:

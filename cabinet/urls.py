@@ -8,6 +8,8 @@ from . import (
     bonus_views,
     capper_views,
     copybetting_views,
+    message_views,
+    paid_prediction_views,
     dashboard_views,
     demand_views,
     earnings_views,
@@ -23,6 +25,14 @@ from .roulette import api as roulette_api
 app_name = "cabinet"
 
 urlpatterns = [
+    path("coupons/<int:coupon_id>/checkout/", paid_prediction_views.checkout, name="single_coupon_checkout"),
+    path("purchases/", paid_prediction_views.purchases, name="coupon_purchases"),
+    path("coupon-sales/", paid_prediction_views.purchases, {"sales": True}, name="coupon_sales"),
+    path("messages/", message_views.inbox, name="inbox"),
+    path("messages/<str:username>/", message_views.dialog, name="dialog"),
+    path("profile/copybetting/strategies/<int:subscription_id>/history/", copybetting_views.history, name="copybetting_history"),
+    path("profile/copybetting/limits/", copybetting_views.limits, name="copybetting_limits"),
+    *[path("profile/copybetting/users/<int:user_id>/" + action + "/", copybetting_views.audience_action, {"action": action}, name="copybetting_" + action) for action in ("block", "unblock", "hide", "unhide")],
     path("", dashboard_views.dashboard, name="dashboard"),
     path("reader/", views.legacy_reader_dashboard, name="reader_dashboard"),
     path("analyst/", views.legacy_analyst_dashboard, name="analyst_dashboard"),

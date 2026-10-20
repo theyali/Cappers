@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load money %}
+{% block title %}{{ page_title }} — КапперХаб{% endblock %}
+{% block content %}
+<section class="profile-page matches-page container">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+        <section class="matches-list-panel profile-purchases-page">
+            <h1>{{ page_title }}</h1>
+            {% if sales %}<p>Продаж: {{ totals.count }} · Выручка: {{ totals.revenue|money }} ₽ · Комиссия: {{ totals.fee|money }} ₽ · Доход: {{ totals.income|money }} ₽ · Возвраты: {{ totals.refunds|money }} ₽</p>{% endif %}
+            <nav class="matches-tabs" aria-label="Статус покупок"><a href="?status=paid"{% if not refunded %} aria-current="page"{% endif %}>Оплаченные</a><a href="?status=refunded"{% if refunded %} aria-current="page"{% endif %}>Возвраты</a></nav>
+            <div class="profile-purchases-table-scroll" tabindex="0" role="region" aria-label="{{ page_title }}">
+                <table class="profile-purchases-table"><thead><tr><th>Купон</th><th>{% if sales %}Покупатель{% else %}Автор{% endif %}</th><th>Дата оплаты</th><th>Цена</th>{% if sales %}<th>Комиссия</th><th>Доход</th>{% endif %}<th>Результат</th><th>Доступ</th></tr></thead><tbody>
+                {% for purchase in page_obj %}<tr><td>#{{ purchase.coupon_id }}</td><td>{% if sales %}{{ purchase.buyer.username }}{% else %}{{ purchase.analyst.username }}{% endif %}</td><td>{{ purchase.paid_at|date:"d.m.Y H:i" }}</td><td>{{ purchase.price|money }} ₽</td>{% if sales %}<td>{{ purchase.platform_fee_amount|money }} ₽</td><td>{{ purchase.capper_income|money }} ₽</td>{% endif %}<td>{{ purchase.coupon.get_state_status_display }}</td><td>{% if refunded %}Возврат {{ purchase.refunded_at|date:"d.m.Y" }}{% else %}<a href="{% url 'front:prediction_detail' prediction_id=purchase.coupon_id %}">Открыть купон</a>{% endif %}</td></tr>{% empty %}<tr><td colspan="{% if sales %}8{% else %}6{% endif %}">{% if refunded %}Возвратов пока нет.{% else %}Оплаченных купонов пока нет.{% endif %}</td></tr>{% endfor %}
+                </tbody></table>
+            </div>
+            <nav aria-label="Страницы покупок">{% if page_obj.has_previous %}<a href="?status={% if refunded %}refunded{% else %}paid{% endif %}&amp;page={{ page_obj.previous_page_number }}">Назад</a>{% endif %}<span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>{% if page_obj.has_next %}<a href="?status={% if refunded %}refunded{% else %}paid{% endif %}&amp;page={{ page_obj.next_page_number }}">Далее</a>{% endif %}</nav>
+        </section>
+    </div>
+</section>
+{% endblock %}

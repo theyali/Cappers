@@ -222,6 +222,8 @@ class AnalystProfileForm(forms.ModelForm):
             "x",
             "paid_predictions_enabled",
             "paid_predictions_price",
+            "single_coupon_sales_enabled",
+            "single_coupon_price",
             "is_public",
         )
         widgets = {
@@ -257,6 +259,12 @@ class AnalystProfileForm(forms.ModelForm):
         self.fields["telegram_channel"].required = False
         self.fields["telegram_account"].required = False
         self.fields["paid_predictions_price"].required = False
+        self.fields["single_coupon_sales_enabled"].widget.attrs.update({
+            "aria-label": "Разовая покупка купона", "aria-describedby": "single-coupon-sale-help",
+        })
+        self.fields["single_coupon_price"].widget.attrs.update({
+            "step": "0.01", "placeholder": "0.00", "aria-describedby": "single-coupon-sale-help",
+        })
         self.fields["telegram_channel"].label = "Telegram-канал (необязательно)"
         self.fields["telegram_account"].label = "Telegram-аккаунт (необязательно)"
         self.fields["paid_predictions_enabled"].label = "Платные прогнозы"
@@ -335,6 +343,19 @@ class AnalystPaidPlanSettingsForm(forms.Form):
                         f"Укажите стоимость тарифа «{title}».",
                     )
         return cleaned_data
+
+    def validate_sales_options(self, *, paid_enabled, single_enabled, single_price):
+        if not paid_enabled:
+            return True
+        has_subscription = any(
+            self.cleaned_data.get(f"plan_{days}_active")
+            and self.cleaned_data.get(f"plan_{days}_price")
+            for days, _ in DEFAULT_PAID_PLAN_PRESETS
+        )
+        if not has_subscription and not (single_enabled and single_price and single_price > 0):
+            self.add_error(None, "Включите разовую покупку с ценой или хотя бы один тариф подписки.")
+            return False
+        return True
 
     def save(self, analyst):
         existing_plans = {
@@ -434,3 +455,8 @@ class AnalystAvatarForm(forms.ModelForm):
             raise forms.ValidationError("Разрешены JPG, PNG и WebP.")
 
         return avatar
+
+
+class DirectMessageForm(forms.Form):
+    body = forms.CharField(label="Сообщение", max_length=2000, strip=True, widget=forms.Textarea(attrs={"rows": 4, "maxlength": 2000}))
+    client_id = forms.UUIDField(widget=forms.HiddenInput)

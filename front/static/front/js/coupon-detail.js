@@ -26,3 +26,44 @@
     window.addEventListener("resize", update);
     update();
 })();
+
+(() => {
+    const page = document.querySelector("[data-coupon-open-url]");
+    if (!page) return;
+    let sent = false;
+    let pending = false;
+    const record = () => {
+        if (sent || pending || document.visibilityState !== "visible") return;
+        pending = true;
+        // Wait for the visible content to paint; document prefetches never POST.
+        requestAnimationFrame(() => requestAnimationFrame(async () => {
+            if (document.visibilityState !== "visible") {
+                pending = false;
+                return;
+            }
+            const token = document.cookie.split(";").map((part) => part.trim())
+                .find((part) => part.startsWith("csrftoken="))?.slice(10) || "";
+            try {
+                const response = await fetch(page.dataset.couponOpenUrl, {
+                    method: "POST", credentials: "same-origin",
+                    headers: { "X-CSRFToken": decodeURIComponent(token), "X-Requested-With": "XMLHttpRequest" },
+                });
+                if (!response.ok) return;
+                const result = await response.json();
+                if (!result.ok) return;
+                sent = true;
+                document.querySelectorAll(`[data-coupon-open-count="${CSS.escape(page.dataset.couponId)}"]`).forEach((node) => {
+                    node.textContent = result.label;
+                    node.hidden = result.unique_opens_count === 0 && node.dataset.showZero !== "true";
+                });
+            } catch (_) {
+                // Analytics failure must never block reading the coupon.
+            } finally {
+                pending = false;
+            }
+        }));
+    };
+    document.addEventListener("visibilitychange", record);
+    window.addEventListener("pageshow", record);
+    record();
+})();

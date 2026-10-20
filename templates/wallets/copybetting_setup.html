@@ -2,11 +2,12 @@
 {% load static %}
 {% block title %}Настройка копирования — КапперХаб{% endblock %}
 {% block content %}
-<section class="container copybetting-setup-page" data-copy-setup data-preview-url="{% url 'wallets:copybetting_preview' analyst.id %}">
+<section class="container copybetting-setup-page" data-copy-setup data-copy-blocked="{% if setup_copy_blocked %}true{% else %}false{% endif %}" data-preview-url="{% url 'wallets:copybetting_preview' analyst.id %}">
     <header class="copybetting-setup-header"><a href="{% url 'cabinet:profile' %}?tab=copybetting" aria-label="Вернуться к копибеттингу">←</a><div><h1>Настройка копирования</h1><p>Шаг 2 из 2<span class="copybetting-setup-step-detail"> · параметры можно изменить в любой момент</span></p></div></header>
     <form class="copybetting-setup-grid" method="post" action="{% url 'wallets:copybetting_setup' analyst.id %}" data-copy-setup-form>
         {% csrf_token %}
         <div class="copybetting-setup-fields">
+            {% if setup_copy_blocked %}<div class="copybetting-setup-error" role="alert">Автор запретил вам копировать его прогнозы. Уже принятые ставки будут рассчитаны. Повторное включение доступно после разрешения автора.</div>{% endif %}
             {% if form.errors %}<div class="copybetting-setup-error" role="alert"><strong>Проверьте параметры копирования.</strong>{{ form.non_field_errors }}{% if form.errors and not form.non_field_errors %}<span>Исправьте отмеченные поля ниже.</span>{% endif %}</div>{% endif %}
             <section class="copybetting-setup-surface">
                 <h2 class="copybetting-setup-divider">Банк и размер ставки</h2>
@@ -32,7 +33,7 @@
             <div class="copybetting-cap-stats"><span class="{% if setup_capper.roi_positive %}is-profit{% else %}is-loss{% endif %}"><b>{{ setup_capper.roi }}</b><small>ROI за 3 мес</small></span><span><b>{{ setup_capper.win_rate }}%</b><small>побед</small></span><span><b>{{ setup_capper.coupons }}</b><small>прогнозов</small></span></div>
         </section>
         <section class="copybetting-setup-surface copybetting-history-preview" data-copy-history-preview>{% include "wallets/includes/_copybetting_setup_preview.html" %}</section>
-        <section class="copybetting-setup-surface copybetting-setup-actions"><button type="submit" class="copybetting-button is-primary" data-copy-setup-submit{% if setup_stake_too_low %} disabled{% endif %}>{% if subscription %}Сохранить и включить копирование{% else %}Начать копирование{% endif %}</button><a class="copybetting-button" href="{% url 'cabinet:profile' %}?tab=copybetting">Отмена</a><small>Действуют настройки выбранной стратегии. На балансе должны быть коины.</small><p data-copy-preview-status role="status" aria-live="polite"></p></section>
+        <section class="copybetting-setup-surface copybetting-setup-actions"><button type="submit" class="copybetting-button is-primary" data-copy-setup-submit{% if setup_stake_too_low or setup_copy_blocked %} disabled{% endif %}>{% if subscription %}Сохранить и включить копирование{% else %}Начать копирование{% endif %}</button><a class="copybetting-button" href="{% url 'cabinet:profile' %}?tab=copybetting">Отмена</a><small>Действуют настройки выбранной стратегии. На балансе должны быть коины.</small><p data-copy-preview-status role="status" aria-live="polite"></p></section>
         </aside>
     </form>
 </section>

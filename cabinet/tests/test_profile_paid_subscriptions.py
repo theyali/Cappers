@@ -243,3 +243,140 @@ class ProfilePaidSubscriptionsTests(TestCase):
             context = self.context()
         self.assertEqual(len(context["profile_social_rows"]), 8)
         self.assertEqual(len(one), len(eight))
+
+    def test_public_tariffs_require_paid_settings_and_use_active_real_plans(self):
+        from cabinet.models import AnalystPaidPlan
+        from cabinet.paid_predictions import build_public_paid_tariffs_context, get_active_paid_plans
+        profile = self.analyst.analyst_profile
+        plans = [AnalystPaidPlan.objects.create(analyst=self.analyst, title=str(days), duration_days=days, price=Decimal(price))
+                 for days, price in ((1, "100"), (7, "600"), (30, "2000"), (90, "5000"))]
+        AnalystPaidPlan.objects.create(analyst=self.analyst, title="Выключен", duration_days=180, price=Decimal("9999"), is_active=False)
+        url = reverse("front:expert_profile", args=[self.analyst.username])
+        self.assertNotContains(self.client.get(url), 'class="expert-public-paid-tariffs"')
+        profile.paid_predictions_enabled = True
+        profile.save(update_fields=["paid_predictions_enabled"])
+        page = self.client.get(url)
+        self.assertContains(page, 'class="expert-public-paid-tariffs"')
+        self.assertContains(page, 'id="expert-paid-tariffs-title"')
+        self.assertEqual(len(page.context["expert_paid_tariffs"]["plans"]), 4)
+        body = page.content.decode()
+        self.assertLess(body.index('expert-public-stats expert-public-stats-compact'), body.index('class="expert-public-paid-tariffs"'))
+        self.assertLess(body.index('class="expert-public-paid-tariffs"'), body.index('class="expert-public-analytics"'))
+        context = build_public_paid_tariffs_context(self.reader, profile, list(get_active_paid_plans(self.analyst)), next_url=url, subscription=self.subscription)
+        self.assertEqual(context["subscribers_label"], "1 подписчик")
+        best = [choice for choice in context["plans"] if choice["is_best_value"]]
+        self.assertEqual([choice["id"] for choice in best], [str(plans[-1].pk)])
+        self.assertTrue(all(choice["action_label"] == "Продлить" for choice in context["plans"]))
+        self.assertIn(f"plan_id={plans[0].pk}", context["plans"][0]["action_url"])
+
+    def test_tariff_choice_is_preselected_in_modal_and_preserved_by_direct_link(self):
+        from cabinet.models import AnalystPaidPlan
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = True
+        profile.save(update_fields=["paid_predictions_enabled"])
+        day = AnalystPaidPlan.objects.create(analyst=self.analyst, title="День", duration_days=1, price=Decimal("100"))
+        AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("2000"))
+        url = reverse("cabinet:paid_predictions_subscribe", args=[self.analyst.pk])
+        page = self.client.get(url, {"plan_id": day.pk}, HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertContains(page, f'name="plan_id" value="{day.pk}" checked>')
+        self.assertEqual(page.context["subscription_default"]["id"], str(day.pk))
+        response = self.client.get(url, {"plan_id": day.pk, "next": "/predictions/"})
+        self.assertRedirects(response, f"/predictions/?paid_subscribe={self.analyst.pk}&paid_plan={day.pk}", fetch_redirect_response=False)
+
+    def test_own_tariffs_link_to_settings_and_single_only_profile_has_no_subscription_block(self):
+        from cabinet.models import AnalystPaidPlan
+        from cabinet.paid_predictions import build_public_paid_tariffs_context
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = profile.single_coupon_sales_enabled = True
+        profile.single_coupon_price = Decimal("100")
+        profile.paid_predictions_price = Decimal("0")
+        profile.save()
+        url = reverse("front:expert_profile", args=[self.analyst.username])
+        self.assertNotContains(self.client.get(url), 'class="expert-public-paid-tariffs"')
+        plan = AnalystPaidPlan.objects.create(analyst=self.analyst, title="День", duration_days=1, price=Decimal("100"))
+        context = build_public_paid_tariffs_context(self.analyst, profile, [plan], next_url=url)
+        self.assertEqual(context["plans"][0]["action_label"], "Настроить")
+        self.assertEqual(context["plans"][0]["action_url"], reverse("cabinet:profile") + "?tab=settings#paid-predictions-settings")
+
+    @override_settings(SINGLE_COUPON_SALES_ENABLED=True)
+    def test_tariffs_tab_follows_statistics_and_has_only_public_coupon_previews(self):
+        from cabinet.models import AnalystPaidPlan
+        from game.models import Match, Prediction, PredictionCoupon
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = profile.single_coupon_sales_enabled = True
+        profile.single_coupon_price = Decimal("100")
+        profile.save()
+        AnalystPaidPlan.objects.create(analyst=self.analyst, title="Месяц", duration_days=30, price=Decimal("2000"))
+        match = Match.objects.create(external_id=8899471, sync_scope="prematch", starts_at=timezone.now() + timedelta(days=1))
+        coupon = PredictionCoupon.objects.create(author=self.analyst, total_stake=1, audience="paid", published_status="published", single_purchase_enabled=True, single_purchase_price=100, headline="PRIVATE_HEADLINE_123", description="PRIVATE_ANALYSIS_123")
+        Prediction.objects.create(coupon=coupon, match=match, market="winner", selection="PRIVATE_PICK_123", coefficient=2, stake=1)
+        self.client.logout()
+        response = self.client.get(reverse("front:expert_profile", args=[self.analyst.username]))
+        self.assertContains(response, 'data-expert-public-tab="tariffs"')
+        self.assertContains(response, 'data-expert-public-panel="tariffs"')
+        body = response.content.decode()
+        self.assertLess(body.index('data-expert-public-tab="stats"'), body.index('data-expert-public-tab="tariffs"'))
+        self.assertLess(body.index('data-expert-public-tab="tariffs"'), body.index('data-expert-public-tab="bank"'))
+        self.assertEqual(response.context["expert_tariff_coupons"]["total"], 1)
+        self.assertEqual(response.context["expert_tariff_coupons"]["rows"][0]["id"], coupon.pk)
+        self.assertContains(response, "Купить 100 ₽")
+        for secret in ("PRIVATE_HEADLINE_123", "PRIVATE_ANALYSIS_123", "PRIVATE_PICK_123"):
+            self.assertNotContains(response, secret)
+        profile.paid_predictions_enabled = False
+        profile.save(update_fields=["paid_predictions_enabled"])
+        disabled = self.client.get(reverse("front:expert_profile", args=[self.analyst.username]))
+        self.assertNotContains(disabled, 'data-expert-public-tab="tariffs"')
+        self.assertNotContains(disabled, 'data-expert-public-panel="tariffs"')
+
+    @override_settings(SINGLE_COUPON_SALES_ENABLED=True)
+    def test_tariff_coupon_list_includes_started_and_finished_coupons_without_allowing_late_purchase(self):
+        from cabinet.paid_prediction_purchases import build_public_tariff_coupon_context
+        from game.models import Match, Prediction, PredictionCoupon
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = profile.single_coupon_sales_enabled = True
+        profile.single_coupon_price = Decimal("100")
+        profile.save()
+        future = Match.objects.create(external_id=8899472, sync_scope="prematch", starts_at=timezone.now() + timedelta(days=1))
+        past = Match.objects.create(external_id=8899473, sync_scope="prematch", starts_at=timezone.now() - timedelta(minutes=1))
+        valid = PredictionCoupon.objects.create(author=self.analyst, total_stake=1, audience="paid", published_status="published", single_purchase_enabled=True, single_purchase_price=100)
+        invalid = PredictionCoupon.objects.create(author=self.analyst, total_stake=1, audience="paid", published_status="published", single_purchase_enabled=True, single_purchase_price=100)
+        for coupon, match in ((valid, future), (invalid, future), (invalid, past)):
+            Prediction.objects.create(coupon=coupon, match=match, market="winner", selection="private", coefficient=2, stake=1)
+        context = build_public_tariff_coupon_context(self.reader, self.analyst, limit=1)
+        self.assertEqual(context["total"], 2)
+        self.assertEqual(context["total_label"], "2 прогноза")
+        self.assertEqual(context["rows"][0]["id"], invalid.pk)
+        self.assertEqual(context["rows"][0]["action_label"], "Открыть")
+        self.assertTrue(context["rows"][0]["accessible"])
+        valid.metrics.refresh_from_db()
+        self.assertEqual(valid.metrics.unique_opens_count, 0)
+        from django.contrib.auth.models import AnonymousUser
+        valid.state_status = "win"
+        valid.settled_at = timezone.now()
+        valid.save(update_fields=["state_status", "settled_at"])
+        public_rows = build_public_tariff_coupon_context(AnonymousUser(), self.analyst)["rows"]
+        self.assertEqual(len(public_rows), 2)
+        finished = next(row for row in public_rows if row["id"] == valid.pk)
+        self.assertTrue(finished["is_completed"])
+        for row in public_rows:
+            self.assertEqual(row["action_label"], "Подробнее")
+            self.assertEqual(row["action_url"], reverse("front:prediction_detail", args=[row["id"]]))
+        future.starts_at = None
+        future.save(update_fields=["starts_at"])
+        self.assertEqual(build_public_tariff_coupon_context(self.reader, self.analyst)["total"], 2)
+        future.starts_at = timezone.now() + timedelta(days=1)
+        future.sync_scope = "live"
+        future.save(update_fields=["starts_at", "sync_scope"])
+        self.assertEqual(build_public_tariff_coupon_context(self.reader, self.analyst)["total"], 2)
+
+    def test_single_only_profile_has_tariffs_tab_without_subscription_rail(self):
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = profile.single_coupon_sales_enabled = True
+        profile.single_coupon_price = Decimal("100")
+        profile.paid_predictions_price = 0
+        profile.save()
+        response = self.client.get(reverse("front:expert_profile", args=[self.analyst.username]))
+        self.assertContains(response, 'data-expert-public-tab="tariffs"')
+        self.assertContains(response, 'expert-tariffs-panel has-no-subscription')
+        self.assertNotContains(response, 'data-expert-tariff-picker')
+        self.assertContains(response, 'Платных прогнозов пока нет.')

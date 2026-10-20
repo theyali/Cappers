@@ -17,6 +17,8 @@ from .vip import annotate_vip_status, attach_vip_status_to_user
 
 
 EARNING_KINDS = (
+    RealBalanceTransaction.Kind.COUPON_INCOME,
+    RealBalanceTransaction.Kind.COUPON_INCOME_REVERSAL,
     RealBalanceTransaction.Kind.SUBSCRIPTION_INCOME,
     RealBalanceTransaction.Kind.TOURNAMENT_PRIZE,
     RealBalanceTransaction.Kind.REFERRAL_SUBSCRIPTION,
@@ -524,9 +526,8 @@ def build_earnings_context(user) -> dict:
         user=user,
         # Held income is earned too: it only cannot be withdrawn yet.
         status__in=(RealBalanceTransaction.Status.COMPLETED, RealBalanceTransaction.Status.HELD),
-        amount__gt=0,
         kind__in=EARNING_KINDS,
-    )
+    ).filter(Q(amount__gt=0) | Q(kind=RealBalanceTransaction.Kind.COUPON_INCOME_REVERSAL))
     settled_prediction_coupons = PredictionCoupon.objects.filter(
         author=user,
         published_status=PredictionCoupon.PublishedStatus.PUBLISHED,

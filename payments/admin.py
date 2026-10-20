@@ -35,11 +35,12 @@ class PaymentAdmin(ReadOnlyAdminMixin, admin.ModelAdmin):
         "currency",
         "amount_rub",
         "is_test",
+        "requires_review",
         "created_at",
         "paid_at",
         "fulfilled_at",
     )
-    list_filter = ("provider", "purpose", "status", "is_test", "created_at")
+    list_filter = ("provider", "purpose", "status", "is_test", "requires_review", "created_at")
     search_fields = ("=public_id", "=external_id", "=external_invoice_id", "user__username", "user__email")
     list_select_related = ("user",)
     inlines = (PaymentEventInline,)

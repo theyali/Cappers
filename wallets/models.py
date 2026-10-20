@@ -221,6 +221,10 @@ class CapperBankStats(models.Model):
 
 class RealBalanceTransaction(models.Model):
     class Kind(models.TextChoices):
+        COUPON_PURCHASE = "coupon_purchase", "Покупка купона"
+        COUPON_INCOME = "coupon_income", "Доход от купона"
+        COUPON_REFUND = "coupon_refund", "Возврат покупки купона"
+        COUPON_INCOME_REVERSAL = "coupon_income_reversal", "Отмена дохода от купона"
         SUBSCRIPTION_INCOME = "subscription_income", "Доход с подписки"
         TOURNAMENT_PRIZE = "tournament_prize", "Приз турнира"
         VIP_PURCHASE = "vip_purchase", "Покупка VIP"
@@ -431,3 +435,44 @@ class CopiedBet(models.Model):
 
     def __str__(self) -> str:
         return f"{self.user}: копия прогноза #{self.source_coupon_id}"
+
+
+class CopyBettingBlock(models.Model):
+    analyst = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="copybetting_blocks_issued")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="copybetting_blocks_received")
+    reason = models.CharField(max_length=300, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    revoked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["analyst", "user"], condition=Q(revoked_at__isnull=True), name="unique_active_copybetting_block")]
+        indexes = [models.Index(fields=["user", "analyst", "revoked_at"])]
+
+
+class CopyBettingAudiencePreference(models.Model):
+    analyst = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="copybetting_audience_preferences")
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="copybetting_display_preferences")
+    hidden = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=["analyst", "user"], name="unique_copybetting_audience_preference")]
+
+
+class CopyBettingLimits(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="copybetting_limits")
+    daily_budget = models.PositiveBigIntegerField("Дневной бюджет, коины", default=0)
+    daily_stop_loss = models.PositiveBigIntegerField("Дневной стоп-лосс, коины", default=0)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
+class CopyBettingTransition(models.Model):
+    subscription = models.ForeignKey(CopyBettingSubscription, on_delete=models.CASCADE, related_name="transitions")
+    previous_status = models.CharField(max_length=16, blank=True)
+    status = models.CharField(max_length=16, choices=CopyBettingSubscription.Status.choices)
+    pending_status = models.CharField(max_length=16, blank=True, choices=CopyBettingSubscription.Status.choices)
+    actor = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL, related_name="copybetting_transitions")
+    reason = models.CharField(max_length=300, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["created_at", "id"]

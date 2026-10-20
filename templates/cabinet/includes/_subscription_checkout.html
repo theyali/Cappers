@@ -1,0 +1,75 @@
+<form class="subscription-form" method="post" action="{% url 'cabinet:paid_predictions_subscribe' user_id=expert.id %}" data-subscription-form data-no-transition novalidate>
+    {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next_url }}">
+    <input type="hidden" name="analyst_id" value="{{ expert.id }}">
+    {{ subscription_choices|json_script:"subscription-choices" }}
+    <header class="subscription-head">
+        <button class="subscription-back" type="button" data-subscription-back aria-label="Вернуться к выбору тарифа" hidden>←</button>
+        <div>
+            <span class="subscription-kicker" data-subscription-step-label>ШАГ 1 ИЗ 2 · ВЫБОР ТАРИФА</span>
+            <h2 data-subscription-title>Подписка на прогнозы</h2>
+            <p data-subscription-intro>Выберите срок — дальше оплата. Списание разовое, без автопродления.</p>
+        </div>
+    </header>
+    <div data-subscription-step="1" class="subscription-plan-step">
+        {% include "cabinet/includes/_subscription_author.html" %}
+        <fieldset class="subscription-options">
+            <legend class="sr-only">Срок подписки</legend>
+            {% for choice in subscription_choices %}
+            <label class="subscription-option">
+                <input type="radio" name="plan_id" value="{{ choice.id }}"{% if choice.is_default %} checked{% endif %}>
+                <span class="subscription-radio" aria-hidden="true"></span>
+                <span class="subscription-option-copy"><span><strong>{{ choice.label }}</strong>{% if choice.discount %}<em>−{{ choice.discount }}%</em>{% endif %}</span><small>≈ {{ choice.daily_label }} ₽ в день</small></span>
+                <b>{{ choice.price_label }} ₽</b>
+            </label>
+            {% endfor %}
+        </fieldset>
+        <div class="subscription-benefits">
+            <h3>ЧТО ВХОДИТ В ПОДПИСКУ</h3>
+            <p><span aria-hidden="true">✓</span> Все платные прогнозы автора в период подписки</p>
+            <p><span aria-hidden="true">✓</span> Платные одиночные прогнозы и экспресс-купоны</p>
+            <p><span aria-hidden="true">✓</span> Прогнозы каппера в вашей ленте</p>
+        </div>
+        <footer class="subscription-plan-footer">
+            <div><small>К оплате за <span data-subscription-period>{{ subscription_default.label }}</span></small><strong data-subscription-price>{{ subscription_default.price_label }} ₽</strong></div>
+            <button class="subscription-primary" type="button" data-subscription-continue>Перейти к оплате <span aria-hidden="true">→</span></button>
+        </footer>
+    </div>
+    <div data-subscription-step="2" class="subscription-pay-step" hidden>
+        <section class="subscription-payment-panel">
+            <h3>Способ оплаты</h3>
+            <fieldset class="subscription-options">
+                <legend class="sr-only">Выберите способ оплаты</legend>
+                {% if can_use_subscription_balance %}
+                <label class="subscription-option" data-subscription-balance-option>
+                    <input type="radio" name="payment_method" value="balance">
+                    <span class="subscription-radio" aria-hidden="true"></span>
+                    <span class="subscription-option-copy"><strong>Баланс КапперХаб</strong><small>Доступно {{ real_balance_display }} ₽<span data-subscription-insufficient> · Недостаточно средств на балансе</span></small></span>
+                </label>
+                <a class="subscription-top-up" href="{% url 'wallets:top_up' %}">Пополнить баланс</a>
+                {% endif %}
+                {% for option in payment_options %}
+                <label class="subscription-option" data-subscription-provider="{{ option.code }}">
+                    <input type="radio" name="payment_method" value="{{ option.code }}">
+                    <span class="subscription-radio" aria-hidden="true"></span>
+                    <span class="subscription-option-copy"><strong>{{ option.label }}</strong><small>{% if option.code == 'cloudpayments' %}Банковская карта · CloudPayments{% elif option.code == 'nowpayments' %}Криптовалюта · NOWPayments{% elif option.code == 'telegram_stars' %}Telegram Stars{% endif %}</small></span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            <p class="subscription-unavailable" data-subscription-unavailable hidden>Для этого тарифа сейчас нет доступных способов оплаты. Попробуйте позже.</p>
+        </section>
+        <aside class="subscription-order">
+            <h3>Ваш заказ</h3>
+            {% include "cabinet/includes/_subscription_author.html" %}
+            <dl>
+                <div><dt>Тариф</dt><dd data-subscription-period>{{ subscription_default.label }}</dd></div>
+                <div><dt>Доступ до</dt><dd data-subscription-expiry>{{ subscription_default.expires_label }}</dd></div>
+                <div><dt>Стоимость</dt><dd data-subscription-price>{{ subscription_default.price_label }} ₽</dd></div>
+                <div class="subscription-total"><dt>Итого</dt><dd data-subscription-price>{{ subscription_default.price_label }} ₽</dd></div>
+            </dl>
+            <button class="subscription-primary" type="submit" data-checkout-pay data-provider-action="{% url 'payments:checkout' purpose='paid_subscription' %}">Оплатить {{ subscription_default.price_label }} ₽</button>
+            <p class="subscription-terms">Оплата разовая, без автопродления. Нажимая «Оплатить», вы соглашаетесь с <a href="{% url 'front:rules' %}" target="_blank" rel="noopener">правилами платформы</a>.</p>
+        </aside>
+    </div>
+    <p class="subscription-error" role="alert" tabindex="-1" data-checkout-error hidden></p>
+</form>

@@ -55,6 +55,7 @@ def reconcile_pending_payments() -> dict:
     unfulfilled = Payment.objects.filter(
         status=Payment.Status.SUCCEEDED,
         fulfilled_at__isnull=True,
+        requires_review=False,
         paid_at__lte=cutoff,
     ).values_list("pk", flat=True)[:RECONCILE_BATCH_SIZE]
     for payment_id in unfulfilled:

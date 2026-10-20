@@ -160,4 +160,5 @@
             </svg>
         </button>
     </div>
+    {% include "front/includes/_coupon_open_count.html" with count=prediction.unique_opens_count coupon_id=prediction.coupon.id only %}
 </article>

@@ -1,0 +1,49 @@
+<section class="expert-tariffs-panel{% if not expert_paid_tariffs %} has-no-subscription{% endif %}" data-expert-public-panel="tariffs" aria-label="Тарифы и платные прогнозы" hidden>
+    <section class="expert-tariffs-coupons" aria-labelledby="expert-tariff-coupons-title">
+        <header class="expert-tariffs-coupons-head">
+            <h2 id="expert-tariff-coupons-title"><span class="expert-tariffs-desktop">Платные прогнозы автора</span><span class="expert-tariffs-mobile">Платные прогнозы</span></h2>
+            <span>{{ expert_tariff_coupons.total_label }}</span>
+        </header>
+        {% for row in expert_tariff_coupons.rows %}
+        <article class="expert-tariff-coupon">
+            <div class="expert-tariff-coupon-head">
+                <span class="expert-tariff-coupon-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="balls-bold" %}</span>
+                <div class="expert-tariff-coupon-copy"><h3>{{ row.title }}</h3><p>{{ row.league }}{% if row.league %} · {% endif %}{{ row.starts_label }}{% if row.is_completed %}<span>Завершён</span>{% endif %}<span class="expert-tariffs-desktop expert-tariff-coupon-private">{% if row.accessible %}Прогноз доступен{% else %}Исход скрыт{% endif %}</span></p></div>
+                <span class="expert-tariff-coupon-lock" aria-label="{% if row.accessible %}Прогноз доступен{% else %}Исход скрыт{% endif %}">{% if row.accessible %}✓{% else %}{% include "front/includes/_solar_icon.html" with name="lock-bold" %}{% endif %}</span>
+            </div>
+            <div class="expert-tariff-coupon-action">
+                <span class="expert-tariff-coupon-pick">{% if row.accessible %}Прогноз доступен{% else %}Исход скрыт{% endif %}</span>
+                <a href="{{ row.action_url }}"><span class="expert-tariffs-desktop">{{ row.action_label }}</span><span class="expert-tariffs-mobile">{{ row.mobile_action_label }}</span></a>
+            </div>
+        </article>
+        {% empty %}
+        <p class="expert-tariffs-empty">Платных прогнозов пока нет.</p>
+        {% endfor %}
+        {% if expert_tariff_coupons.has_more_mobile %}<a class="expert-tariffs-all{% if not expert_tariff_coupons.has_more_desktop %} expert-tariffs-mobile{% endif %}" href="{{ expert_tariffs_paid_url }}">Все платные прогнозы <span aria-hidden="true">→</span></a>{% endif %}
+    </section>
+    {% if expert_paid_tariffs %}
+    <aside class="expert-tariffs-subscription" data-expert-tariff-picker>
+        {{ expert_paid_tariffs.plans|json_script:"expert-tariff-plans" }}
+        <header class="expert-tariffs-subscription-head"><h2>Подписка</h2><span class="expert-tariffs-desktop expert-tariffs-discount" data-tariff-discount{% if not expert_paid_tariffs.default_plan.discount %} hidden{% endif %}>−{{ expert_paid_tariffs.default_plan.discount }}% к цене дня</span><span class="expert-tariffs-mobile expert-tariffs-subscribers">{{ expert_paid_tariffs.subscribers_label }}</span></header>
+        <fieldset class="expert-tariffs-periods">
+            <legend>Срок подписки</legend>
+            {% for plan in expert_paid_tariffs.plans %}
+            <label class="expert-tariffs-period">
+                <input type="radio" name="expert_tariff_plan" value="{{ plan.id }}"{% if plan.is_default %} checked{% endif %}>
+                <span class="expert-tariffs-period-radio" aria-hidden="true"></span>
+                <span class="expert-tariffs-period-short">{{ plan.short_label }}</span>
+                <span class="expert-tariffs-period-full"><span><strong>{{ plan.label }}</strong>{% if plan.discount %}<em>−{{ plan.discount }}%</em>{% endif %}</span><small>≈ {{ plan.daily_label }} ₽ в день</small></span>
+                <b>{{ plan.price_label }} ₽</b>
+            </label>
+            {% endfor %}
+        </fieldset>
+        <div class="expert-tariffs-summary expert-tariffs-desktop"><strong data-tariff-price>{{ expert_paid_tariffs.default_plan.price_label }} ₽</strong><span>за <span data-tariff-period>{{ expert_paid_tariffs.default_plan.label }}</span> · ≈ <span data-tariff-daily>{{ expert_paid_tariffs.default_plan.daily_label }}</span> ₽ в день</span></div>
+        <a class="expert-tariffs-checkout" href="{{ expert_paid_tariffs.default_plan.action_url }}" data-tariff-checkout><span class="expert-tariffs-desktop" data-tariff-action>{{ expert_paid_tariffs.default_plan.rail_label }}</span><span class="expert-tariffs-mobile" data-tariff-mobile-action>{{ expert_paid_tariffs.default_plan.mobile_label }}</span></a>
+        <div class="expert-paid-tariffs-benefits">{% include "cabinet/includes/_paid_subscription_benefits.html" %}</div>
+        {% if expert_paid_tariffs.single_price_label %}
+        <div class="expert-tariffs-single"><div><strong>Или один прогноз</strong><span>{{ expert_paid_tariffs.single_price_label }} ₽ без подписки</span></div><a href="{{ expert_tariffs_paid_url }}">Выбрать</a></div>
+        {% endif %}
+        <p class="expert-tariffs-payment-note">Разовая оплата. Без автоматического продления.</p>
+    </aside>
+    {% endif %}
+</section>

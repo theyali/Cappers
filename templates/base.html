@@ -3,7 +3,7 @@
 <html lang="ru">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% if seo_meta.title %}{{ seo_meta.title }}{% else %}{% block title %}КапперХаб{% endblock %}{% endif %}</title>
     {% if seo_meta.description %}<meta name="description" content="{{ seo_meta.description }}">{% endif %}
     {% if seo_meta.keywords %}<meta name="keywords" content="{{ seo_meta.keywords }}">{% endif %}
@@ -155,10 +155,18 @@
     {% endif %}
     <script src="{% static 'front/js/transitions.js' %}" defer></script>
     <script src="{% static 'front/js/mobile-offcanvas.js' %}" defer></script>
+    <script src="{% static 'front/js/mobile-app-nav.js' %}" defer></script>
     <script src="{% static 'front/js/active-scroll-tabs.js' %}" defer></script>
     <script src="{% static 'front/js/leader-badges.js' %}" defer></script>
     {% if request.user.is_authenticated and request.user.is_analyst %}
     <script src="{% static 'front/js/coupon-draft.js' %}" data-user-id="{{ request.user.pk }}" data-state-url="{% url 'game:coupon_draft_state' %}" defer></script>
+    {% endif %}
+    {% if request.user.is_authenticated %}
+    {% include "modals/expert_paid_subscribe.html" %}
+    {% endif %}
+    <script src="{% static 'front/js/expert-public-details.js' %}" defer></script>
+    {% if request.user.is_authenticated %}
+    <script src="{% static 'front/js/paid-checkout.js' %}" defer></script>
     {% endif %}
     {% block extra_js %}{% endblock %}
     <script src="{% static 'front/js/mobile-coupon-sheet.js' %}" defer></script>

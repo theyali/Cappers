@@ -87,3 +87,6 @@
     <span class="matches-table-scope-copy">Публичный профиль</span>
 </a>
 {% endif %}
+
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'purchases' %} is-active{% endif %}" href="{% url 'cabinet:coupon_purchases' %}"{% if active_tab == 'purchases' %} aria-current="page"{% endif %}><span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="ticket-bold" %}</span><span class="matches-table-scope-copy">Купленные купоны</span></a>
+{% if request.user.is_analyst %}<a class="{{ profile_tab_link_class }}{% if active_tab == 'coupon_sales' %} is-active{% endif %}" href="{% url 'cabinet:coupon_sales' %}"{% if active_tab == 'coupon_sales' %} aria-current="page"{% endif %}><span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="predictions" %}</span><span class="matches-table-scope-copy">Продажи купонов</span></a>{% endif %}
