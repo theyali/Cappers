@@ -13,12 +13,12 @@
             ".expert-sport-profit",
             ".expert-monthly-stats",
         ],
+        tariffs: ['[data-expert-public-panel="tariffs"]'],
         bank: ['[data-expert-public-panel="bank"]'],
         achievements: ['[data-expert-public-panel="achievements"]'],
         tournaments: ['[data-expert-public-panel="tournaments"]'],
         articles: ['[data-expert-public-panel="articles"]'],
     };
-    const TAB_NAMES = Object.keys(TAB_PANELS);
     const MANAGED_PANEL_SELECTOR = Array.from(
         new Set(Object.values(TAB_PANELS).flat())
     ).join(",");
@@ -27,6 +27,7 @@
         const buttons = Array.from(root.querySelectorAll('[role="tab"][data-expert-public-tab]'));
         const panels = Array.from(root.querySelectorAll(MANAGED_PANEL_SELECTOR));
         if (!buttons.length) return;
+        const availableTabs = new Set(buttons.map((button) => button.dataset.expertPublicTab));
 
         const setPanelVisibility = (tabName) => {
             const visibleSelectors = TAB_PANELS[tabName] || [];
@@ -43,7 +44,7 @@
         };
 
         const setActiveTab = (tabName, focusButton = null, updateHash = false) => {
-            if (!TAB_NAMES.includes(tabName)) return;
+            if (!availableTabs.has(tabName)) return;
 
             root.dataset.activeTab = tabName;
             setPanelVisibility(tabName);
@@ -95,7 +96,7 @@
             const trigger = event.target.closest("[data-expert-public-open-tab]");
             if (!trigger || event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
             const tabName = trigger.dataset.expertPublicOpenTab;
-            if (!TAB_NAMES.includes(tabName)) return;
+            if (!availableTabs.has(tabName)) return;
             const url = new URL(trigger.href, window.location.href);
             // Other profiles and shelf pages must keep their native navigation.
             if (url.origin !== window.location.origin || url.pathname !== window.location.pathname || url.search !== window.location.search || trigger.hasAttribute("download") || (trigger.target && trigger.target !== "_self")) return;
@@ -112,7 +113,7 @@
         const openHashTarget = () => {
             const hash = window.location.hash.slice(1);
             const target = hash.startsWith("leader-") && document.getElementById(hash);
-            setActiveTab(hash.startsWith("leader-") ? "achievements" : TAB_NAMES.includes(hash) ? hash : root.dataset.activeTab || "overview");
+            setActiveTab(hash.startsWith("leader-") ? "achievements" : availableTabs.has(hash) ? hash : "overview");
             if (target) {
                 if (target.matches("details.expert-leader-award")) target.open = true;
                 target.scrollIntoView({ block: "start", behavior: "auto" });

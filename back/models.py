@@ -1,5 +1,6 @@
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
@@ -281,6 +282,13 @@ class WebsiteSettings(models.Model):
         default=0,
         validators=PERCENT_VALIDATORS,
     )
+    single_coupon_min_price = models.DecimalField("Минимальная цена купона, ₽", max_digits=10, decimal_places=2, default=Decimal("50"), validators=[MinValueValidator(Decimal("0.01"))])
+    single_coupon_max_price = models.DecimalField("Максимальная цена купона, ₽", max_digits=10, decimal_places=2, default=Decimal("50000"), validators=[MinValueValidator(Decimal("0.01"))])
+    single_coupon_fee_percent = models.DecimalField("Комиссия разовой покупки, %", max_digits=5, decimal_places=2, default=Decimal("20"), validators=PERCENT_VALIDATORS)
+    single_coupon_income_hold_days = models.PositiveSmallIntegerField("Холд дохода с купона, дней", default=0)
+    withdrawal_requests_per_week = models.PositiveSmallIntegerField("Заявок на вывод в неделю", default=2, validators=[MinValueValidator(1)])
+    withdrawal_schedule = models.CharField("Расписание ручных выплат", max_length=180, default="Выплаты обрабатываются вручную по понедельникам и четвергам.")
+
     income_hold_days = models.PositiveSmallIntegerField(
         "Холд дохода с оплат, дней",
         default=7,
@@ -388,6 +396,11 @@ class WebsiteSettings(models.Model):
 
     def __str__(self) -> str:
         return self.site_name
+
+    def clean(self):
+        super().clean()
+        if self.single_coupon_min_price > self.single_coupon_max_price:
+            raise ValidationError({"single_coupon_max_price": "Максимальная цена должна быть не меньше минимальной."})
 
     @classmethod
     def load(cls):

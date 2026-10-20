@@ -11,14 +11,16 @@ from cabinet.models import User
 from game.models import PredictionCoupon
 
 from .capper_bank import ensure_empty_capper_bank_stats, refresh_capper_bank_stats
-from .models import CopyBettingSubscription
-from .services import ensure_coin_wallet, ensure_real_balance
+from .models import CopyBettingSubscription, CopyBettingTransition
+from .services import ensure_coin_wallet, ensure_real_balance, stop_copybetting_after_role_change
 from .tasks import copy_coupon_to_followers
 
 
 @receiver(pre_save, sender=CopyBettingSubscription)
 def prevent_capper_copybetting(sender, instance: CopyBettingSubscription, **kwargs) -> None:
     if not instance.user_id:
+        return
+    if not instance._state.adding and instance.status == CopyBettingSubscription.Status.STOPPED:
         return
     if User.objects.filter(pk=instance.user_id, role=User.Role.ANALYST).exists():
         raise ValidationError("Капперы не могут использовать копибеттинг.")
@@ -82,11 +84,19 @@ def create_balance_for_new_user(sender, instance: User, **kwargs) -> None:
     if instance.role == User.Role.ANALYST:
         ensure_real_balance(instance)
         ensure_empty_capper_bank_stats(instance.pk)
-        CopyBettingSubscription.objects.filter(user=instance).exclude(
-            status=CopyBettingSubscription.Status.STOPPED,
-        ).update(
-            status=CopyBettingSubscription.Status.STOPPED,
-            pending_status="",
-            pending_status_requested_at=None,
-            stopped_at=timezone.now(),
-        )
+        stop_copybetting_after_role_change(instance)
+
+
+@receiver(pre_save, sender=CopyBettingSubscription)
+def remember_copybetting_transition(sender, instance, **kwargs):
+    instance._transition_previous = CopyBettingSubscription.objects.filter(pk=instance.pk).values("status", "pending_status").first() if instance.pk else None
+
+
+@receiver(post_save, sender=CopyBettingSubscription)
+def record_copybetting_transition(sender, instance, created, **kwargs):
+    previous = getattr(instance, "_transition_previous", None)
+    if previous and (previous["status"], previous["pending_status"]) == (instance.status, instance.pending_status):
+        return
+    CopyBettingTransition.objects.create(subscription=instance, previous_status=previous["status"] if previous else "",
+                                         status=instance.status, pending_status=instance.pending_status,
+                                         actor=getattr(instance, "_transition_actor", None), reason=getattr(instance, "_transition_reason", ""))

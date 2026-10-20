@@ -201,3 +201,11 @@ def profile_coupon_reaction_counts(context, coupon_id):
         "comments": int(row["comments_count"] or 0),
         "favorites": int(row["favorites_count"] or 0),
     }
+
+
+@register.filter
+def coupon_opens_label(value):
+    from cabinet.vip import plural_ru
+
+    count = max(0, int(value or 0))
+    return f"Открыли {count} {plural_ru(count, 'человек', 'человека', 'человек')}"

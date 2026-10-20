@@ -61,6 +61,11 @@ urlpatterns = [
         name="prediction_detail",
     ),
     path(
+        "predictions/<int:prediction_id>/open/",
+        reaction_views.open_prediction,
+        name="prediction_open",
+    ),
+    path(
         "predictions/<int:prediction_id>/like/",
         reaction_views.toggle_prediction_like,
         name="prediction_like",

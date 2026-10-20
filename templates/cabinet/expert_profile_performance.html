@@ -22,6 +22,7 @@
         <section class="predictions-content expert-public-shell{% if analyst_profile.user.is_vip %} is-vip{% endif %}" aria-label="Контент профиля эксперта">
             {% include "cabinet/includes/_expert_public_mobile.html" %}
             {{ block.super }}
+            {% if expert_tariffs_enabled %}{% include "cabinet/includes/_expert_tariffs_panel.html" %}{% endif %}
 
             {% include "cabinet/_expert_recent_performance.html" %}
             {% include "cabinet/_expert_sport_profit.html" %}
@@ -39,6 +40,7 @@
 {% block extra_js %}
 {{ block.super }}
 <script src="{% static 'front/js/expert-public-tabs.js' %}" defer></script>
+{% if expert_tariffs_enabled %}<script src="{% static 'front/js/expert-tariffs.js' %}" defer></script>{% endif %}
 <script src="{% static 'front/js/tournaments.js' %}" defer></script>
 <script src="{% static 'front/js/expert-public-mobile.js' %}" defer></script>
 <script src="{% static 'front/js/expert-sport-profit.js' %}" defer></script>

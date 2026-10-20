@@ -120,17 +120,26 @@ class CouponFeedTests(TestCase):
         self.assertIn("profile-coupon-locked", payload["desktop_html"])
         self.assertNotIn("СЕКРЕТНЫЙ", payload["desktop_html"])
 
+    @override_settings(SINGLE_COUPON_SALES_ENABLED=False)
     def test_pending_paid_card_offers_subscription_and_completed_card_closes_purchase(self):
+        profile = self.author.analyst_profile
+        profile.paid_predictions_enabled = True
+        profile.paid_predictions_price = Decimal("299")
+        profile.save()
         payload = self.public(sort="stake").json()
         self.assertIn("Покупка закрыта", payload["desktop_html"])
         self.paid.state_status = PredictionCoupon.StateStatus.PENDING
         self.paid.save(update_fields=["state_status"])
         payload = self.public(state="pending").json()
         self.assertIn("Выбрать подписку", payload["desktop_html"])
-        self.assertIn("Разовая покупка готовится", payload["desktop_html"])
+        self.assertIn("Разовые покупки пока недоступны.", payload["desktop_html"])
         self.assertNotIn("СЕКРЕТНЫЙ", payload["desktop_html"])
 
     def test_locked_ajax_cards_keep_offers_in_inert_template_and_have_one_purchase_button(self):
+        profile = self.author.analyst_profile
+        profile.paid_predictions_enabled = True
+        profile.paid_predictions_price = Decimal("299")
+        profile.save()
         self.paid.state_status = PredictionCoupon.StateStatus.PENDING
         self.paid.save(update_fields=["state_status"])
         payload = self.public(state="pending").json()

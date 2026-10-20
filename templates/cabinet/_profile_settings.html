@@ -296,28 +296,46 @@
                     <div class="profile-paid-plans-head">
                         <div>
                             <span class="eyebrow">Тарифы</span>
-                            <h3 id="profile-paid-plans-title">Периоды платной подписки</h3>
+                            <h3 id="profile-paid-plans-title">Платные прогнозы</h3>
                         </div>
                         <small>Активные тарифы будут показаны пользователю при покупке подписки.</small>
                     </div>
-                    <div class="profile-paid-plan-list">
-                        {% for plan_row in paid_plan_form.plan_rows %}
-                        <div class="profile-paid-plan-row">
-                            <div class="profile-paid-plan-title">
-                                <strong>{{ plan_row.title }}</strong>
-                                <span>{{ plan_row.duration_days }} дн.</span>
+                    <div class="profile-paid-plans-content">
+                        <div class="profile-paid-plan-list">
+                            <div class="profile-paid-plan-row">
+                                <div class="profile-paid-plan-title"><strong>Разовая покупка купона</strong></div>
+                                <label class="switch-control profile-paid-plan-switch">
+                                    {{ analyst_form.single_coupon_sales_enabled }}
+                                    <span></span>
+                                </label>
+                                <label class="profile-paid-plan-price">
+                                    <span>{{ analyst_form.single_coupon_price.label }}</span>
+                                    {{ analyst_form.single_coupon_price }}
+                                    {{ analyst_form.single_coupon_price.errors }}
+                                </label>
                             </div>
-                            <label class="switch-control profile-paid-plan-switch">
-                                {{ plan_row.active }}
-                                <span></span>
-                            </label>
-                            <label class="profile-paid-plan-price">
-                                <span>Цена, ₽</span>
-                                {{ plan_row.price }}
-                                {{ plan_row.price.errors }}
-                            </label>
                         </div>
-                        {% endfor %}
+                        <p id="single-coupon-sale-help">Цена применяется к новым платным купонам. Покупатель получает доступ только к выбранному купону. Подписка открывает платные прогнозы автора.</p>
+                        <h4>Периоды платной подписки</h4>
+                        <div class="profile-paid-plan-list">
+                            {% for plan_row in paid_plan_form.plan_rows %}
+                            <div class="profile-paid-plan-row">
+                                <div class="profile-paid-plan-title">
+                                    <strong>{{ plan_row.title }}</strong>
+                                    <span>{{ plan_row.duration_days }} дн.</span>
+                                </div>
+                                <label class="switch-control profile-paid-plan-switch">
+                                    {{ plan_row.active }}
+                                    <span></span>
+                                </label>
+                                <label class="profile-paid-plan-price">
+                                    <span>Цена, ₽</span>
+                                    {{ plan_row.price }}
+                                    {{ plan_row.price.errors }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
                     <div class="profile-paid-plans-art" aria-hidden="true">
                     </div>

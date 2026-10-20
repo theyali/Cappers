@@ -13,7 +13,7 @@ from cabinet.services.copybetting import coins
 from front.prediction_metrics import annotate_author_roi
 from game.models import Prediction, PredictionCoupon
 from game.services.coupon_validation import PREDICTION_STAKE_MIN_COINS
-from .models import CopyBettingSubscription
+from .models import CopyBettingSubscription, CopyBettingBlock
 from .services import _copy_stake, _copybetting_allows_coupon, _coupon_is_tournament, _coupon_total_coefficient
 
 SEARCH_PAGE_SIZE = 6
@@ -128,10 +128,14 @@ def build_setup_context(reader, analyst, form, *, balance):
                 reason = "Вид спорта не выбран"
         history.append({"title": title, "subtitle": subtitle,
                         "eligible": eligible, "result": coins(stake) + " C" if eligible else reason})
-    return {"setup_capper": capper_card(enriched), "setup_balance": coins(balance), "setup_history": history,
+    blocked = CopyBettingBlock.objects.filter(user=reader, analyst=analyst, revoked_at__isnull=True).exists()
+    errors = [message for messages in form.errors.values() for message in messages] if form.is_bound else []
+    if blocked:
+        errors.insert(0, "Автор запретил вам копировать его прогнозы.")
+    return {"setup_copy_blocked": blocked, "setup_capper": capper_card(enriched), "setup_balance": coins(balance), "setup_history": history,
             "setup_valid": bool(settings), "setup_stake_too_low": stake is not None and stake < PREDICTION_STAKE_MIN_COINS,
             "setup_min_stake": int(PREDICTION_STAKE_MIN_COINS),
-            "setup_validation_errors": [message for errors in form.errors.values() for message in errors] if form.is_bound else [], "setup_stake": coins(stake) if stake is not None else "—",
+            "setup_validation_errors": errors, "setup_stake": coins(stake) if stake is not None else "—",
             "setup_bank": coins(settings.bank_amount) if settings else "—",
             "setup_percent": format(settings.stake_percent.normalize(), "f") if settings else "—",
             "setup_capped": bool(settings and settings.max_single_stake > 0 and settings.bank_amount * settings.stake_percent / 100 > stake),

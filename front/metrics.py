@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Iterable
 
 from django.contrib.contenttypes.models import ContentType
+from django.core.exceptions import PermissionDenied
 from django.db import transaction
 from django.db.models import Case, F, PositiveIntegerField, Value, When
 from django.utils import timezone
@@ -11,7 +12,7 @@ from cabinet.comments.models import Comment
 from game.models import Match, Prediction, PredictionCoupon
 from notifications.models import MatchWatch
 
-from .metric_models import MatchMetrics, PredictionMetrics
+from .metric_models import MatchMetrics, PredictionMetrics, PredictionCouponOpen
 from .models import PredictionFavorite, PredictionLike
 
 
@@ -20,6 +21,33 @@ PUBLISHED_COMMENT_STATUS = Comment.Status.PUBLISHED
 
 def get_prediction_metrics(coupon_id: int) -> PredictionMetrics:
     metrics, _ = PredictionMetrics.objects.get_or_create(coupon_id=coupon_id)
+    return metrics
+
+
+def record_coupon_open(user, coupon):
+    """Record one reader once; payment and document GETs never count as opens."""
+    from cabinet.paid_predictions import user_can_view_paid_coupon
+
+    if not getattr(user, "is_authenticated", False) or user.pk == coupon.author_id:
+        return None
+    with transaction.atomic():
+        from django.contrib.auth import get_user_model
+        reader = get_user_model().objects.select_for_update(no_key=True).filter(
+            pk=user.pk, is_active=True, deleted_at__isnull=True,
+        ).first()
+        if reader is None:
+            return None
+        # Serialize duplicate events and rebuilds through the same aggregate row.
+        metrics = _locked_prediction_metrics(coupon.pk)
+        coupon = PredictionCoupon.objects.select_related("author").get(pk=coupon.pk)
+        if coupon.published_status != PredictionCoupon.PublishedStatus.PUBLISHED:
+            raise PermissionDenied("Купон недоступен.")
+        if coupon.audience == PredictionCoupon.Audience.PAID and not user_can_view_paid_coupon(user, coupon):
+            raise PermissionDenied("Купон недоступен.")
+        _, created = PredictionCouponOpen.objects.get_or_create(coupon=coupon, user=user)
+        if created:
+            _update_counter(PredictionMetrics, metrics.pk, "unique_opens_count", 1)
+        metrics.refresh_from_db()
     return metrics
 
 
@@ -47,8 +75,10 @@ def refresh_prediction_metrics(coupon_id: int) -> PredictionMetrics | None:
     ).count()
 
     with transaction.atomic():
-        metrics = get_prediction_metrics(coupon_id)
+        metrics = _locked_prediction_metrics(coupon_id)
+        unique_opens_count = PredictionCouponOpen.objects.filter(coupon_id=coupon_id).count()
         PredictionMetrics.objects.filter(pk=metrics.pk).update(
+            unique_opens_count=unique_opens_count,
             likes_count=likes_count,
             favorites_count=favorites_count,
             comments_count=comments_count,

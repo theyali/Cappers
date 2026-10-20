@@ -32,13 +32,12 @@ from .services.capper_articles import decorate_capper_articles
 from .services.copybetting import build_public_copybetting_context
 from .paid_predictions import (
     active_paid_subscriptions_by_analyst,
-    build_paid_checkout_context,
+    build_public_paid_tariffs_context,
     get_active_paid_plans,
-    profile_paid_predictions_enabled,
+    profile_paid_subscriptions_enabled,
 )
 from .presence import presence_payload
 from .sport_stats import MONTH_NAMES_RU, sport_profit_periods
-from .telegram_auth import in_telegram_app
 from .vip import annotate_vip_status, attach_vip_status_to_user, plural_ru
 
 
@@ -553,17 +552,17 @@ def expert_profile(request, username: str):
     ).get(profile.user_id)
     context["paid_subscription"] = paid_subscription
     context["paid_plans"] = list(get_active_paid_plans(profile.user))
-    context["paid_predictions_enabled"] = profile_paid_predictions_enabled(profile.user)
-    if (
-        request.user.is_authenticated
-        and request.user.pk != profile.user_id
-        and context["paid_predictions_enabled"]
-    ):
-        context.update(
-            build_paid_checkout_context(
-                request.user, profile, context["paid_plans"], in_telegram_app=in_telegram_app(request)
-            )
+    context["paid_predictions_enabled"] = profile_paid_subscriptions_enabled(profile.user)
+    context["expert_tariffs_enabled"] = bool(profile.paid_predictions_enabled)
+    if context["paid_predictions_enabled"]:
+        context["expert_paid_tariffs"] = build_public_paid_tariffs_context(
+            request.user, profile, context["paid_plans"],
+            next_url=request.get_full_path(), subscription=paid_subscription,
         )
+    if context["expert_tariffs_enabled"]:
+        from .paid_prediction_purchases import build_public_tariff_coupon_context
+        context["expert_tariff_coupons"] = build_public_tariff_coupon_context(request.user, profile.user)
+        context["expert_tariffs_paid_url"] = reverse("front:predictions") + f"?prediction_type=paid&capper={profile.user_id}"
     latest_coupons = (
         _published_queryset()
         .filter(

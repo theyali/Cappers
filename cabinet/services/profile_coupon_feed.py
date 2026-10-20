@@ -2,10 +2,11 @@
 from types import SimpleNamespace
 from urllib.parse import urlencode
 
+from django.db.models import Min
 from django.template.loader import render_to_string
 from django.urls import reverse
 
-from cabinet.paid_predictions import get_active_paid_plans, user_can_view_paid_predictions
+from cabinet.paid_predictions import get_active_paid_plans, accessible_paid_coupon_ids
 
 from game.models import PredictionCoupon
 
@@ -39,14 +40,16 @@ def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer
     total = queryset.count()
     rows = list(_sort_profile_coupons(queryset, sort, direction)[offset:offset + PAGE_SIZE + 1])
     visible = rows[:PAGE_SIZE]
-    can_view_paid = user_can_view_paid_predictions(viewer if public else user, user)
-    accessible = [row for row in visible if row.audience != PredictionCoupon.Audience.PAID or can_view_paid]
+    accessible_ids = accessible_paid_coupon_ids(viewer if public else user, visible)
+    accessible = [row for row in visible if row.audience != PredictionCoupon.Audience.PAID or row.pk in accessible_ids]
     by_id = {card["id"]: card for card in _expert_mobile_coupon_cards(accessible)}
     locked_context = None
     cards = []
+    from cabinet.paid_prediction_purchases import single_coupon_offer
     for row in visible:
+        row.author = user
         is_paid = row.audience == PredictionCoupon.Audience.PAID
-        if is_paid and not can_view_paid:
+        if is_paid and row.pk not in accessible_ids:
             if locked_context is None:
                 locked_context = build_locked_coupon_author_context(user)
             # No match, pick, odds, stake or payout is put into a locked card.
@@ -54,14 +57,18 @@ def build_coupon_feed_context(user, params, *, public=False, offset=None, viewer
                 "id": row.pk, "is_paid": True, "is_paid_locked": True,
                 "locked_prediction": SimpleNamespace(
                     **locked_context,
+                    **single_coupon_offer(row),
                     coupon=SimpleNamespace(id=row.pk, author_id=user.pk, author=locked_context["author"]),
                     created_at=row.created_at,
+                    unique_opens_count=row.unique_opens_count,
                     is_paid_purchase_closed=row.state_status != PredictionCoupon.StateStatus.PENDING,
                 ),
             })
         elif row.pk in by_id:
             cards.append({**by_id[row.pk], "is_paid": is_paid, "is_paid_locked": False})
     return {
+        "coupon_feed_show_zero_opens": not public,
+        "coupon_opens_started_at": queryset.aggregate(start=Min("metrics__unique_opens_started_at"))["start"] if not public else None,
         "coupon_feed_items": cards,
         "coupon_feed_available": available,
         "coupon_feed_total": total,
@@ -97,9 +104,11 @@ def build_coupon_feed_payload(request, context):
         "ok": True,
         "html": render_to_string("cabinet/includes/_profile_mobile_coupon_items.html", {
             "mobile_coupons": context["coupon_feed_items"],
+            "coupon_feed_show_zero_opens": context["coupon_feed_show_zero_opens"],
         }, request=request),
         "desktop_html": render_to_string("cabinet/includes/_profile_mobile_coupon_items.html", {
-            "mobile_coupons": context["coupon_feed_items"], "desktop": True,
+            "mobile_coupons": context["coupon_feed_items"],
+            "coupon_feed_show_zero_opens": context["coupon_feed_show_zero_opens"], "desktop": True,
         }, request=request),
         "has_more": context["coupon_feed_has_more"],
         "next_offset": context["coupon_feed_next_offset"],

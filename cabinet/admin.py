@@ -5,6 +5,7 @@ from django.utils.html import format_html
 
 from .models import (
     AnalystFollow,
+    PaidPredictionPurchase,
     AnalystPaidPlan,
     AnalystPaidSubscription,
     AnalystPaidSubscriptionPayment,
@@ -743,3 +744,32 @@ from .roulette import admin as roulette_admin  # noqa: E402,F401
 from .roulette import history_admin as roulette_history_admin  # noqa: E402,F401
 from .roulette import rewards_admin as roulette_rewards_admin  # noqa: E402,F401
 from .roulette import state_admin as roulette_state_admin  # noqa: E402,F401
+
+
+@admin.register(PaidPredictionPurchase)
+class PaidPredictionPurchaseAdmin(admin.ModelAdmin):
+    list_display = ("id", "buyer", "analyst", "coupon", "status", "price", "platform_fee_amount", "capper_income", "paid_at")
+    list_filter = ("status", "created_at")
+    list_select_related = ("buyer", "analyst", "coupon")
+    search_fields = ("buyer__username", "analyst__username", "=coupon__id")
+    actions = ("refund_balance_purchase",)
+
+    def get_readonly_fields(self, request, obj=None):
+        return tuple(field.name for field in self.model._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    @admin.action(description="Вернуть выбранные покупки с реального баланса")
+    def refund_balance_purchase(self, request, queryset):
+        from .paid_prediction_purchases import refund_coupon_purchase
+        for purchase in queryset.select_related("buyer", "analyst"):
+            try:
+                refund_coupon_purchase(purchase)
+            except ValidationError as exc:
+                self.message_user(request, f"Покупка #{purchase.pk}: {exc.messages[0]}", level=messages.ERROR)
+            else:
+                self.message_user(request, f"Покупка #{purchase.pk} обработана.")

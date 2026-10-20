@@ -15,6 +15,7 @@ class Payment(models.Model):
 
     class Purpose(models.TextChoices):
         COIN_PACKAGE = "coin_package", "Пакет коинов"
+        SINGLE_COUPON_PURCHASE = "single_coupon_purchase", "Покупка купона"
         PAID_SUBSCRIPTION = "paid_subscription", "Платная подписка"
         VIP_PLAN = "vip_plan", "VIP-тариф"
 
@@ -80,6 +81,7 @@ class Payment(models.Model):
     paid_amount = models.DecimalField("Оплачено", max_digits=24, decimal_places=8, null=True, blank=True)
     paid_currency = models.CharField("Валюта оплаты", max_length=16, blank=True)
     is_test = models.BooleanField("Тестовый платёж", default=False)
+    requires_review = models.BooleanField("Требует разбора/возврата", default=False, db_index=True)
     failure_reason = models.CharField("Причина ошибки", max_length=255, blank=True)
     provider_payload = models.JSONField("Последний ответ провайдера", default=dict, blank=True)
 

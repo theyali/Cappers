@@ -1,0 +1,36 @@
+<section class="expert-public-paid-tariffs" data-expert-public-panel="overview" aria-labelledby="expert-paid-tariffs-title">
+    <header class="expert-paid-tariffs-head">
+        <div>
+            <h2 id="expert-paid-tariffs-title">Подписка на прогнозы</h2>
+            <p>Доступ ко всем платным прогнозам автора на выбранный срок. Без автопродления — продлеваете сами.</p>
+        </div>
+        <span class="expert-paid-tariffs-subscribers">
+            {% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" %}
+            {{ expert_paid_tariffs.subscribers_label }}
+        </span>
+    </header>
+    <div class="expert-paid-tariff-grid">
+        {% for plan in expert_paid_tariffs.plans %}
+        <article class="expert-paid-tariff{% if plan.is_best_value %} is-best-value{% endif %}">
+            {% if plan.is_best_value %}<span class="expert-paid-tariff-best">ВЫГОДНЕЕ ВСЕГО</span>{% endif %}
+            <div class="expert-paid-tariff-period"><h3>{{ plan.label }}</h3>{% if plan.discount %}<span>−{{ plan.discount }}%</span>{% endif %}</div>
+            <div class="expert-paid-tariff-price"><strong>{{ plan.price_label }} ₽</strong><span>≈ {{ plan.daily_label }} ₽ в день</span></div>
+            <p>Все платные прогнозы автора на выбранный срок</p>
+            <a href="{{ plan.action_url }}">{{ plan.action_label }}</a>
+        </article>
+        {% endfor %}
+    </div>
+    <div class="expert-paid-tariffs-footer">
+        <div class="expert-paid-tariffs-benefits">
+            <h3>ЧТО ВХОДИТ</h3>
+            {% include "cabinet/includes/_paid_subscription_benefits.html" %}
+        </div>
+        {% if expert_paid_tariffs.single_price_label %}
+        <aside class="expert-paid-tariffs-single">
+            <h3>Нужен только один прогноз?</h3>
+            <p>Новые платные купоны автора можно купить отдельно — {{ expert_paid_tariffs.single_price_label }} ₽, без подписки.</p>
+            <a href="{{ expert_paid_tariffs.paid_predictions_url }}">Смотреть платные прогнозы</a>
+        </aside>
+        {% endif %}
+    </div>
+</section>

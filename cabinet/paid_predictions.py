@@ -15,6 +15,7 @@ from .models import (
     AnalystPaidSubscription,
     AnalystPaidSubscriptionPayment,
     AnalystProfile,
+    PaidPredictionPurchase,
     User,
     paid_subscription_expires_at,
 )
@@ -63,6 +64,21 @@ def profile_paid_predictions_enabled(user: User) -> bool:
     profile = getattr(user, "analyst_profile", None)
     if not profile or not profile.paid_predictions_enabled:
         return False
+    return profile_single_coupon_sales_enabled(user) or profile_paid_subscriptions_enabled(user)
+
+
+def profile_single_coupon_sales_enabled(user) -> bool:
+    profile = getattr(user, "analyst_profile", None)
+    return bool(
+        profile and profile.paid_predictions_enabled and profile.single_coupon_sales_enabled
+        and profile.single_coupon_price and profile.single_coupon_price > 0
+    )
+
+
+def profile_paid_subscriptions_enabled(user) -> bool:
+    profile = getattr(user, "analyst_profile", None)
+    if not profile or not profile.paid_predictions_enabled:
+        return False
     if get_active_paid_plans(user).exists():
         return True
     if AnalystPaidPlan.objects.filter(analyst=user).exists():
@@ -82,40 +98,90 @@ def get_active_paid_plans(analyst: User):
     ).order_by("order", "duration_days", "id")
 
 
-def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list, *, in_telegram_app: bool = False) -> dict:
+def build_paid_plan_choices(profile, paid_plans, *, selected_plan_id=None):
+    """Public prices and checkout use the same period, daily price and discount."""
+    legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
+    choices = [
+        {"id": str(plan.pk), "label": plan.period_label, "days": plan.duration_days, "price": plan.price}
+        for plan in paid_plans
+    ] or [{"id": "", "label": "30 дней", "days": 30, "price": legacy_paid_price or Decimal("0")}]
+    shortest = min(choices, key=lambda choice: choice["days"])
+    base_daily = shortest["price"] / shortest["days"]
+    best = min(choices, key=lambda choice: (choice["price"] / choice["days"], choice["days"]))
+    default = next((choice for choice in choices if choice["id"] == str(selected_plan_id)), None)
+    default = default or next((choice for choice in choices if choice["days"] == 30), choices[0])
+    for choice in choices:
+        price = choice["price"]
+        daily = price / choice["days"]
+        choice.update(
+            short_label=f"{choice['days'] // 30} мес" if choice["days"] > 30 and choice["days"] % 30 == 0 else f"{choice['days']}д",
+            price=str(price), price_label=format_money(price),
+            daily_label=format_money(daily.quantize(Decimal("1"))),
+            discount=max(0, int((1 - daily / base_daily) * 100)) if base_daily else 0,
+            is_best_value=choice is best and daily < base_daily,
+            is_default=choice is default,
+        )
+    return choices
+
+
+def build_public_paid_tariffs_context(viewer, profile, paid_plans, *, next_url, subscription=None):
+    from urllib.parse import urlencode
+    from django.conf import settings
+    from .vip import plural_ru
+
+    choices = build_paid_plan_choices(profile, paid_plans)
+    checkout_url = reverse("cabinet:paid_predictions_subscribe", args=[profile.user_id])
+    is_self = getattr(viewer, "pk", None) == profile.user_id
+    for choice in choices:
+        choice["action_url"] = (
+            reverse("cabinet:profile") + "?tab=settings#paid-predictions-settings"
+            if is_self else checkout_url + "?" + urlencode({"plan_id": choice["id"], "next": next_url})
+        )
+        choice["action_label"] = "Настроить" if is_self else "Продлить" if subscription else "Выбрать"
+        choice["rail_label"] = "Настроить тарифы" if is_self else "Продлить подписку" if subscription else "Оформить подписку"
+        choice["mobile_label"] = "Настроить тарифы" if is_self else f"{'Продлить' if subscription else 'Оформить'} за {choice['price_label']} ₽"
+    now = timezone.now()
+    subscribers = AnalystPaidSubscription.objects.filter(
+        analyst_id=profile.user_id, starts_at__lte=now, expires_at__gt=now, subscriber__is_active=True,
+    ).count()
+    single_enabled = getattr(settings, "SINGLE_COUPON_SALES_ENABLED", False) and profile_single_coupon_sales_enabled(profile.user)
+    return {
+        "plans": choices,
+        "default_plan": next(choice for choice in choices if choice["is_default"]),
+        "subscribers_label": f"{subscribers} {plural_ru(subscribers, 'подписчик', 'подписчика', 'подписчиков')}",
+        "single_price_label": format_money(profile.single_coupon_price) if single_enabled else "",
+        "paid_predictions_url": reverse("front:predictions") + "?" + urlencode({"prediction_type": "paid", "capper": profile.user_id}),
+    }
+
+
+def build_paid_checkout_context(user, profile: AnalystProfile, paid_plans: list, *, in_telegram_app: bool = False, selected_plan_id=None) -> dict:
     """Plan picker for buying a subscription with the real balance or through a provider."""
     from payments.utils import build_payment_options
 
-    real_balance = ensure_real_balance(user)
-    legacy_paid_price = profile.paid_predictions_price if not paid_plans else None
-    prices = [plan.price for plan in paid_plans] or [legacy_paid_price or 0]
-    payment_options = build_payment_options(max(prices), user, in_telegram_app=in_telegram_app)
-    checked_plan_marked = False
-    for paid_plan in paid_plans:
-        paid_plan.can_afford = real_balance.balance >= paid_plan.price
-        # A plan the balance does not cover can still be paid by card.
-        paid_plan.is_selectable = paid_plan.can_afford or bool(payment_options)
-        paid_plan.is_default_checked = False
-        if paid_plan.can_afford and not checked_plan_marked:
-            paid_plan.is_default_checked = True
-            checked_plan_marked = True
-    if paid_plans and not checked_plan_marked:
-        paid_plans[0].is_default_checked = True
-    legacy_can_afford = (
-        real_balance.balance >= legacy_paid_price
-        if legacy_paid_price and legacy_paid_price > 0
-        else True
-    )
+    can_use_balance = user.role == User.Role.ANALYST
+    real_balance = ensure_real_balance(user) if can_use_balance else None
+    balance = real_balance.balance if real_balance else Decimal("0")
+    choices = build_paid_plan_choices(profile, paid_plans, selected_plan_id=selected_plan_id)
+    subscription = active_paid_subscriptions(user).filter(analyst_id=profile.user_id).first()
+    starts_at = max(timezone.now(), subscription.expires_at) if subscription else timezone.now()
+    default = next(choice for choice in choices if choice["is_default"])
+    options_by_code = {}
+    for choice in choices:
+        price = Decimal(choice["price"])
+        methods = build_payment_options(price, user, in_telegram_app=in_telegram_app)
+        options_by_code.update({method["code"]: method for method in methods})
+        choice.update(
+            can_afford=can_use_balance and balance >= price,
+            providers=[method["code"] for method in methods],
+            expires_label=date_format(timezone.localtime(paid_subscription_expires_at(starts_at, duration_days=choice["days"])), "j E Y, H:i"),
+            is_default=choice is default,
+        )
     return {
-        "paid_plans": paid_plans,
-        "real_balance": real_balance,
-        "real_balance_display": format_money(real_balance.balance),
-        "legacy_paid_price": legacy_paid_price,
-        "legacy_can_afford": legacy_can_afford,
-        "legacy_is_selectable": legacy_can_afford or bool(payment_options),
-        "paid_checkout_can_pay": any(plan.can_afford for plan in paid_plans) if paid_plans else legacy_can_afford,
-        "payment_options": payment_options,
-        "balance_pay_label": "Оплатить с баланса" if payment_options else "Оплатить подписку",
+        "subscription_choices": choices,
+        "subscription_default": default,
+        "can_use_subscription_balance": can_use_balance,
+        "real_balance_display": format_money(balance),
+        "payment_options": list(options_by_code.values()),
     }
 
 
@@ -130,11 +196,50 @@ def user_can_view_paid_predictions(user, analyst: User) -> bool:
     return user.pk == analyst.pk or user_has_paid_prediction_subscription(user, analyst.pk)
 
 
+def paid_coupon_purchases(user):
+    if not getattr(user, "is_authenticated", False):
+        return PaidPredictionPurchase.objects.none()
+    return PaidPredictionPurchase.objects.filter(
+        buyer=user, status=PaidPredictionPurchase.Status.PAID,
+        paid_at__isnull=False, refunded_at__isnull=True,
+    )
+
+
+def paid_coupon_purchase_ids(user, coupon_ids):
+    """One query for a whole page; purchases never grant access to an author."""
+    if not getattr(user, "is_authenticated", False) or not coupon_ids:
+        return set()
+    return set(paid_coupon_purchases(user).filter(coupon_id__in=coupon_ids)
+               .values_list("coupon_id", flat=True))
+
+
+def user_can_view_paid_coupon(user, coupon) -> bool:
+    if not getattr(user, "is_authenticated", False):
+        return False
+    return (
+        user_can_view_paid_predictions(user, coupon.author)
+        or bool(paid_coupon_purchase_ids(user, [coupon.pk]))
+    )
+
+
+def accessible_paid_coupon_ids(user, coupons):
+    """Resolve all paid rights in two queries, independent of page length."""
+    coupons = list(coupons)
+    if not getattr(user, "is_authenticated", False):
+        return set()
+    author_ids = active_paid_subscription_analyst_ids(user)
+    accessible_ids = {
+        coupon.pk for coupon in coupons
+        if coupon.author_id == user.pk or coupon.author_id in author_ids
+    }
+    return accessible_ids | paid_coupon_purchase_ids(user, [coupon.pk for coupon in coupons])
+
+
 def active_paid_subscription_analyst_ids(user) -> set[int]:
     if not getattr(user, "is_authenticated", False):
         return set()
     return set(
-        active_paid_subscriptions(user).values_list("analyst_id", flat=True)
+        active_paid_subscriptions(user).filter(starts_at__lte=timezone.now()).values_list("analyst_id", flat=True)
     )
 
 
@@ -284,6 +389,7 @@ def grant_paid_subscription(
     """
     now = timezone.now()
     with transaction.atomic():
+        list(User.objects.select_for_update(no_key=True).filter(pk__in=[subscriber.pk, analyst.pk]).order_by("pk"))
         subscription, created = AnalystPaidSubscription.objects.select_for_update().get_or_create(
             subscriber=subscriber,
             analyst=analyst,

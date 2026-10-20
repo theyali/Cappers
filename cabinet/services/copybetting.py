@@ -6,13 +6,13 @@ from decimal import Decimal
 from urllib.parse import urlencode
 
 from django.core.paginator import Paginator
-from django.db.models import Count, F, Max, Q, Sum, Window
+from django.db.models import Count, Exists, F, Max, OuterRef, Q, Sum, Window
 from django.db.models.functions import Coalesce, RowNumber
 from django.urls import reverse
 from django.utils import timezone
 
 from game.models import PredictionCoupon
-from wallets.models import CopiedBet, CopyBettingSubscription
+from wallets.models import CopiedBet, CopyBettingSubscription, CopyBettingBlock, CopyBettingAudiencePreference, CopyBettingLimits
 from wallets.services import _copy_stake
 
 PAGE_SIZE = 8
@@ -26,8 +26,18 @@ def coins(value, *, signed=False):
     return f"+{label}" if signed and amount > 0 else label.replace("-", "−")
 
 
+def _author_audience(user):
+    return CopyBettingSubscription.objects.filter(analyst=user).annotate(
+        ui_blocked=Exists(CopyBettingBlock.objects.filter(analyst=user, user_id=OuterRef("user_id"), revoked_at__isnull=True)),
+        ui_hidden=Exists(CopyBettingAudiencePreference.objects.filter(analyst=user, user_id=OuterRef("user_id"), hidden=True)),
+    )
+
+
 def audience_queryset(user, params):
-    rows = CopyBettingSubscription.objects.filter(analyst=user)
+    rows = _author_audience(user)
+    show_hidden = params.get("copy_show_hidden") == "1"
+    if not show_hidden:
+        rows = rows.filter(ui_hidden=False)
     query = str(params.get("copy_q", "")).strip()[:100].lstrip("@")
     state = params.get("copy_status", "all")
     state = state if state in {"all", "active", "stopped"} else "all"
@@ -48,7 +58,7 @@ def audience_queryset(user, params):
     if valid_person:
         rows = rows.filter(user_id=int(person_id))
     return rows, {"copy_q": query, "copy_status": state, "copy_period": period,
-                  "copy_user": person_id if valid_person else ""}
+                  "copy_user": person_id if valid_person else "", "copy_show_hidden": "1" if show_hidden else ""}
 
 
 def _person(subscription):
@@ -58,11 +68,15 @@ def _person(subscription):
         "id": person.pk, "username": person.username,
         "avatar": person.avatar.url if person.avatar else "", "initial": person.username[:1].upper(),
         "profile_url": reverse("cabinet:user_profile", args=[person.username]),
-        "status": subscription.status, "status_label": STATUS_LABELS[subscription.status],
+        "status": "blocked" if getattr(subscription, "ui_blocked", False) else subscription.status,
+        "blocked": getattr(subscription, "ui_blocked", False), "hidden": getattr(subscription, "ui_hidden", False),
+        "status_label": "Копирование запрещено" if getattr(subscription, "ui_blocked", False) else STATUS_LABELS[subscription.status],
         "started_at": subscription.started_at, "stopped_at": subscription.stopped_at,
         "duration": f"{'Копировал' if subscription.status == 'stopped' else 'Копирует'} {days} дн.",
         "stake": coins(_copy_stake(subscription)),
         "profit": coins(subscription.total_profit, signed=True), "profit_positive": subscription.total_profit >= 0,
+        "message_url": reverse("cabinet:dialog", args=[person.username]),
+        "history_url": reverse("cabinet:copybetting_history", args=[subscription.pk]),
         "copied_count": subscription.copied_count, "total_staked": coins(subscription.total_staked),
     }
 
@@ -70,7 +84,7 @@ def _person(subscription):
 def build_copybetting_context(user, params):
     if not user.is_analyst:
         return build_reader_copybetting_context(user, params)
-    base = CopyBettingSubscription.objects.filter(analyst=user)
+    base = _author_audience(user)
     summary = base.aggregate(total=Count("pk"), active=Count("pk", filter=Q(status="active")), profit=Sum("total_profit"),
                              new=Count("pk", filter=Q(status="active", started_at__gte=timezone.now() - timedelta(days=7))))
     filtered, filters = audience_queryset(user, params)
@@ -157,6 +171,7 @@ def build_copybetting_context(user, params):
     return {
         "analyst_profile": profile,
         "copybetting_checklist": checklist,
+        "copybetting_hidden_count": CopyBettingAudiencePreference.objects.filter(analyst=user, hidden=True).count(),
         "copybetting_audience_active_count": summary["active"], "copybetting_audience_total_count": summary["total"],
         "copybetting_audience_profit": summary["profit"] or 0, "copybetting_audience_profit_display": coins(summary["profit"], signed=True),
         "copybetting_new_count": summary["new"], "copybetting_people": people, "copybetting_top": top,
@@ -229,7 +244,7 @@ def build_reader_copybetting_context(user, params):
     filters = {"copy_q": query, "copy_status": state, "copy_sort": sort, "copy_view": view}
     def url(**changes):
         return reverse("cabinet:profile") + "?" + urlencode({"tab": "copybetting", **filters, **changes})
-    following = base.select_related("analyst", "analyst__analyst_profile")
+    following = base.select_related("analyst", "analyst__analyst_profile").annotate(ui_blocked=Exists(CopyBettingBlock.objects.filter(user=user, analyst_id=OuterRef("analyst_id"), revoked_at__isnull=True)))
     if query:
         following = following.filter(Q(analyst__username__icontains=query) | Q(analyst__analyst_profile__display_name__icontains=query))
     if state != "all":
@@ -254,12 +269,14 @@ def build_reader_copybetting_context(user, params):
             "avatar": analyst.avatar.url if analyst.avatar else "", "initial": analyst.username[:1].upper(),
             "trust": profile.trust_index, "verified": profile.is_verified,
             "profile_url": reverse("front:expert_profile", args=[analyst.username]),
+            "history_url": reverse("cabinet:copybetting_history", args=[subscription.pk]),
             "setup_url": reverse("wallets:copybetting_setup", args=[analyst.pk]),
             "bets_url": url(copy_view="bets", copy_q=analyst.username, copy_status="all", copy_page=1),
             "started_at": subscription.started_at, "status": subscription.status,
             "status_label": {"active": "Копирую", "paused": "На паузе", "stopped": "Остановлено"}[subscription.status],
             "pending_label": subscription.get_pending_status_display() if subscription.pending_status else "",
             **_copybetting_controls(subscription),
+            **({"can_pause": False, "can_resume": False, "can_stop": False, "status_label": "Запрещено автором", "status": "blocked"} if subscription.ui_blocked else {}),
             "stake": coins(_copy_stake(subscription)), "profit": coins(subscription.total_profit, signed=True),
             "profit_positive": subscription.total_profit >= 0,
             "sparkline": _sparkline(reversed(histories.get(subscription.pk, []))),
@@ -275,6 +292,7 @@ def build_reader_copybetting_context(user, params):
     current = bet_page if view == "bets" else page
     turnover = CopiedBet.objects.filter(user=user, created_at__gte=timezone.now() - timedelta(days=30)).aggregate(total=Sum("stake"))["total"]
     return {
+        "copybetting_limits": CopyBettingLimits.objects.filter(user=user).first() or CopyBettingLimits(),
         "copybetting_reader_rows": rows, "copybetting_reader_bets": copied,
         "copybetting_reader_active": summary["active"], "copybetting_reader_paused": summary["paused"],
         "copybetting_reader_turnover": coins(turnover), "copybetting_reader_profit": coins(summary["profit"], signed=True),
@@ -309,12 +327,14 @@ def build_public_copybetting_context(viewer, analyst):
         from urllib.parse import quote
         data["setup_url"] = data["hero_url"] = data["hero_mobile_url"] = f"{reverse('cabinet:login')}?next={quote(setup_url)}"
         return {"public_copybetting": data}
+    blocked = CopyBettingBlock.objects.filter(user=viewer, analyst=analyst, revoked_at__isnull=True).exists()
+    data["blocked"] = blocked
     subscription = CopyBettingSubscription.objects.filter(user=viewer, analyst=analyst).first()
     if subscription:
         status = subscription.status
         profits = list(CopiedBet.objects.filter(user=viewer, subscription=subscription).exclude(state_status="pending")
                        .order_by("-settled_at", "-id").values_list("profit", flat=True)[:12])
-        data.update(id=subscription.pk, status=status, started_at=subscription.started_at,
+        data.update(id=subscription.pk, history_url=reverse("cabinet:copybetting_history", args=[subscription.pk]), status=status, started_at=subscription.started_at,
                     stopped_at=subscription.stopped_at, days=max(0, ((subscription.stopped_at or timezone.now()) - subscription.started_at).days),
                     stake=coins(_copy_stake(subscription)), profit=coins(subscription.total_profit, signed=True),
                     profit_positive=subscription.total_profit >= 0, sparkline=_sparkline(reversed(profits)), sparkline_count=len(profits),
@@ -325,4 +345,6 @@ def build_public_copybetting_context(viewer, analyst):
                     hero_url="#expert-copybetting" if status in {"active", "paused"} else setup_url,
                     hero_mobile_url="#expert-copybetting-mobile" if status in {"active", "paused"} else setup_url,
                     bets_url=reverse("cabinet:profile") + "?" + urlencode({"tab": "copybetting", "copy_view": "bets", "copy_q": analyst.username}))
+    if data.get("blocked"):
+        data.update(hero_label="Копирование запрещено", can_pause=False, can_resume=False, can_stop=False)
     return {"public_copybetting": data}

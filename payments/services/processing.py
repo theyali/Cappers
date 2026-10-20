@@ -129,6 +129,15 @@ def _move(payment: Payment, event: ProviderEvent) -> str:
         payment.refunded_at = timezone.now()
         fields.append("refunded_at")
     payment.save(update_fields=fields)
+    if new == S.REFUNDED and payment.purpose == Payment.Purpose.SINGLE_COUPON_PURCHASE:
+        from cabinet.models import PaidPredictionPurchase
+        from cabinet.paid_prediction_purchases import refund_coupon_purchase
+        purchase = PaidPredictionPurchase.objects.select_related("buyer", "analyst").filter(payment=payment).first()
+        if purchase:
+            refund_coupon_purchase(purchase, provider_confirmed=True)
+        if payment.requires_review:
+            payment.requires_review = False
+            payment.save(update_fields=["requires_review", "updated_at"])
     logger.info("Payment %s: %s -> %s by %s", payment.public_id, current, new, event.dedup_key)
     return ""
 

@@ -1039,7 +1039,6 @@ h2 { font-size: clamp(24px, 3vw, 42px); }
 .auth-form,
 .cappers-table-page,
 .coupon-slip-list,
-.expert-paid-subscribe-form,
 .expert-public-analytics,
 .expert-public-predictions,
 .profile-telegram-card,
@@ -4548,7 +4547,6 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
     background: var(--blue);
 }
 .coupon-field,
-.expert-paid-subscribe-head,
 .home-best-featured-expert > span:last-child,
 .home-best-featured-pick,
 .home-best-featured-result,
@@ -9418,7 +9416,8 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
     grid-column: 2;
 }
 .predictions-content { min-width: 0; display: grid; gap: 18px; grid-column: 2; }
-.predictions-content.is-paid-catalog { gap: 0; }
+.predictions-content.is-paid-catalog,
+.predictions-content.matches-list-panel { gap: 0; }
 .predictions-content-breadcrumbs {
     width: 100%;
     max-width: none;
@@ -11928,9 +11927,6 @@ body.register footer {
     font-weight: 700;
     cursor: pointer;
 }
-.expert-paid-subscribe-card { width: min(620px, 100%); }
-.expert-paid-subscribe-head .expert-public-kicker { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; }
-.expert-paid-subscribe-head p { margin: 0; color: var(--muted); font-size: 14px; }
 .expert-public-stats.expert-public-stats-compact { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
 .expert-public-stats-compact .expert-public-stat-card {
     height: 90px;
@@ -13644,7 +13640,7 @@ ul.profile-email-modal-copy { padding-left: 18px; }
     pointer-events: none;
 }
 .profile-paid-plans {
-    max-height: 1200px;
+    max-height: 2400px;
     opacity: 1;
     transform: translateY(0);
     transition:
@@ -13682,7 +13678,10 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .profile-paid-plans-head h3 { margin: 4px 0 0; color: #f7f8ff; font-size: 17px; font-weight: 600; line-height: 1.25; }
 .profile-paid-plans-head small { max-width: 280px; color: rgba(255, 255, 255, 0.48); font-size: 14px; font-weight: 500; line-height: 1.45; }
 .profile-paid-plans-head { grid-area: head; }
-.profile-paid-plan-list { grid-area: list; gap: 16px; }
+.profile-paid-plans-content { grid-area: list; display: grid; gap: 20px; min-width: 0; }
+.profile-paid-plans-content > p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.profile-paid-plans-content > h4 { margin: 0; color: var(--text); font-family: var(--font-body); font-size: 17px; font-weight: 700; line-height: 1.4; }
+.profile-paid-plan-list { gap: 16px; }
 .profile-paid-plan-row {
     display: grid;
     grid-template-columns: minmax(130px, 1fr) 56px minmax(170px, 230px);
@@ -13697,12 +13696,11 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 }
 .profile-paid-plan-title { display: grid; gap: 3px; min-width: 0; }
 .profile-paid-plan-title strong {
-    overflow: hidden;
     color: #f7f8ff;
     font-size: 17px;
     font-weight: 600;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 .profile-paid-plan-price > span,
 .profile-paid-plan-title span {
@@ -17602,6 +17600,7 @@ body.register {
 .expert-public-shell { display: grid; padding: 0 12px; }
 .expert-public-shell .expert-public-hero { order: 10; }
 .expert-public-shell .expert-public-stats-compact { order: 20; }
+.expert-public-shell .expert-public-paid-tariffs { order: 25; }
 .expert-public-tabs {
     order: 30;
     display: grid;
@@ -17863,6 +17862,7 @@ body.register {
 .expert-public-shell .expert-recommendations { order: 80; }
 /* The page wrapper uses display: contents; its blocks follow this grid order. */
 .expert-public-shell .expert-public-best-predictions { order: 75; }
+.expert-public-shell .expert-public-latest-articles { order: 76; }
 .fixed-tg-btn {
     width: 50px;
     min-width: 50px;
@@ -24691,7 +24691,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .rich-prediction-publish:disabled { color: #6b6e78; background: #1a1b21; box-shadow: inset 0 0 0 1px #24262e; cursor: default; }
 .rich-prediction-mobile-progress { display: none; }
 .rich-prediction-published {
-    width: 1120px;
     max-width: 100%;
     box-sizing: border-box;
     display: flex;
@@ -27492,7 +27491,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     padding: 0 14px 12px 20px;
 }
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions,
-:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions > span,
+:is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions > span:not([hidden]),
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-actions { display: flex; align-items: center; }
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions { gap: 13px; min-width: 0; color: var(--muted); font-size: 11px; }
 :is(#profile-tab-predictions, .expert-public-page) .profile-desktop-coupon-reactions > span { gap: 4px; white-space: nowrap; }
@@ -30749,7 +30748,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .copybetting-menu-divider { height: 1px; margin: 4px 0; background: var(--ink); }
 /* CH1 / CH3 share the existing modal controller, focus trap and scroll lock. */
 .copybetting-how-modal { z-index: var(--z-profile-modal); }
-.copybetting-how-modal .copybetting-how-dialog { display: flex; flex-direction: column; gap: 0; width: min(720px, 100%); max-height: calc(100dvh - 48px); overflow: hidden; padding: 26px; border-radius: 24px; color: var(--text); background: var(--ink); outline: none; box-shadow: 0 32px 80px rgba(0, 0, 0, .6); }
+.copybetting-how-modal .copybetting-how-dialog { display: flex; flex-direction: column; gap: 0; width: min(720px, 100%); max-height: calc(100dvh - 48px); overflow: hidden; padding: 26px; border-radius: 24px; color: var(--text); background: var(--ink); outline: none; }
 .copybetting-how-modal.is-open:not(.is-visible) { opacity: 0; }
 .copybetting-how-modal:not(.is-visible) .copybetting-how-dialog { opacity: 0; transform: translateY(16px) scale(.985); }
 .copybetting-sheet-handle { display: none; }
@@ -30758,7 +30757,10 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .copybetting-how-dialog .copybetting-how-head h2 { margin: 0 0 6px; font-family: var(--font-display); font-size: 21px; font-weight: 800; line-height: 1.35; }
 .copybetting-how-head p { margin: 0; color: #a3a6b0; font-size: 13.5px; line-height: 1.4; }
 .copybetting-how-close { display: grid; place-items: center; flex: none; width: 36px; height: 36px; border: 0; border-radius: 11px; color: #a3a6b0; background: var(--panel); cursor: pointer; }
-.copybetting-how-dialog .copybetting-how-body { display: grid; gap: 18px; min-height: 0; padding: 0 4px 0 0; overflow-y: auto; overscroll-behavior: contain; }
+.copybetting-how-dialog .copybetting-how-body { display: grid; gap: 18px; min-height: 0; padding: 0 4px 0 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #3a3a3d transparent; }
+.copybetting-how-body::-webkit-scrollbar { width: 6px; }
+.copybetting-how-body::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3d; }
+.copybetting-how-body::-webkit-scrollbar-track { background: transparent; }
 .copybetting-how-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0; list-style: none; }
 .copybetting-how-steps li { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; background: var(--panel); }
 .copybetting-how-steps li > div { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--green); }
@@ -30994,7 +30996,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 
 /* PR1–PR4: copying controls on the public capper profile. */
 .expert-copy-button { display: inline-flex; align-items: center; justify-content: center; flex: none; gap: 9px; min-height: 50px; padding: 0 20px; border-radius: 12px; color: var(--ink); background: var(--yellow); font-size: 14.5px; font-weight: 800; text-decoration: none; }
-.expert-copy-button.is-active { color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--ink)); box-shadow: inset 0 0 0 1.5px var(--green); }
+.expert-copy-button.is-active { color: white; background: var(--green);}
 .expert-copy-button.is-paused { color: var(--yellow); background: var(--ink); box-shadow: inset 0 0 0 1.5px var(--yellow); }
 .expert-copy-button svg { width: 20px; height: 20px; flex: none; }
 .expert-copy-strip { --copy-state-color: var(--muted); display: flex; flex-wrap: wrap; align-items: center; gap: 18px; min-width: 0; padding: 16px 22px; border-radius: 20px; background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); scroll-margin-top: 110px; }
@@ -31042,3 +31044,263 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .expert-copy-feedback { flex-basis: 100%; grid-column: 1 / -1; margin: 0; color: var(--soft); font-size: 12px; line-height: 1.4; }
 .expert-copy-feedback:empty { display: none; }
 [data-copy-status-form] button:disabled { cursor: wait; opacity: .6; }
+.copybetting-status.is-blocked { color: var(--danger); white-space: normal; }
+[data-copy-limits-form] { display: grid; gap: 16px; }
+.copybetting-history { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.copybetting-history > li { display: grid; gap: 6px; padding: 16px; border-radius: 12px; background: var(--panel); }
+.copybetting-message-composer { display: grid; gap: 12px; margin-bottom: 20px; }
+.copybetting-message-composer textarea { width: 100%; padding: 14px; resize: vertical; border: 0; border-radius: 12px; color: var(--text); background: var(--panel); font: inherit; }
+.copybetting-message-composer textarea:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.copybetting-history p { margin: 0; overflow-wrap: anywhere; }
+
+/* The same unique-reader aggregate is used in cards, detail and the access dialog. */
+.coupon-open-count { max-width: 100%; overflow: hidden; color: #a3a6b0; font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.coupon-open-count[hidden] { display: none; }
+.profile-coupon-lock-action > .coupon-open-count { margin-right: auto; }
+
+.profile-purchases-page { display: flex; flex-direction: column; gap: 20px; min-width: 0; padding: 24px; }
+.profile-purchases-table-scroll { max-width: 100%; overflow-x: auto; scrollbar-width: thin; scrollbar-color: #3a3a3d transparent; }
+.profile-purchases-table { width: 100%; border-collapse: collapse; text-align: left; }
+.profile-purchases-table th, .profile-purchases-table td { padding: 12px; white-space: nowrap; }
+.profile-purchases-table th { color: #a3a6b0; font-size: 12px; }
+.profile-purchases-table td { background: var(--panel); }
+.profile-purchases-page a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.profile-purchases-page a:hover, .profile-purchases-page a[aria-current="page"] { color: var(--yellow); }
+.profile-purchases-page a:focus-visible, .profile-purchases-table-scroll:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.profile-desktop-coupon-reactions > .coupon-open-count { min-width: 0; flex: 0 1 auto; }
+
+.paid-prediction-offers:has(> .paid-prediction-offer:only-child) { grid-template-columns: minmax(0, 1fr); }
+
+/* Subscription checkout: PY1 / PY2 reference, shared across all entry points. */
+.subscription-modal { z-index: var(--z-profile-modal); }
+.subscription-modal .subscription-card {
+    width: min(720px, 100%);
+    max-height: calc(100dvh - 48px);
+    padding: 24px;
+    border-radius: 24px;
+    outline: none;
+    background: var(--ink);
+    color: #fff;
+    box-shadow: none;
+    font-family: var(--font-body);
+    scrollbar-width: thin;
+    scrollbar-color: #494b55 transparent;
+    overscroll-behavior: contain;
+}
+.subscription-modal .subscription-card.is-payment { width: min(1168px, 100%); }
+.subscription-close,
+.subscription-back {
+    width: 42px;
+    height: 42px;
+    display: grid;
+    place-items: center;
+    flex: none;
+    border: 0;
+    border-radius: 13px;
+    background: #17181e;
+    box-shadow: inset 0 0 0 1px #24262e;
+    color: #a3a6b0;
+    font: inherit;
+    font-size: 24px;
+    cursor: pointer;
+}
+.subscription-close { position: absolute; top: 24px; right: 24px; z-index: 2; }
+.subscription-form,
+.subscription-plan-step { display: flex; flex-direction: column; gap: 18px; }
+.subscription-head { display: flex; align-items: flex-start; gap: 14px; padding-right: 54px; }
+.subscription-head > div { min-width: 0; display: grid; gap: 5px; }
+.subscription-kicker { color: #6b6e78; font-size: 11px; font-weight: 800; letter-spacing: .5px; }
+.subscription-head h2 { margin: 0; color: #fff; font-family: var(--font-display); font-size: 20px; font-weight: 800; line-height: 1.45; letter-spacing: normal; }
+.subscription-head p { margin: 0; color: #a3a6b0; font-size: 12.5px; font-weight: 600; line-height: 1.5; }
+.subscription-author { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: 14px; background: var(--panel); }
+.subscription-author img,
+.subscription-avatar { width: 38px; height: 38px; border-radius: 50%; flex: none; object-fit: cover; }
+.subscription-avatar { display: grid; place-items: center; background: #6a2be0; font-size: 18px; font-weight: 800; }
+.subscription-author > div { flex: 1; min-width: 0; display: grid; gap: 3px; }
+.subscription-author strong { font-size: 14px; overflow-wrap: anywhere; }
+.subscription-author span:not(.subscription-avatar),
+.subscription-author small { color: #6b6e78; font-size: 11.5px; font-weight: 700; }
+.subscription-options { display: flex; flex-direction: column; gap: 10px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.subscription-option { position: relative; display: flex; align-items: center; gap: 14px; padding: 15px 16px; border-radius: 15px; background: var(--panel);}
+.subscription-option:has(input:checked) { background: #1c1b14; box-shadow: inset 0 0 0 1.5px #f6ec4e; }
+.subscription-option:has(input:disabled) { cursor: default; }
+.subscription-option:has(input:disabled) .subscription-option-copy { opacity: .6; }
+.subscription-option input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.subscription-radio { width: 20px; height: 20px; display: grid; place-items: center; flex: none; border-radius: 50%; box-shadow: inset 0 0 0 2px #24262e; }
+.subscription-option input:checked + .subscription-radio { background: #f6ec4e; color: #0e0f12; box-shadow: none; }
+.subscription-option input:checked + .subscription-radio::after { content: "✓"; font-size: 14px; font-weight: 800; }
+.subscription-option:has(input:focus-visible),
+.subscription-primary:focus-visible,
+.subscription-close:focus-visible,
+.subscription-back:focus-visible { outline: 2px solid #f6ec4e; outline-offset: 4px; }
+.subscription-option-copy { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.subscription-option-copy > span { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; }
+.subscription-option-copy strong { color: #fff; font-size: 14.5px; font-weight: 800; }
+.subscription-option-copy small { color: #6b6e78; font-size: 12px; font-weight: 700; }
+.subscription-option-copy em { padding: 3px 9px; border-radius: 7px; background: #13261c; color: #5be38a; font-size: 11px; font-style: normal; font-weight: 800; }
+.subscription-option > b { font-family: var(--font-display); font-size: 20px; font-weight: 800; white-space: nowrap; }
+.subscription-benefits { display: flex; flex-direction: column; gap: 9px; padding: 16px; border-radius: 15px; background: var(--panel); box-shadow: inset 0 0 0 1px #24262e; }
+.subscription-benefits h3 { margin: 0; color: #6b6e78; font-family: var(--font-body); font-size: 11.5px; font-weight: 800; letter-spacing: .5px; }
+.subscription-benefits p { display: flex; gap: 9px; margin: 0; color: #d7d9e0; font-size: 12.5px; line-height: 1.45; font-weight: 600; }
+.subscription-benefits p span { color: #5be38a; font-weight: 800; }
+.subscription-plan-footer { display: flex; align-items: center; gap: 16px; padding-top: 18px; box-shadow: 0 -1px #24262e; }
+.subscription-plan-footer > div { flex: 1; display: grid; gap: 3px; }
+.subscription-plan-footer small { color: #6b6e78; font-size: 12px; font-weight: 700; }
+.subscription-plan-footer strong { font-family: var(--font-display); font-size: 26px; font-weight: 800; }
+.subscription-primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; padding: 12px 20px; border: 0; border-radius: 12px; background: #f6ec4e; color: #0e0f12; font: inherit; font-size: 14.5px; font-weight: 800; text-decoration: none; cursor: pointer; }
+.subscription-primary:disabled { opacity: .5; cursor: default; }
+.subscription-plan-footer .subscription-primary { min-width: 260px; }
+.subscription-pay-step { display: grid; grid-template-columns: minmax(0, 1fr) 380px; align-items: start; gap: 16px; }
+.subscription-payment-panel,
+.subscription-order { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 22px; border-radius: 20px; background: var(--panel); box-shadow: inset 0 0 0 1px #24262e; }
+.subscription-pay-step h3 { margin: 0; color: #fff; font-family: var(--font-display); font-size: 16px; font-weight: 800; }
+.subscription-top-up { align-self: flex-end; padding: 5px; color: #f6ec4e; font-size: 12.5px; font-weight: 800; text-decoration: none; }
+.subscription-order dl { display: grid; gap: 14px; margin: 0; }
+.subscription-order dl > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; }
+.subscription-order dt { color: #a3a6b0; font-weight: 600; }
+.subscription-order dd { margin: 0; color: #d7d9e0; font-weight: 800; text-align: right; }
+.subscription-order .subscription-total { padding-top: 16px; box-shadow: 0 -1px #24262e; }
+.subscription-total dt { color: #fff; font-weight: 800; }
+.subscription-total dd { color: #fff; font-family: var(--font-display); font-size: 16px; }
+.subscription-terms { margin: 0; color: #6b6e78; font-size: 11px; font-weight: 600; line-height: 1.5; }
+.subscription-terms a { color: #a3a6b0; }
+.subscription-error,
+.subscription-unavailable { margin: 0; color: #f6b7b1; font-size: 13px; line-height: 1.5; }
+.subscription-loading { min-height: 180px; display: grid; place-items: center; margin: 0; color: #a3a6b0; }
+.subscription-modal [hidden] { display: none !important; }
+.subscription-modal.is-open:not(.is-visible) { opacity: 0; }
+.subscription-modal.is-open:not(.is-visible) .subscription-card { opacity: 0; transform: translateY(16px) scale(.985); }
+.subscription-options .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.subscription-modal .expert-public-details-backdrop { background: rgba(8, 9, 12, .78); }
+
+/* Single-coupon confirmation: PY4 / PY7, using the shared paid-checkout dialog. */
+.subscription-modal .subscription-card.is-single-purchase { width: min(640px, 100%); }
+.single-coupon-preview { display: grid; gap: 2px; padding: 16px 18px; border-radius: 16px; background: var(--panel);}
+.single-coupon-preview-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding-bottom: 10px; color: #a3a6b0; font-size: 13px; font-weight: 700; }
+.single-coupon-preview-head > div { display: grid; gap: 2px; text-align: right; }
+.single-coupon-preview-head small { color: #6b6e78; font-size: 10px; font-weight: 800; }
+.single-coupon-preview-head strong { color: #f6ec4e; font-family: var(--font-display); font-size: 19px; }
+.single-coupon-event { display: grid; gap: 4px; min-width: 0; padding: 12px 0; box-shadow: 0 -1px #24262e; }
+.single-coupon-event > strong { color: #fff; font-size: 14px; font-weight: 800; overflow-wrap: anywhere; }
+.single-coupon-event small { color: #6b6e78; font-size: 11.5px; font-weight: 600; }
+.single-coupon-hidden-pick { display: flex; align-items: center; gap: 8px; padding-top: 6px; color: #a3a6b0; font-size: 13px; font-weight: 700; }
+.single-coupon-hidden-pick svg { width: 16px; height: 16px; }
+.single-coupon-preview > p { margin: 8px 0 0; color: #6b6e78; font-size: 11.5px; line-height: 1.5; }
+.single-coupon-subscription { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 14px 16px; border-radius: 15px; color: #5be38a; background: #13261c; box-shadow: inset 0 0 0 1px #1e4433; text-decoration: none; }
+.single-coupon-subscription > div { min-width: 0; display: grid; gap: 3px; }
+.single-coupon-subscription strong { color: #5be38a; font-size: 13px; font-weight: 800; }
+.single-coupon-subscription small { color: #a3a6b0; font-size: 11.5px; line-height: 1.45; }
+.single-coupon-subscription > span { flex: none; color: #5be38a; font-size: 12px; font-weight: 800; }
+.single-coupon-success { display: grid; gap: 14px; padding-top: 44px; }
+.single-coupon-success-banner { display: flex; align-items: center; gap: 12px; padding: 14px; border-radius: 15px; background: #10231a; box-shadow: inset 0 0 0 1px #1e4433; }
+.single-coupon-success-banner > span { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 50%; color: #10231a; background: #5be38a; font-size: 22px; font-weight: 800; }
+.single-coupon-success-banner h2 { margin: 0; color: #fff; font-family: var(--font-display); font-size: 16px; font-weight: 800; }
+.single-coupon-success-banner p,
+.single-coupon-success > p { margin: 4px 0 0; color: #a3a6b0; font-size: 12px; line-height: 1.5; }
+.single-coupon-purchases-link { justify-self: center; padding: 10px; color: #a3a6b0; font-size: 13px; font-weight: 800; text-decoration: none; }
+
+/* MK5: desktop tariffs in the public profile Overview. */
+.expert-public-paid-tariffs {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+    padding: 24px;
+    border-radius: 20px;
+    background: var(--panel);
+    color: var(--text);
+    font-family: var(--font-body);
+}
+.expert-paid-tariffs-head { display: flex; align-items: flex-start; gap: 16px; }
+.expert-paid-tariffs-head > div { flex: 1; min-width: 0; display: grid; gap: 5px; }
+.expert-paid-tariffs-head h2 { margin: 0; color: var(--text); font-family: var(--font-display); font-size: 20px; font-weight: 800; letter-spacing: normal; line-height: 1.4; }
+.expert-paid-tariffs-head p { margin: 0; color: var(--soft); font-size: 13px; font-weight: 600; line-height: 1.5; }
+.expert-paid-tariffs-subscribers { display: inline-flex; align-items: center; gap: 8px; flex: none; min-height: 34px; padding: 0 14px; border-radius: 10px; color: var(--soft); background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font-size: 12.5px; font-weight: 800; }
+.expert-paid-tariffs-subscribers svg { width: 15px; height: 15px; }
+.expert-paid-tariff-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-top: 4px; }
+.expert-paid-tariff {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-width: 0;
+    padding: 20px 18px 18px;
+    border-radius: 20px;
+    background: var(--ink);
+}
+.expert-paid-tariff.is-best-value { background: color-mix(in srgb, var(--yellow) 5%, var(--panel)); box-shadow: inset 0 0 0 1.5px var(--yellow); }
+.expert-paid-tariff-best { position: absolute; right: 16px; top: -11px; display: inline-flex; align-items: center; min-height: 22px; padding: 0 10px; border-radius: 7px; color: var(--ink); background: var(--yellow); font-size: 10.5px; font-weight: 800; letter-spacing: .4px; }
+.expert-paid-tariff-period { display: flex; align-items: center; gap: 8px; min-height: 22px; }
+.expert-paid-tariff-period h3 { flex: 1; margin: 0; color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 800; }
+.expert-paid-tariff-period > span { display: inline-flex; align-items: center; min-height: 22px; padding: 0 9px; border-radius: 7px; color: var(--green); background: color-mix(in srgb, var(--green) 12%, var(--ink)); font-size: 11px; font-weight: 800; }
+.expert-paid-tariff.is-best-value .expert-paid-tariff-period > span { color: var(--ink); background: var(--green); }
+.expert-paid-tariff-price { display: grid; gap: 4px; }
+.expert-paid-tariff-price strong { color: var(--text); font-family: var(--font-display); font-size: 28px; font-weight: 800; letter-spacing: -.5px; overflow-wrap: anywhere; }
+.expert-paid-tariff-price > span { color: var(--muted); font-size: 12px; font-weight: 700; }
+.expert-paid-tariff > p { flex: 1; margin: 0; padding-top: 14px; box-shadow: 0 -1px var(--line); color: var(--soft); font-size: 12px; font-weight: 600; line-height: 1.45; }
+.expert-paid-tariff > a { display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 10px 20px; border-radius: 12px; color: var(--soft); background: var(--blue); font-size: 13.5px; font-weight: 800; text-decoration: none; }
+.expert-paid-tariff.is-best-value > a { color: var(--ink); background: var(--yellow); box-shadow: none; }
+.expert-paid-tariff > a:hover { filter: brightness(1.12); }
+.expert-paid-tariff > a:focus-visible,
+.expert-paid-tariffs-single > a:focus-visible { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.expert-paid-tariffs-footer { display: flex; flex-wrap: wrap; gap: 28px; margin-top: 4px; padding-top: 20px; box-shadow: 0 -1px var(--line); }
+.expert-paid-tariffs-benefits { flex: 1 1 420px; min-width: 0; display: grid; align-content: start; gap: 10px; }
+.expert-paid-tariffs-benefits h3 { margin: 0; color: var(--muted); font-family: var(--font-body); font-size: 12px; font-weight: 800; letter-spacing: .5px; }
+.expert-paid-tariffs-benefits ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 28px; padding: 0; margin: 0; list-style: none; }
+.expert-paid-tariffs-benefits li { display: flex; align-items: flex-start; gap: 9px; color: var(--soft); font-size: 13px; font-weight: 600; line-height: 1.45; }
+.expert-paid-tariffs-benefits li > span { flex: none; color: var(--green); font-weight: 800; }
+.expert-paid-tariffs-single { display: flex; flex-direction: column; gap: 10px; flex: 1 1 260px; max-width: 300px; padding: 18px; border-radius: 16px; background: var(--ink); }
+.expert-paid-tariffs-single h3 { margin: 0; color: var(--text); font-family: var(--font-body); font-size: 13.5px; font-weight: 800; }
+.expert-paid-tariffs-single p { margin: 0; color: var(--soft); font-size: 12.5px; font-weight: 600; line-height: 1.45; }
+.expert-paid-tariffs-single a { display: inline-flex; align-items: center; justify-content: center; min-height: 42px; margin-top: auto; padding: 10px 14px; border-radius: 12px; color: black; background: var(--yellow); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; font-weight: 800; text-decoration: none; text-align: center; }
+.expert-public-paid-tariffs[hidden] { display: none; }
+
+/* MK6/MK8: the public Tariffs tab uses the site's palette. */
+.expert-public-shell .expert-tariffs-panel { order: 35; }
+.expert-tariffs-panel { display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 384px); align-items: start; gap: 16px; min-width: 0; color: var(--text); font-family: var(--font-body); }
+.expert-tariffs-panel.has-no-subscription { grid-template-columns: minmax(0, 1fr); }
+.expert-tariffs-coupons, .expert-tariffs-subscription { min-width: 0; padding: 22px; border-radius: 20px; background: var(--panel); box-shadow: inset 0 0 0 1px var(--line); }
+.expert-tariffs-coupons-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 2px; }
+.expert-tariffs-coupons-head h2 { margin: 0; color: var(--text); font-family: var(--font-display); font-size: 16px; font-weight: 800; line-height: 1.4; }
+.expert-tariffs-coupons-head > span { flex: none; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.expert-tariff-coupon { display: flex; align-items: center; gap: 14px; min-width: 0; padding: 14px 0; }
+.expert-tariff-coupon + .expert-tariff-coupon { box-shadow: 0 -1px var(--line); }
+.expert-tariff-coupon-head { display: flex; align-items: center; gap: 14px; flex: 1; min-width: 0; }
+.expert-tariff-coupon-icon { display: grid; place-items: center; flex: none; width: 40px; height: 40px; border-radius: 12px; color: var(--text); background: var(--green); }
+.expert-tariff-coupon-icon svg { width: 20px; height: 20px; }
+.expert-tariff-coupon-copy { display: grid; gap: 5px; flex: 1; min-width: 0; }
+.expert-tariff-coupon-copy h3 { margin: 0; overflow: hidden; color: var(--text); font-family: var(--font-body); font-size: 14px; font-weight: 800; white-space: nowrap; text-overflow: ellipsis; }
+.expert-tariff-coupon-copy p { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin: 0; color: var(--muted); font-size: 11.5px; font-weight: 700; }
+.expert-tariff-coupon-private { color: var(--soft); }
+.expert-tariff-coupon-lock { flex: none; color: var(--muted); font-size: 18px; }
+.expert-tariff-coupon-lock svg { width: 16px; height: 16px; }
+.expert-tariff-coupon-action { display: contents; }
+.expert-tariff-coupon-pick { display: none; }
+.expert-tariff-coupon-action > a { display: inline-flex; align-items: center; justify-content: center; flex: none; min-width: 76px; min-height: 38px; padding: 8px 14px; border-radius: 12px; color: var(--yellow); background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; font-weight: 800; text-decoration: none; }
+.expert-tariffs-subscription { display: flex; flex-direction: column; gap: 16px; border-radius: 22px; }
+.expert-tariffs-subscription-head { display: flex; align-items: center; gap: 10px; }
+.expert-tariffs-subscription-head h2 { flex: 1; margin: 0; color: var(--text); font-family: var(--font-display); font-size: 17px; font-weight: 800; }
+.expert-tariffs-discount { display: inline-flex; align-items: center; min-height: 22px; padding: 0 9px; border-radius: 7px; color: var(--ink); background: var(--green); font-size: 11px; font-weight: 800; }
+.expert-tariffs-periods { display: flex; gap: 4px; min-width: 0; margin: 0; padding: 4px; border: 0; border-radius: 13px; background: var(--ink); box-shadow: inset 0 0 0 1px var(--line); }
+.expert-tariffs-periods legend { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.expert-tariffs-period { position: relative; display: flex; align-items: center; justify-content: center; flex: 1; gap: 8px; min-width: 0; min-height: 38px; padding: 4px; border-radius: 9px; color: var(--soft); font-size: 12.5px; font-weight: 800; cursor: pointer; }
+.expert-tariffs-period:has(input:checked) { color: var(--ink); background: var(--yellow); }
+.expert-tariffs-period input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+.expert-tariffs-period-radio, .expert-tariffs-period-full, .expert-tariffs-period > b { display: none; }
+.expert-tariffs-summary { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 8px 10px; }
+.expert-tariffs-summary > strong { color: var(--text); font-family: var(--font-display); font-size: 34px; font-weight: 800; letter-spacing: -1px; }
+.expert-tariffs-summary > span { padding-bottom: 6px; color: var(--muted); font-size: 12.5px; font-weight: 700; }
+.expert-tariffs-checkout { display: inline-flex; align-items: center; justify-content: center; min-height: 50px; padding: 12px 20px; border-radius: 12px; color: var(--ink); background: var(--yellow); font-size: 14.5px; font-weight: 800; text-decoration: none; text-align: center; }
+.expert-tariffs-subscription .expert-paid-tariffs-benefits { flex: none; }
+.expert-tariffs-subscription .expert-paid-tariffs-benefits ul { grid-template-columns: 1fr; gap: 10px; }
+.expert-tariffs-subscription .expert-paid-tariffs-benefits li { font-size: 12.5px; }
+.expert-tariffs-single { display: flex; align-items: center; gap: 10px; padding-top: 16px; box-shadow: 0 -1px var(--line); }
+.expert-tariffs-single > div { display: grid; flex: 1; gap: 3px; }
+.expert-tariffs-single strong { color: var(--text); font-size: 13px; font-weight: 800; }
+.expert-tariffs-single span { color: var(--muted); font-size: 11.5px; font-weight: 600; }
+.expert-tariffs-single > a { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 8px 20px; border-radius: 12px; color: var(--yellow); box-shadow: inset 0 0 0 1px var(--line); font-size: 12.5px; font-weight: 800; text-decoration: none; }
+.expert-tariffs-payment-note { margin: 0; color: var(--muted); font-size: 11px; font-weight: 600; line-height: 1.4; }
+.expert-tariffs-empty { margin: 20px 0; color: var(--soft); font-size: 13px; line-height: 1.5; }
+.expert-tariffs-all { display: inline-flex; align-items: center; gap: 8px; margin-top: 10px; padding: 8px 0; color: var(--yellow); font-size: 12px; font-weight: 800; text-decoration: none; }
+.expert-tariffs-panel a:focus-visible, .expert-tariffs-period:has(input:focus-visible) { outline: 2px solid var(--yellow); outline-offset: 4px; }
+.expert-tariffs-mobile, .expert-tariffs-panel[hidden], .expert-tariffs-panel [hidden] { display: none !important; }

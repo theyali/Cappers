@@ -139,7 +139,7 @@ class CopybettingReaderTests(TestCase):
     def test_public_copy_strip_uses_only_viewers_strategy_and_real_stake(self):
         analyst = self.subscriptions[0].analyst
         CopyBettingSubscription.objects.create(user=self.other, analyst=analyst, bank_amount=20000, stake_percent=20, total_profit=90000)
-        with self.assertNumQueries(2):
+        with self.assertNumQueries(3):
             data = build_public_copybetting_context(self.reader, analyst)["public_copybetting"]
         self.assertEqual(data["status"], "active")
         self.assertEqual(data["stake"], "500")

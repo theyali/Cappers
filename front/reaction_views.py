@@ -3,12 +3,15 @@ from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.http import require_POST
 
+from cappers.ratelimit import rate_limited
 from cabinet.models import DailyTask
-from cabinet.paid_predictions import user_can_view_paid_predictions
+from cabinet.paid_predictions import user_can_view_paid_coupon
 from cabinet.services.daily_tasks import record_daily_task_action
 from game.models import PredictionCoupon
 
 from .metrics import (
+    get_prediction_metrics,
+    record_coupon_open,
     increment_prediction_shares,
     refresh_prediction_metrics,
     toggle_prediction_favorite_metric,
@@ -29,10 +32,25 @@ def _accessible_published_prediction(user, prediction_id: int) -> PredictionCoup
     )
     if (
         prediction.audience == PredictionCoupon.Audience.PAID
-        and not user_can_view_paid_predictions(user, prediction.author)
+        and not user_can_view_paid_coupon(user, prediction)
     ):
         raise Http404("Прогноз не найден.")
     return prediction
+
+
+@login_required
+@require_POST
+def open_prediction(request, prediction_id: int):
+    from .templatetags.prediction_reactions import coupon_opens_label
+
+    if rate_limited(f"coupon-open:{request.user.pk}", limit=120, window=60):
+        return JsonResponse({"ok": False}, status=429)
+    prediction = _accessible_published_prediction(request.user, prediction_id)
+    metrics = record_coupon_open(request.user, prediction) or get_prediction_metrics(prediction.pk)
+    return JsonResponse({
+        "ok": True, "unique_opens_count": metrics.unique_opens_count,
+        "label": coupon_opens_label(metrics.unique_opens_count),
+    })
 
 
 @login_required

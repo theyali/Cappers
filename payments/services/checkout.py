@@ -69,6 +69,29 @@ def paid_subscription_order(subscriber, analyst_id, plan_id) -> dict:
     }
 
 
+def single_coupon_order(user, coupon_id):
+    from cabinet.paid_prediction_purchases import prepare_coupon_purchase
+    from game.models import PredictionCoupon
+
+    coupon = PredictionCoupon.objects.select_related("author__analyst_profile").filter(pk=_object_id(coupon_id)).first()
+    if coupon is None:
+        raise ValidationError("Купон не найден.")
+    purchase = prepare_coupon_purchase(user, coupon)
+    deadline = purchase.sale_deadline
+    return {
+        "purpose": Payment.Purpose.SINGLE_COUPON_PURCHASE,
+        "amount_rub": purchase.price,
+        "product_snapshot": {
+            "purchase_id": purchase.pk, "coupon_id": coupon.pk, "analyst_id": purchase.analyst_id,
+            "price_rub": str(purchase.price), "currency": purchase.currency,
+            "platform_fee_percent": str(purchase.platform_fee_percent),
+            "platform_fee_amount": str(purchase.platform_fee_amount), "capper_income": str(purchase.capper_income),
+            "income_hold_days": purchase.income_hold_days,
+            "sale_deadline": deadline.isoformat(), "description": f"Доступ к купону #{coupon.pk}",
+        },
+    }
+
+
 def vip_plan_order(user, plan_id, *, switch: bool) -> dict:
     plan = VipPlan.objects.filter(pk=_object_id(plan_id), price_rub__gt=0).first()
     if plan is None:
@@ -153,6 +176,10 @@ def start_checkout(user, order: dict, provider_code: str, *, site_url: str) -> P
     payment.checkout_url = session.redirect_url
     payment.external_invoice_id = session.external_invoice_id
     payment.expires_at = session.expires_at
+    if payment.purpose == Payment.Purpose.SINGLE_COUPON_PURCHASE:
+        from django.utils.dateparse import parse_datetime
+        deadline = parse_datetime(payment.product_snapshot["sale_deadline"])
+        payment.expires_at = min(payment.expires_at, deadline) if payment.expires_at else deadline
     payment.save(update_fields=["status", "checkout_url", "external_invoice_id", "expires_at", "updated_at"])
     return payment
 

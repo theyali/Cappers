@@ -1,4 +1,6 @@
+from django.conf import settings
 from django.db import models
+from django.utils import timezone
 
 
 class PredictionMetrics(models.Model):
@@ -12,6 +14,8 @@ class PredictionMetrics(models.Model):
     comments_count = models.PositiveIntegerField("Комментарии", default=0)
     favorites_count = models.PositiveIntegerField("Избранное", default=0)
     views_count = models.PositiveIntegerField("Просмотры", default=0)
+    unique_opens_count = models.PositiveIntegerField("Уникальные открытия", default=0)
+    unique_opens_started_at = models.DateTimeField("Начало сбора открытий", default=timezone.now)
     shares_count = models.PositiveIntegerField("Репосты", default=0)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
@@ -21,6 +25,21 @@ class PredictionMetrics(models.Model):
 
     def __str__(self) -> str:
         return f"Метрики прогноза #{self.coupon_id}"
+
+
+class PredictionCouponOpen(models.Model):
+    coupon = models.ForeignKey("game.PredictionCoupon", on_delete=models.CASCADE, related_name="unique_opens")
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True,
+        related_name="coupon_opens",
+    )
+    first_opened_at = models.DateTimeField(default=timezone.now)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["coupon", "user"], name="unique_coupon_open_user"),
+        ]
+        indexes = [models.Index(fields=["coupon", "first_opened_at"], name="coupon_open_date_idx")]
 
 
 class MatchMetrics(models.Model):

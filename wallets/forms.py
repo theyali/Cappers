@@ -6,7 +6,7 @@ from .services import validate_copybetting_stake
 
 from game.models import Sport
 
-from .models import CopyBettingSubscription
+from .models import CopyBettingLimits, CopyBettingSubscription
 
 
 class CopyBettingForm(forms.ModelForm):
@@ -87,3 +87,17 @@ class CopyBettingForm(forms.ModelForm):
             "stop_loss_amount": "Когда просадка достигнет лимита, копирование остановится.",
             "min_total_coefficient": "Минимум — 1,01. Прогнозы ниже порога пропускаются.",
         }
+
+
+class CopyBettingLimitsForm(forms.ModelForm):
+    class Meta:
+        model = CopyBettingLimits
+        fields = ("daily_budget", "daily_stop_loss")
+        widgets = {name: forms.NumberInput(attrs={"min": "0", "step": "1", "max": "1000000000"}) for name in fields}
+
+    def clean(self):
+        data = super().clean()
+        for name in self.Meta.fields:
+            if data.get(name, 0) > 1000000000:
+                self.add_error(name, "Максимум — 1 000 000 000 коинов.")
+        return data

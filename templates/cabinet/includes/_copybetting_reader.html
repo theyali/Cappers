@@ -1,7 +1,7 @@
 <div class="copybetting-panel copybetting-reader" data-copybetting-panel data-copy-role="reader" data-url="{% url 'cabinet:copybetting_reader' %}" data-owner="{{ request.user.pk }}">
     <header class="copybetting-heading">
         <div><h2>Копибеттинг</h2><p><span class="copybetting-reader-description-desktop">Капперы, чьи ставки повторяются на вашем счёте</span><span class="copybetting-reader-description-mobile">Кого я копирую</span></p></div>
-        <div class="copybetting-heading-actions">
+        <div class="copybetting-heading-actions"><a class="copybetting-button" href="{% url 'cabinet:inbox' %}" aria-label="Личные сообщения">{% include "cabinet/includes/_copybetting_icon.html" with name="message" only %}<span>Сообщения</span></a>
             <button type="button" class="copybetting-button is-primary" aria-label="Добавить каппера" data-expert-public-modal-open="copybetting-search" data-copy-discovery-open aria-haspopup="dialog" aria-controls="copybetting-search-modal">{% include "cabinet/includes/_copybetting_reader_icon.html" with name="add" only %}<span>Добавить каппера</span></button>
             <button type="button" class="copybetting-button is-quiet" data-expert-public-modal-open="copybetting-limits" aria-controls="copybetting-limits-modal" aria-haspopup="dialog" aria-label="Общие лимиты">{% include "cabinet/includes/_copybetting_reader_icon.html" with name="limits" only %}<span>Общие лимиты</span></button>
         </div>

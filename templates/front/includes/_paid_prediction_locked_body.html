@@ -34,6 +34,7 @@
             <div class="paid-prediction-locked-copy-title">{% if prediction.is_paid_purchase_closed %}Прогноз завершён{% else %}Выберите удобный вариант{% endif %}</div>
         </div>
 
+        {% include "front/includes/_coupon_open_count.html" with count=prediction.unique_opens_count coupon_id=prediction.coupon.id only %}
         {% if prediction.is_paid_purchase_closed %}
         <div class="paid-prediction-purchase-closed">
             <strong>Покупка закрыта</strong>
@@ -45,16 +46,16 @@
             <section class="paid-prediction-offer is-single" aria-label="Разовая покупка прогноза">
                 <div>
                     <span>Этот прогноз</span>
-                    <strong>Скоро</strong>
+                    <strong>{% if prediction.single_purchase_price %}{{ prediction.single_purchase_price|money }} ₽{% else %}Недоступно{% endif %}</strong>
                 </div>
                 <ul>
                     <li>Один прогноз</li>
                     <li>Доступ навсегда</li>
                 </ul>
-                <span class="paid-prediction-offer-soon">Разовая покупка готовится</span>
+                {% if prediction.single_purchase_available %}<a href="{{ prediction.single_checkout_url }}">Купить за {{ prediction.single_purchase_price|money }} ₽</a>{% else %}<span class="paid-prediction-offer-soon">{{ prediction.single_purchase_reason|default:"Разовая покупка недоступна" }}</span>{% endif %}
             </section>
 
-            <section class="paid-prediction-offer is-subscription" aria-label="Подписка на платные прогнозы автора">
+            {% if prediction.paid_access_price %}<section class="paid-prediction-offer is-subscription" aria-label="Подписка на платные прогнозы автора">
                 <span class="paid-prediction-offer-value">Выгоднее</span>
                 <div>
                     <span>Подписка</span>
@@ -66,7 +67,7 @@
                     <li>Закрытая аналитика</li>
                 </ul>
                 <a href="{{ prediction.paid_checkout_url }}">Выбрать подписку</a>
-            </section>
+            </section>{% endif %}
         </div>
         {% endif %}
     </div>

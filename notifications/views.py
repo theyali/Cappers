@@ -160,6 +160,7 @@ def update_preferences(request):
         "prediction_favorite",
         "prediction_comment",
         "comment_reply",
+        "direct_messages",
         "copybetting",
         "new_follower",
         "paid_subscription",

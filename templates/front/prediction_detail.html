@@ -4,12 +4,13 @@
 {% block title %}{{ prediction_title }} — КапперХаб{% endblock %}
 
 {% block content %}
-<section class="coupon-detail-layout-page container" aria-label="{{ prediction_title }}">
+<section class="coupon-detail-layout-page container" aria-label="{{ prediction_title }}"{% if request.user.is_authenticated and request.user.pk != coupon.author_id %} data-coupon-open-url="{% url 'front:prediction_open' prediction_id=coupon.id %}" data-coupon-id="{{ coupon.id }}"{% endif %}>
   <div class="coupon-detail-content">
     <section class="coupon-detail-page" aria-label="Подробности купона #{{ coupon.id }}">
       {% include "front/includes/_coupon_detail_mobile.html" %}
       <a class="coupon-detail-back" href="{% url 'front:predictions' %}">{% include "front/includes/_solar_icon.html" with name="coupon_arrow_left_linear" %}Вернуться в ленту</a>
       <header class="coupon-detail-heading">
+        {% include "front/includes/_coupon_open_count.html" with count=coupon.unique_opens_count coupon_id=coupon.id only %}
         <div class="coupon-detail-heading-top">
           <h1>{{ prediction_title }}</h1>
           <span class="coupon-detail-state is-{{ coupon.state_status }}">{% if coupon.state_status == 'win' %}✓ Выигрыш{% elif coupon.state_status == 'lose' %}× Проигрыш{% elif coupon.state_status == 'refund' %}↩ Возврат{% else %}◷ Ожидает{% endif %}</span>

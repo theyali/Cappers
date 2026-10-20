@@ -3,27 +3,15 @@
     if (!panel) return;
     const content = panel.querySelector('[data-copy-content]');
     const feedback = panel.querySelector('[data-copy-feedback]');
-    const hiddenKey = `cappers:copybetting:hidden:${panel.dataset.owner}`;
-    let hiddenPeople;
-    try { hiddenPeople = new Set(JSON.parse(localStorage.getItem(hiddenKey) || '[]')); }
-    catch (_) { hiddenPeople = new Set(); }
     let pending = null;
     let version = 0;
     let debounce = null;
     let composing = false;
+    let currentHref = window.location.href;
     let currentMenu = null;
     let currentTrigger = null;
     let menuHome = null;
     const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const applyHidden = () => {
-        content.querySelectorAll('[data-copy-person]').forEach((row) => { row.hidden = hiddenPeople.has(row.dataset.copyPerson); });
-        const note = content.querySelector('[data-copy-hidden-note]');
-        if (note) note.hidden = hiddenPeople.size === 0;
-    };
-    const saveHidden = () => {
-        try { localStorage.setItem(hiddenKey, JSON.stringify([...hiddenPeople])); } catch (_) { /* Hiding still works for this visit. */ }
-        applyHidden();
-    };
     const closeMenu = (restoreFocus = false, immediate = false) => {
         if (!currentMenu) return;
         const menu = currentMenu, trigger = currentTrigger, home = menuHome;
@@ -96,7 +84,11 @@
                 content.innerHTML = payload.html;
                 if (push && panel.dataset.copyRole !== 'reader') window.history.pushState({ copybetting: true }, '', url);
             }
-            applyHidden();
+            if (typeof payload.summary_html === 'string') {
+                const summary = panel.querySelector('.copybetting-summary');
+                if (summary) summary.innerHTML = payload.summary_html;
+            }
+            currentHref = url.href;
             if (focusName && !append) {
                 const candidates = [...content.querySelectorAll(`[name="${focusName}"]`)];
                 const target = candidates.find((item) => item.tagName === focusTag && item.type !== 'hidden' && (focusTag !== 'BUTTON' || item.value === focusValue));
@@ -154,9 +146,27 @@
     document.addEventListener('click', async (event) => {
         const trigger = event.target.closest('[data-copy-menu-trigger]');
         if (trigger) { openMenu(trigger); return; }
-        const hide = event.target.closest('[data-copy-hide]');
-        if (hide) { hiddenPeople.add(hide.dataset.copyHide); closeMenu(false, true); saveHidden(); content.querySelector('[data-copy-show-hidden]')?.focus({ preventScroll: true }); feedback.textContent = 'Пользователь скрыт только в этом браузере. Копирование продолжается.'; return; }
-        if (event.target.closest('[data-copy-show-hidden]')) { hiddenPeople.clear(); saveHidden(); return; }
+        const audienceAction = event.target.closest('[data-copy-audience-action]');
+        if (audienceAction && !audienceAction.disabled) {
+            if (audienceAction.dataset.copyBlockAction === 'block' && !window.confirm(`Запретить @${audienceAction.dataset.username} копировать ваши прогнозы? Новые ставки перестанут копироваться. Уже принятые ставки будут рассчитаны.`)) return;
+            audienceAction.disabled = true;
+            try {
+                const token = panel.querySelector('[name="csrfmiddlewaretoken"]')?.value || document.querySelector('[name="csrfmiddlewaretoken"]')?.value;
+                const response = await fetch(audienceAction.dataset.url, { method: 'POST', credentials: 'same-origin', headers: { 'X-CSRFToken': token, Accept: 'application/json' } });
+                if (!response.ok) throw new Error('action');
+                closeMenu(false, true);
+                await load(currentHref, false, false);
+            } catch (_) { feedback.textContent = 'Не удалось сохранить изменение. Повторите действие.'; }
+            finally { audienceAction.disabled = false; }
+            return;
+        }
+        const showHidden = event.target.closest('[data-copy-show-hidden]');
+        if (showHidden) {
+            const url = new URL(currentHref, window.location.origin);
+            url.searchParams.set('copy_show_hidden', showHidden.dataset.show);
+            load(url.href, false, false);
+            return;
+        }
         const navigation = event.target.closest('[data-copy-nav], [data-copy-more]');
         if (navigation && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey && event.button === 0) {
             event.preventDefault();
@@ -211,5 +221,4 @@
         window.CappersSkeleton?.ready(content);
         feedback.textContent = '';
     });
-    applyHidden();
 })();

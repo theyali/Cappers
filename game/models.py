@@ -932,6 +932,11 @@ class PredictionCoupon(models.Model):
         default=Audience.FREE,
         db_index=True,
     )
+    single_purchase_enabled = models.BooleanField("Разовая продажа", default=False)
+    single_purchase_price = models.DecimalField(
+        "Цена разовой покупки при публикации", max_digits=10, decimal_places=2,
+        null=True, blank=True,
+    )
     headline = models.CharField("Заголовок", max_length=160, blank=True)
     description = models.TextField("Описание прогноза", blank=True)
     cover_image = models.ForeignKey(
@@ -957,6 +962,13 @@ class PredictionCoupon(models.Model):
         verbose_name = "Прогноз"
         verbose_name_plural = "Прогнозы"
         ordering = ["-created_at"]
+        constraints = [
+            models.CheckConstraint(
+                condition=models.Q(single_purchase_enabled=False)
+                | models.Q(audience="paid", single_purchase_price__isnull=False, single_purchase_price__gt=0),
+                name="coupon_single_purchase_price_valid",
+            ),
+        ]
         indexes = [
             models.Index(fields=["author", "published_status", "created_at"]),
             models.Index(fields=["published_status", "state_status", "created_at"]),

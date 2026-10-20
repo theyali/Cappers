@@ -37,6 +37,12 @@
     </span>
     <span class="matches-table-scope-copy">Статистика</span>
 </a>
+{% if expert_tariffs_enabled %}
+<a class="{{ public_tab_link_class }}" href="#tariffs" role="tab" aria-selected="false" tabindex="-1" data-expert-public-tab="tariffs">
+    <span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="wallet" only %}</span>
+    <span class="matches-table-scope-copy">Тарифы</span>
+</a>
+{% endif %}
 <a
     class="{{ public_tab_link_class }}"
     href="#bank"

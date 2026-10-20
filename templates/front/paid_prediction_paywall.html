@@ -5,6 +5,7 @@
 
 {% block content %}
 <section class="paid-coupon-paywall" aria-labelledby="paid-coupon-title">
+  {% include "front/includes/_coupon_open_count.html" with count=coupon.unique_opens_count coupon_id=coupon.id only %}
   <header class="paid-coupon-paywall__heading">
     <a class="paid-coupon-paywall__back" href="{% url 'front:predictions' %}">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
@@ -37,15 +38,17 @@
         Платный прогноз
       </span>
       <h2>{% if coupon.coupon_type == 'express' %}Экспресс из {{ positions_count }} событий{% else %}Ординар{% endif %}<br>от {{ expert_name }}</h2>
-      <p>{% if is_purchase_closed %}Купон уже рассчитан. Покупка задним числом закрыта, новые прогнозы доступны в профиле автора.{% else %}Исходы, коэффициенты, участники событий и разбор каждого матча открываются сразу после оформления подписки.{% endif %}</p>
+      <p>{% if is_purchase_closed %}Купон уже рассчитан. Покупка задним числом закрыта, новые прогнозы доступны в профиле автора.{% else %}Исходы, коэффициенты, участники событий и разбор каждого матча открываются сразу после покупки купона или оформления подписки.{% endif %}</p>
       <div class="paid-coupon-hero__actions">
+        {% if single_purchase_available %}<a class="paid-coupon-button paid-coupon-button--primary" href="{{ single_checkout_url }}">Купить купон за {{ single_purchase_price|money }} ₽</a>{% endif %}
         {% if access_available %}
+          {% if not single_purchase_available %}
           <a class="paid-coupon-button paid-coupon-button--primary" href="{{ checkout_url }}">
             <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4.5" y="10.5" width="15" height="10" rx="3"/><path d="M8 10.5V7.8a4 4 0 0 1 7.5-1.9"/></svg>
             Открыть за {{ access_price|money }} ₽
           </a>
-          <a class="paid-coupon-button paid-coupon-button--subscription" href="{{ checkout_url }}">Подписка — {{ access_price|money }} ₽ / {{ access_period }}</a>
-        {% else %}
+          {% endif %}<a class="paid-coupon-button paid-coupon-button--subscription" href="{{ checkout_url }}">Подписка — {{ access_price|money }} ₽ / {{ access_period }}</a>
+        {% elif not single_purchase_available %}
           <a class="paid-coupon-button paid-coupon-button--primary" href="{{ checkout_url }}">Профиль автора</a>
         {% endif %}
       </div>
@@ -107,7 +110,7 @@
         </div>
       </article>
       {% empty %}
-      <p class="paid-coupon-events__empty">События станут доступны после оформления подписки.</p>
+      <p class="paid-coupon-events__empty">События станут доступны после покупки купона или оформления подписки.</p>
       {% endfor %}
     </div>
     <div class="paid-coupon-events__summary">
@@ -124,7 +127,9 @@
     <a class="paid-coupon-button paid-coupon-button--subscription" href="{{ checkout_url }}">{% if access_available %}Подписаться{% else %}Профиль автора{% endif %}</a>
   </section>
 
-  {% if access_available %}
+  {% if single_purchase_available %}
+  <div class="paid-coupon-mobile-unlock"><span><b>{{ single_purchase_price|money }} ₽</b><small>доступ к этому купону</small></span><a class="paid-coupon-button paid-coupon-button--primary" href="{{ single_checkout_url }}">Купить купон</a></div>
+  {% elif access_available %}
   <div class="paid-coupon-mobile-unlock">
     <span><b>{{ access_price|money }} ₽</b><small>доступ по подписке</small></span>
     <a class="paid-coupon-button paid-coupon-button--primary" href="{{ checkout_url }}">

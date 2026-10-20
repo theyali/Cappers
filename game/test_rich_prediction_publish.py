@@ -172,6 +172,40 @@ class RichPredictionPublishTests(TestCase):
         profile.paid_predictions_price = Decimal("299")
         profile.save(update_fields=["paid_predictions_enabled", "paid_predictions_price"])
 
+    def test_single_only_price_is_snapshotted_on_publication_and_not_on_edit(self):
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = True
+        profile.single_coupon_sales_enabled = True
+        profile.single_coupon_price = Decimal("150.50")
+        profile.save()
+        response = self._publish(is_paid="on", description="я" * 300, published_status="draft")
+        self.assertEqual(response.status_code, 302)
+        self.coupon.refresh_from_db()
+        self.assertFalse(self.coupon.single_purchase_enabled)
+        self.assertIsNone(self.coupon.single_purchase_price)
+        response = self._edit(is_paid="on", description="я" * 300)
+        self.assertEqual(response.status_code, 302)
+        self.coupon.refresh_from_db()
+        self.assertTrue(self.coupon.single_purchase_enabled)
+        self.assertEqual(self.coupon.single_purchase_price, Decimal("150.50"))
+        profile.single_coupon_price = Decimal("300")
+        profile.save()
+        response = self._edit(is_paid="on", description="я" * 300, headline="Обновлённый заголовок")
+        self.assertEqual(response.status_code, 302)
+        self.coupon.refresh_from_db()
+        self.assertEqual(self.coupon.single_purchase_price, Decimal("150.50"))
+
+    def test_free_coupon_never_copies_single_purchase_price(self):
+        profile = self.analyst.analyst_profile
+        profile.paid_predictions_enabled = True
+        profile.single_coupon_sales_enabled = True
+        profile.single_coupon_price = Decimal("150.50")
+        profile.save()
+        self.assertEqual(self._publish().status_code, 302)
+        self.coupon.refresh_from_db()
+        self.assertFalse(self.coupon.single_purchase_enabled)
+        self.assertIsNone(self.coupon.single_purchase_price)
+
     def test_paid_draft_with_title_and_300_characters_saves(self):
         self._enable_paid_predictions()
         response = self._publish(is_paid="on", headline="Платный разбор", description="я" * 300,

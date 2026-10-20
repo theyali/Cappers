@@ -101,6 +101,8 @@ def top_up_balance(request):
             "real_balance_display": format_money(real_balance.balance) if real_balance else "",
             "pending_withdrawal_display": format_money(real_balance.pending_withdrawal) if real_balance else "",
             "held_display": format_money(real_balance.held) if real_balance and real_balance.held else "",
+            "withdrawal_schedule": WebsiteSettings.load().withdrawal_schedule,
+            "withdrawal_requests_per_week": WebsiteSettings.load().withdrawal_requests_per_week,
             "min_withdrawal_display": format_money(WebsiteSettings.load().min_withdrawal_amount),
         },
     )
@@ -269,4 +271,4 @@ def copybetting_preview(request, analyst_id):
     context = build_setup_context(request.user, analyst, form, balance=balance)
     return JsonResponse({"html": render_to_string("wallets/includes/_copybetting_setup_preview.html", context, request=request),
                          "calculation": render_to_string("wallets/includes/_copybetting_calculation.html", context, request=request),
-                         "valid": form.is_valid(), "errors": context["setup_validation_errors"]})
+                         "valid": form.is_valid() and not context["setup_copy_blocked"], "errors": context["setup_validation_errors"]})

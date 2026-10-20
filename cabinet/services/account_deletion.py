@@ -5,6 +5,7 @@ from django.utils import timezone
 
 from account_email.models import EmailChangeRequest, EmailVerificationRequest, PasswordResetRequest
 from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfile, User
+from front.metric_models import PredictionCouponOpen
 from notifications.models import NotificationPreference, TelegramAccount, TelegramLinkToken
 from wallets.models import CapperRealBalance, CopyBettingSubscription
 from wallets.services import format_money
@@ -43,6 +44,8 @@ def delete_user_account(user) -> User:
     if reasons:
         raise ValidationError(reasons)
 
+    # Keep the historical aggregate without a link back to the deleted account.
+    PredictionCouponOpen.objects.filter(user=user).update(user=None)
     now = timezone.now()
     if user.avatar:
         user.avatar.delete(save=False)

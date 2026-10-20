@@ -138,7 +138,7 @@ class CopybettingPanelTests(TestCase):
         self.assertContains(response, 'id="copybetting-how-modal"', count=1)
         self.assertContains(response, "copybetting-sheet-handle")
         self.assertContains(response, "Влияет ли копирование на мой индекс доверия?")
-        self.assertContains(response, "Запрет со стороны автора появится позже")
+        self.assertContains(response, "Запретить копировать")
         html = self.get().json()["html"]
         self.assertIn("Вас пока никто не копирует", html)
         self.assertNotIn("maxbet_77", html)

@@ -1,4 +1,7 @@
 (() => {
+    if (window.CappersPublicModals) return;
+    const modals = new Map();
+    window.CappersPublicModals = modals;
     const transitionMs = 220;
 
     const focusableSelector = [
@@ -17,7 +20,7 @@
         if (!dialog) return;
         // Fixed dialogs must not be clipped by a profile/content stacking context.
         document.body.appendChild(modal);
-        const closeButtons = Array.from(modal.querySelectorAll("[data-expert-public-details-close]"));
+
         let lastFocused = null;
         let closeTimer = null;
         let isOpen = false;
@@ -63,6 +66,11 @@
                 const body = dialog.querySelector(".expert-public-details-body");
                 if (body) body.scrollTop = 0;
             }
+            modals.forEach((entry, key) => {
+                if (key === modal.dataset.expertPublicModal) return;
+                const returnFocus = entry.close(null, true);
+                if (returnFocus?.isConnected) lastFocused = returnFocus;
+            });
             isOpen = true;
             isolateBackground();
             modal.classList.add("is-open");
@@ -77,22 +85,26 @@
             });
         };
 
-        const close = (event) => {
+        const close = (event, immediate = false) => {
             event?.preventDefault();
-            if (!isOpen) return;
+            if (!isOpen && !closeTimer) return;
+            if (closeTimer) window.clearTimeout(closeTimer);
 
             isOpen = false;
             modal.classList.remove("is-visible");
 
-            closeTimer = window.setTimeout(() => {
+            const finishClose = () => {
                 modal.classList.remove("is-open");
                 closeTimer = null;
                 restoreBackground();
                 document.documentElement.classList.remove("expert-public-details-open");
                 document.body.classList.remove("expert-public-details-open");
-                if (lastFocused?.isConnected) lastFocused.focus({ preventScroll: true });
+                if (!immediate && lastFocused?.isConnected) lastFocused.focus({ preventScroll: true });
                 modal.setAttribute("aria-hidden", "true");
-            }, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : transitionMs);
+            };
+            if (immediate) finishClose();
+            else closeTimer = window.setTimeout(finishClose, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : transitionMs);
+            return lastFocused;
         };
 
         const trapFocus = (event) => {
@@ -124,8 +136,9 @@
                 open(event, trigger);
             }
         });
-        closeButtons.forEach((button) => {
-            button.addEventListener("click", close);
+        modals.set(modal.dataset.expertPublicModal, { open, close });
+        modal.addEventListener("click", (event) => {
+            if (event.target.closest?.("[data-expert-public-details-close]")) close(event);
         });
 
         document.addEventListener("keydown", (event) => {

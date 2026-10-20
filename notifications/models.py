@@ -24,6 +24,7 @@ class NotificationPreference(models.Model):
     prediction_favorite = models.BooleanField("Сохранения моих прогнозов", default=True)
     prediction_comment = models.BooleanField("Комментарии к моим прогнозам", default=True)
     comment_reply = models.BooleanField("Ответы на мои комментарии", default=True)
+    direct_messages = models.BooleanField("Личные сообщения", default=True)
     copybetting = models.BooleanField("Копибеттинг моих прогнозов", default=True)
     new_follower = models.BooleanField("Новые подписчики", default=True)
     paid_subscription = models.BooleanField("Покупка платной подписки", default=True)
@@ -112,8 +113,10 @@ class Notification(models.Model):
         PREDICTION_FAVORITE = "prediction_favorite", "Сохранение прогноза"
         PREDICTION_COMMENT = "prediction_comment", "Комментарий к прогнозу"
         COMMENT_REPLY = "comment_reply", "Ответ на комментарий"
+        DIRECT_MESSAGE = "direct_message", "Личное сообщение"
         COPYBETTING = "copybetting", "Копибеттинг"
         NEW_FOLLOWER = "new_follower", "Новый подписчик"
+        COUPON_PURCHASE = "coupon_purchase", "Покупка и возврат купона"
         PAID_SUBSCRIPTION = "paid_subscription", "Платная подписка"
         NEW_PREDICTION = "new_prediction", "Новый прогноз"
         REQUESTED_MATCH_PREDICTION = "requested_match_prediction", "Прогноз по запросу"
@@ -193,6 +196,7 @@ class Notification(models.Model):
 class NotificationSectionState(models.Model):
     class Section(models.TextChoices):
         PREDICTIONS = "predictions", "Мои прогнозы"
+        MESSAGES = "messages", "Сообщения"
         COPYBETTING = "copybetting", "Копибеттинг"
         FOLLOWERS = "followers", "Подписчики"
         EARNINGS = "earnings", "Доходы"

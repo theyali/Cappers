@@ -32,10 +32,10 @@
             if (typeof payload.html !== 'string' || typeof payload.calculation !== 'string') throw new Error('payload');
             calculation.innerHTML = payload.calculation; history.innerHTML = payload.html;
             status.textContent = (payload.errors || []).join(' ');
-            submit.disabled = payload.valid === false;
+            submit.disabled = payload.valid === false || root.dataset.copyBlocked === "true";
         } catch (error) {
             if (current === version && (!controller.signal.aborted || controller.signal.reason === 'timeout')) {
-                submit.disabled = false;
+                submit.disabled = root.dataset.copyBlocked === "true";
                 status.textContent = 'Не удалось обновить пример. Измените параметр для повтора. Сохранение проверит актуальные настройки.';
             }
         } finally { clearTimeout(timeout); if (current === version) request = null; }
