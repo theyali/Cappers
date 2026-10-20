@@ -23,6 +23,7 @@ from . import (
     static_views,
     wiki_views,
 )
+from .og_cards import views as og_card_views
 
 app_name = "front"
 
@@ -132,6 +133,8 @@ urlpatterns = [
     ),
     path("experts/<str:username>/predictions/", coupon_views.expert_coupons, name="expert_coupons"),
     path("experts/<str:username>/", cabinet_expert_profile_views.expert_profile, name="expert_profile"),
+    path("og/coupon/<int:coupon_id>.png", og_card_views.coupon_image, name="og_coupon"),
+    path("og/capper/<str:username>.png", og_card_views.capper_image, name="og_capper"),
     path("cappers-table/", capper_views.cappers_table, name="cappers_table"),
     path(
         "cappers-table/<slug:group>/",
