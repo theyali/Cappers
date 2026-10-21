@@ -23954,6 +23954,8 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 1;
     font-variant-numeric: tabular-nums;
 }
+.vip-plan-article-limit { display: flex; align-items: center; gap: 8px; color: var(--text); font-size: 13px; line-height: 1.4; }
+.vip-plan-article-limit .solar-icon { flex: none; color: var(--yellow); }
 .vip-plan-action { margin-top: auto; display: grid; gap: 8px; }
 .vip-plan-action .profile-save-button {
     width: 100%;
@@ -30919,7 +30921,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
     border-radius: 20px;
     background: var(--panel);
 }
-.article-editor svg {
+.article-editor svg:not(.tox svg) {
     width: 18px;
     height: 18px;
     flex: 0 0 auto;
@@ -31197,6 +31199,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .article-editor-text .tox .tox-tbtn svg { fill: #c9ccd3; }
 .article-editor-text .tox .tox-tbtn--select { background: #2a2a2d; }
 .article-editor-text .tox .tox-tbtn:hover { background: #2a2a2d; }
+.article-editor-quota { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
 .article-editor-text-foot {
     display: flex;
     align-items: center;
@@ -31309,3 +31312,7 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .article-preview-author small { grid-column: 1 / -1; color: var(--muted); font-size: 11px; font-weight: 600; }
 .article-rules li { display: flex; align-items: center; gap: 12px; color: #c9ccd3; font-size: 12.5px; font-weight: 600; }
 .article-rules li svg { width: 16px; height: 16px; color: var(--muted); }
+
+.vip-plan-benefits { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; color: var(--text); font-size: 12px; line-height: 1.45; }
+.vip-plan-benefits li { display: flex; align-items: flex-start; gap: 8px; }
+.vip-plan-benefits .solar-icon { flex: none; color: var(--yellow); }

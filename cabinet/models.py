@@ -423,6 +423,17 @@ def _social_url(value: str, network: str) -> str:
     return text
 
 
+class CapperArticleDailyUsage(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="article_daily_usage")
+    date = models.DateField("День")
+    submitted_count = models.PositiveIntegerField("Отправлено на модерацию", default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("author", "date"), name="unique_article_daily_usage")]
+        verbose_name = "Дневной счётчик статей"
+        verbose_name_plural = "Дневные счётчики статей"
+
+
 class AnalystFollow(models.Model):
     follower = models.ForeignKey(
         User,
@@ -831,6 +842,11 @@ class VipPlan(models.Model):
     title = models.CharField("Название", max_length=120)
     description = models.TextField("Описание", blank=True)
     duration_days = models.PositiveIntegerField("Срок, дней")
+    daily_article_limit = models.PositiveIntegerField(
+        "Статей в день",
+        default=2,
+        help_text="Лимит отправок на модерацию за календарный день по времени сайта. Повторная отправка тоже учитывается. 0 — запретить отправку; черновики без ограничений.",
+    )
     price_rub = models.DecimalField(
         "Стоимость, ₽",
         max_digits=12,

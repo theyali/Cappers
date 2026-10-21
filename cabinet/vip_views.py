@@ -3,7 +3,6 @@ import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Prefetch
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -13,7 +12,7 @@ from django.views.decorators.http import require_POST
 from payments.utils import build_payment_options
 from wallets.services import InsufficientBalance, ensure_real_balance, format_money
 
-from .models import VipPlan, VipPlanComparisonFeature, VipPlanComparisonValue
+from .models import VipPlan
 from .telegram_auth import in_telegram_app
 from .vip import get_active_vip, plural_ru, purchase_vip, vip_switch_warning
 
@@ -74,29 +73,29 @@ def _error_message(exc) -> str:
 
 
 def _vip_comparison_rows(plans):
-    values_queryset = VipPlanComparisonValue.objects.filter(plan__in=plans).select_related("plan")
-    features = (
-        VipPlanComparisonFeature.objects.filter(is_active=True)
-        .prefetch_related(Prefetch("values", queryset=values_queryset))
-        .order_by("order", "id")
+    # These are implemented VIP capabilities, shared by every active plan.
+    titles = (
+        "Публикация статей",
+        "Текстовые прогнозы",
+        "Своя обложка для прогнозов",
+        "Показ в блоке VIP-капперов в ленте",
+        "Прогнозы в VIP-вкладках всех лент независимо от подписок",
+        "Попадание в последние 10 VIP-прогнозов",
+        "Показ в рекомендациях капперов",
+        "Показ последних 5 VIP-капперов в промоблоке",
+        "Отдельный рейтинг VIP-капперов",
+        "Участие в VIP-турнирах",
     )
-
-    rows = []
-    for feature in features:
-        values_by_plan = {value.plan_id: value for value in feature.values.all()}
-        rows.append(
-            {
-                "feature": feature,
-                "cells": [
-                    {
-                        "plan": plan,
-                        "value": values_by_plan.get(plan.id),
-                    }
-                    for plan in plans
-                ],
-            }
-        )
-    return rows
+    return [
+        {
+            "feature": {"title": title},
+            "cells": [
+                {"plan": plan, "value": {"is_checked": index != 0 or plan.daily_article_limit > 0}}
+                for plan in plans
+            ],
+        }
+        for index, title in enumerate(titles)
+    ]
 
 
 @login_required
@@ -109,6 +108,10 @@ def vip_plans(request):
     plans = list(VipPlan.objects.filter(is_active=True).order_by("order", "duration_days", "id"))
     balance_amount = real_balance.balance
     for plan in plans:
+        plan.article_limit_label = (
+            f"{plan.daily_article_limit} {plural_ru(plan.daily_article_limit, 'статья', 'статьи', 'статей')} в день"
+            if plan.daily_article_limit else "Отправка статей недоступна"
+        )
         plan.can_afford = balance_amount >= plan.price_rub
         plan.balance_after = balance_amount - plan.price_rub
         plan.price_display = format_money(plan.price_rub)

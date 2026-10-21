@@ -150,7 +150,6 @@ def _recommended_experts(
     profiles = AnalystProfile.objects.filter(
         user__role=User.Role.ANALYST,
         is_public=True,
-        is_recommended=True,
     )
     if current_profile is not None:
         profiles = profiles.exclude(pk=current_profile.pk)
@@ -162,11 +161,11 @@ def _recommended_experts(
         profiles.select_related("user"),
         user_outer_ref="user_id",
         activated_annotation_name="active_vip_activated_at",
-    )
+    ).filter(Q(is_recommended=True) | Q(is_vip_active=True))
     profiles = list(
         profiles
         .annotate(followers_count=Count("user__analyst_followers", distinct=True))
-        .order_by("-followers_count", "-is_verified", "display_name", "user__username")[
+        .order_by("-is_vip_active", "-active_vip_activated_at", "-followers_count", "-is_verified", "display_name", "user__username")[
             :RECOMMENDED_EXPERTS_LIMIT
         ]
     )

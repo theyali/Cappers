@@ -11,7 +11,8 @@ from cabinet.comments.services.moderation import (
     contains_profanity,
     normalize_comment_text,
 )
-from cabinet.models import CapperArticle
+from cabinet.models import CapperArticle, CapperArticleDailyUsage, User
+from cabinet.vip import get_active_vip
 
 
 _CYRILLIC_TRANSLIT = str.maketrans(
@@ -90,6 +91,19 @@ MAX_ARTICLE_TAGS = 5
 MAX_ARTICLE_TAG_LENGTH = 30
 EXCERPT_MAX_LENGTH = 300
 WORDS_PER_MINUTE = 200
+DEFAULT_DAILY_ARTICLE_LIMIT = 2
+
+
+def get_article_daily_limit(user, *, at=None) -> int:
+    subscription = get_active_vip(user, at=at)
+    return subscription.plan.daily_article_limit if subscription and subscription.plan else DEFAULT_DAILY_ARTICLE_LIMIT
+
+
+def build_article_daily_quota(user, *, at=None) -> dict:
+    now = at or timezone.now()
+    limit = get_article_daily_limit(user, at=now)
+    used = CapperArticleDailyUsage.objects.filter(author=user, date=timezone.localdate(now)).values_list("submitted_count", flat=True).first() or 0
+    return {"limit": limit, "used": used, "remaining": max(0, limit - used)}
 
 
 def article_reading_minutes(content: str) -> int:
@@ -178,6 +192,7 @@ def build_capper_articles_context(user) -> dict:
         "vip_locked_label": "Стать VIP, чтобы публиковать статьи",
         "vip_upgrade_url": reverse("cabinet:vip_plans"),
         "article_create_url": reverse("cabinet:capper_article_create"),
+        "article_daily_quota": build_article_daily_quota(user) if can_create else None,
     }
 
 
@@ -266,6 +281,7 @@ def build_article_editor_context(user, form, article=None) -> dict:
             "verified": bool(profile and profile.is_verified),
         },
         "max_tags": MAX_ARTICLE_TAGS,
+        "article_daily_quota": build_article_daily_quota(user),
         "excerpt_max_length": EXCERPT_MAX_LENGTH,
         "active_tab": "articles",
     }
@@ -274,6 +290,8 @@ def build_article_editor_context(user, form, article=None) -> dict:
 @transaction.atomic
 def submit_capper_article_for_moderation(user, article) -> CapperArticle:
     _ensure_article_access(user)
+    # All submissions for an author share this lock, including different articles.
+    User.objects.select_for_update().get(pk=user.pk)
     article = CapperArticle.objects.select_for_update().get(pk=article.pk)
     _ensure_article_owner(user, article)
 
@@ -283,9 +301,16 @@ def submit_capper_article_for_moderation(user, article) -> CapperArticle:
     }:
         raise ValidationError("Эту статью нельзя повторно отправить на модерацию.")
 
+    now = timezone.now()
+    limit = get_article_daily_limit(user, at=now)
+    usage, _ = CapperArticleDailyUsage.objects.get_or_create(author=user, date=timezone.localdate(now))
+    if usage.submitted_count >= limit:
+        raise ValidationError(
+            f"Дневной лимит статей исчерпан: {usage.submitted_count} из {limit}. Можно сохранить черновик и отправить его завтра."
+            if limit else "Отправка статей отключена для вашего VIP-тарифа. Черновики можно сохранять."
+        )
     _validate_article_text(article, user=user, check_spam=True)
 
-    now = timezone.now()
     article.status = CapperArticle.Status.PENDING
     article.submitted_at = now
     article.published_at = None
@@ -303,6 +328,8 @@ def submit_capper_article_for_moderation(user, article) -> CapperArticle:
             "updated_at",
         ]
     )
+    usage.submitted_count += 1
+    usage.save(update_fields=["submitted_count"])
     return article
 
 

@@ -43,6 +43,8 @@
                     </div>
                 </header>
 
+                <p class="article-editor-quota">Сегодня отправлено на модерацию: {{ article_daily_quota.used }} из {{ article_daily_quota.limit }}. Осталось: {{ article_daily_quota.remaining }}. Черновики без ограничений.</p>
+
                 {% if rejection_note %}
                 <section class="article-editor-alert" role="status">
                     <strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20zM12 10v5M12 18h.01"/></svg>Статья отклонена модератором</strong>

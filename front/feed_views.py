@@ -49,7 +49,7 @@ def _feed_cache_key(user_id: int, namespace: str, *parts) -> str:
     import hashlib
 
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
-    return f"front:feed:{namespace}:v5:{user_id}:{signature}"
+    return f"front:feed:{namespace}:v6:{user_id}:{signature}"
 
 
 def _feed_url(request, params) -> str:
@@ -252,7 +252,7 @@ def following_feed(request):
     vip_stories, vip_stories_count = _vip_story_payloads(request.user)
 
     selected_capper = request.GET.get("capper", "").strip()
-    if selected_capper and selected_capper not in followed_usernames | paid_usernames:
+    if selected_capper and not is_vip_predictions_tab and selected_capper not in followed_usernames | paid_usernames:
         selected_capper = ""
 
     selected_sport = _sport_from_filter(request.GET.get("sport", "").strip())
@@ -283,7 +283,7 @@ def following_feed(request):
     free_meta_queryset = _apply_feed_filters(
         _feed_meta_queryset(
             audience=PredictionCoupon.Audience.FREE,
-            author_ids=None if favorites_only else following_ids,
+            author_ids=None if favorites_only or is_vip_predictions_tab else following_ids,
             favorites_user=request.user if favorites_only else None,
         ),
         selected_capper=selected_capper,
@@ -292,7 +292,7 @@ def following_feed(request):
         only_today=only_today,
         match_scope=active_match_scope,
     )
-    if active_prediction_type != PREDICTION_TYPE_CLASSIC:
+    if active_prediction_type not in {PREDICTION_TYPE_CLASSIC, PREDICTION_TYPE_VIP}:
         free_meta_queryset = free_meta_queryset.filter(prediction_format=prediction_format)
     if is_vip_predictions_tab:
         free_meta_queryset = annotate_vip_status(free_meta_queryset, user_outer_ref="author_id")
@@ -300,7 +300,7 @@ def following_feed(request):
     paid_meta_queryset = _apply_feed_filters(
         _feed_meta_queryset(
             audience=PredictionCoupon.Audience.PAID,
-            author_ids=None if favorites_only else paid_source_ids,
+            author_ids=None if favorites_only or is_vip_predictions_tab else paid_source_ids,
             favorites_user=request.user if favorites_only else None,
         ),
         selected_capper=selected_capper,
@@ -309,11 +309,12 @@ def following_feed(request):
         only_today=only_today,
         match_scope=active_match_scope,
     )
+    if is_vip_predictions_tab:
+        paid_meta_queryset = annotate_vip_status(paid_meta_queryset, user_outer_ref="author_id").filter(is_vip_active=True)
     free_count_queryset = free_meta_queryset
     paid_count_queryset = paid_meta_queryset
     sport_count_querysets = (
         (paid_meta_queryset,) if is_paid_predictions_tab
-        else (free_meta_queryset,) if is_vip_predictions_tab
         else (free_meta_queryset, paid_meta_queryset)
     )
     sport_counts_by_code, _sport_single_total = prediction_sport_counts(
@@ -375,8 +376,6 @@ def following_feed(request):
     )
     if is_paid_predictions_tab:
         counts = paid_counts
-    elif is_vip_predictions_tab:
-        counts = free_counts
     else:
         counts = {
             key: (free_counts.get(key) or 0) + (paid_counts.get(key) or 0)
@@ -387,8 +386,6 @@ def following_feed(request):
     # All formats share one paginated list; discovery does not grant paid access.
     if is_paid_predictions_tab:
         source_filter = Q(pk__in=paid_count_queryset.values("pk"))
-    elif is_vip_predictions_tab:
-        source_filter = Q(pk__in=free_count_queryset.values("pk"))
     else:
         source_filter = Q(pk__in=free_count_queryset.values("pk")) | Q(pk__in=paid_count_queryset.values("pk"))
     queryset = _published_queryset(include_paid=True).filter(source_filter)
@@ -452,8 +449,8 @@ def following_feed(request):
             "vip_ranking_url": reverse("front:cappers_table_group", args=["vip"]),
             "vip_prediction_rail": build_vip_prediction_rail_context(),
             "paid_subscriptions": paid_subscriptions,
-            "has_feed_sources": bool(following or paid_subscriptions or vip_stories or favorites_only or feed_total_count),
-            "has_personal_feed_sources": bool(following or paid_subscriptions or favorites_only or feed_total_count),
+            "has_feed_sources": bool(following or paid_subscriptions or vip_stories or favorites_only or feed_total_count or is_vip_predictions_tab),
+            "has_personal_feed_sources": bool(following or paid_subscriptions or favorites_only or feed_total_count or is_vip_predictions_tab),
             "following_count": len(following),
             "paid_subscriptions_count": len(paid_subscriptions),
             "feed_total_count": feed_total_count,
