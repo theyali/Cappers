@@ -24,7 +24,7 @@
         <div class="matches-head-lane is-tiles"><div class="matches-head-pane"><div class="matches-head-inner">
             <nav class="matches-head-tiles" aria-label="Виды спорта">
                 {% for sport in head.sports %}
-                <a class="matches-sport-tile is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}" data-sport-code="{{ sport.code }}"{% if sport.active %} aria-current="page"{% endif %}>
+                <a class="matches-sport-tile is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}"{% if sport.active %} aria-current="page"{% endif %}>
                     {% include "game/includes/_match_sport_tile_art.html" with key=sport.tile_key code=sport.code %}
                     <span class="matches-sport-tile-face">
                         {% if head.is_live %}<span class="matches-sport-tile-lv"><span class="matches-head-dot"></span>LIVE</span>{% endif %}
@@ -46,7 +46,7 @@
                 </a>
                 <span class="matches-head-sep" aria-hidden="true"></span>
                 {% for sport in head.sports %}
-                <a class="matches-sport-chip is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}" data-sport-code="{{ sport.code }}"{% if sport.active %} aria-current="page"{% endif %}>
+                <a class="matches-sport-chip is-{{ sport.tile_key }}{% if sport.active %} is-active{% endif %}" href="{{ sport.toggle_url }}"{% if sport.active %} aria-current="page"{% endif %}>
                     <span class="matches-sport-chip-glyph">{% include "front/includes/_sport_icon.html" with key=sport.tile_key code=sport.code size=17 only %}</span>
                     <span class="matches-sport-chip-nm">{{ sport.label }}</span>
                     <span class="matches-sport-chip-q">{{ sport.count }}</span>

@@ -31258,11 +31258,10 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
     transition: opacity 0.24s ease, transform 0.24s ease;
 }
 [data-tournament-hidden][hidden] { display: none !important; }
-.matches-sport-tile,
-.matches-sport-chip,
 [data-match-sport],
 [data-rich-access-card] { transition: opacity 0.24s ease, transform 0.24s ease; }
-.is-tournament-locked[data-bet-option] { opacity: 0.38; cursor: not-allowed; }
+.is-tournament-unavailable { opacity: 0.6; }
+.is-tournament-locked[data-bet-option] { position: relative; opacity: 0.58; cursor: not-allowed; transform: none; }
 .coupon-item.is-tournament-invalid,
 .rich-prediction-coupon-item.is-tournament-invalid {
     background: rgba(255, 77, 85, 0.1);

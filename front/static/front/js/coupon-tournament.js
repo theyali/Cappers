@@ -61,24 +61,47 @@
         node._tournamentFade = window.setTimeout(() => { node.hidden = true; }, FADE_MS);
     };
 
+    const LOCK_ICON = '<svg viewBox="0 0 24 24" fill="none"><path d="M7 10V8a5 5 0 0 1 10 0v2M6 10h12a2 2 0 0 1 2 2v7H4v-7a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    const lockOdd = (button, reason) => {
+        const locked = Boolean(reason);
+        button.classList.toggle("is-tournament-locked", locked);
+        button.setAttribute("aria-disabled", String(locked));
+        let icon = button.querySelector("[data-tournament-lock]");
+        if (locked && !icon) {
+            icon = document.createElement("i");
+            icon.className = "match-odd-lock";
+            icon.setAttribute("aria-hidden", "true");
+            icon.setAttribute("data-tournament-lock", "");
+            icon.innerHTML = LOCK_ICON;
+            button.prepend(icon);
+        }
+        if (!locked) icon?.remove();
+        if (locked) button.title = reason;
+        else if (icon) button.removeAttribute("title");
+    };
+
+    // Matches the tournament does not accept stay in the list, dimmed, with their odds locked;
+    // odds below the tournament minimum are locked too. The coupon refuses such positions anyway.
     const applyToPage = (scope = document) => {
         const rule = current();
-        scope.querySelectorAll(".matches-sport-tile[data-sport-code], .matches-sport-chip[data-sport-code], [data-table-sport-code]").forEach((node) => {
-            const code = node.dataset.sportCode || node.dataset.tableSportCode;
-            setVisible(node, sportAllowed(rule, code));
-        });
-        scope.querySelectorAll("[data-match-sport]").forEach((node) => {
+        const cards = [...scope.querySelectorAll("[data-match-sport]")];
+        if (scope instanceof Element && scope.matches("[data-match-sport]")) cards.push(scope);
+        cards.forEach((node) => {
             const matchId = node.dataset.matchId || node.dataset.matchShellId;
-            setVisible(node, sportAllowed(rule, node.dataset.matchSport) && !matchUsed(rule, matchId)
-                && startsInTime(rule, node.dataset.matchStartsAt));
+            const reason = !rule ? ""
+                : !sportAllowed(rule, node.dataset.matchSport) ? `Турнир принимает только: ${rule.sport_names.join(", ")}`
+                : matchUsed(rule, matchId) ? "На этот матч уже есть ваш прогноз в турнире"
+                : !startsInTime(rule, node.dataset.matchStartsAt) ? "Матч начинается после окончания турнира"
+                : "";
+            node.classList.toggle("is-tournament-unavailable", Boolean(reason));
+            node.dataset.tournamentReason = reason;
         });
         scope.querySelectorAll("[data-bet-option][data-coefficient]").forEach((button) => {
+            const matchReason = button.closest("[data-match-sport]")?.dataset.tournamentReason || "";
             const odd = toNumber(button.dataset.coefficient);
-            const locked = Boolean(rule && rule.min_coefficient > 0 && odd !== null && odd < rule.min_coefficient);
-            button.classList.toggle("is-tournament-locked", locked);
-            button.setAttribute("aria-disabled", String(locked));
-            if (locked) button.title = `Минимальный кф турнира — ${formatOdd(rule.min_coefficient)}`;
-            else if (button.title.startsWith("Минимальный кф турнира")) button.removeAttribute("title");
+            const low = Boolean(rule && rule.min_coefficient > 0 && odd !== null && odd < rule.min_coefficient);
+            lockOdd(button, matchReason || (low ? `Минимальный кф турнира — ${formatOdd(rule.min_coefficient)}` : ""));
         });
     };
 
