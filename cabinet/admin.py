@@ -327,12 +327,13 @@ class VipPlanAdmin(admin.ModelAdmin):
         "title",
         "duration_days",
         "price_rub",
+        "daily_article_limit",
         "is_featured",
         "is_active",
         "order",
         "updated_at",
     )
-    list_editable = ("price_rub", "is_featured", "is_active", "order")
+    list_editable = ("price_rub", "daily_article_limit", "is_featured", "is_active", "order")
     list_filter = ("is_featured", "is_active", "duration_days")
     search_fields = ("title",)
     ordering = ("order", "duration_days", "id")
@@ -347,6 +348,7 @@ class VipPlanAdmin(admin.ModelAdmin):
                     "description",
                     "duration_days",
                     "price_rub",
+                    "daily_article_limit",
                     "icon",
                     "is_featured",
                     "is_active",

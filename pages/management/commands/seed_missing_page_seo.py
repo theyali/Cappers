@@ -254,7 +254,6 @@ ACTION_ROUTES = {
     "tournaments:match_odds",
     "tournaments:join",
     "tournaments:create_coupon",
-    "cabinet:capper_article_submit",
     "cabinet:profile_promo_banner",
     "cabinet:vip_purchase",
     "cabinet:daily_task_claim",

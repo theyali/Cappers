@@ -332,6 +332,16 @@ class CapperArticle(models.Model):
     )
     excerpt = models.TextField("Краткое описание", blank=True)
     content = HTMLField("Контент")
+    category = models.ForeignKey(
+        "front.ArticleCategory",
+        on_delete=models.SET_NULL,
+        related_name="capper_articles",
+        verbose_name="Категория",
+        blank=True,
+        null=True,
+    )
+    tags = models.CharField("Теги", max_length=300, blank=True, help_text="Через запятую")
+    reading_time_minutes = models.PositiveSmallIntegerField("Время чтения, мин", default=1)
     status = models.CharField(
         "Статус",
         max_length=16,
@@ -361,6 +371,19 @@ class CapperArticle(models.Model):
 
     def __str__(self) -> str:
         return self.title
+
+    # The names of the site's Article fields, so both kinds share the article templates.
+    @property
+    def description(self) -> str:
+        return self.excerpt
+
+    @property
+    def image(self):
+        return self.cover_image
+
+    @property
+    def tag_list(self) -> list[str]:
+        return [tag.strip() for tag in self.tags.split(",") if tag.strip()]
 
     def get_absolute_url(self) -> str:
         return reverse(
@@ -398,6 +421,17 @@ def _social_url(value: str, network: str) -> str:
     if network == "x":
         return f"https://x.com/{handle}"
     return text
+
+
+class CapperArticleDailyUsage(models.Model):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name="article_daily_usage")
+    date = models.DateField("День")
+    submitted_count = models.PositiveIntegerField("Отправлено на модерацию", default=0)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("author", "date"), name="unique_article_daily_usage")]
+        verbose_name = "Дневной счётчик статей"
+        verbose_name_plural = "Дневные счётчики статей"
 
 
 class AnalystFollow(models.Model):
@@ -808,6 +842,11 @@ class VipPlan(models.Model):
     title = models.CharField("Название", max_length=120)
     description = models.TextField("Описание", blank=True)
     duration_days = models.PositiveIntegerField("Срок, дней")
+    daily_article_limit = models.PositiveIntegerField(
+        "Статей в день",
+        default=2,
+        help_text="Лимит отправок на модерацию за календарный день по времени сайта. Повторная отправка тоже учитывается. 0 — запретить отправку; черновики без ограничений.",
+    )
     price_rub = models.DecimalField(
         "Стоимость, ₽",
         max_digits=12,

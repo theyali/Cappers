@@ -1,5 +1,6 @@
 (() => {
-    const nav = document.querySelector(".mobile-app-nav");
+    const reactions = document.querySelector(".coupon-detail-page > .prediction-reactions");
+    const nav = reactions || document.querySelector(".mobile-app-nav");
     if (!nav) return;
     const mobile = window.matchMedia("(max-width: 1120px)");
     const root = document.scrollingElement || document.documentElement;
@@ -14,6 +15,19 @@
 
     const position = (scroller) => Math.max(0, Math.min(scroller.scrollTop, Math.max(0, scroller.scrollHeight - scroller.clientHeight)));
     const show = () => nav.classList.remove("is-scroll-hidden");
+    if (reactions) {
+        const page = reactions.closest(".coupon-detail-page");
+        const reserveSpace = () => {
+            if (mobile.matches) {
+                page.style.setProperty("--coupon-reactions-height", `${Math.ceil(reactions.getBoundingClientRect().height)}px`);
+            } else {
+                page.style.removeProperty("--coupon-reactions-height");
+            }
+        };
+        new ResizeObserver(reserveSpace).observe(reactions);
+        mobile.addEventListener("change", reserveSpace);
+        reserveSpace();
+    }
     const reset = () => {
         show();
         positions = new WeakMap();

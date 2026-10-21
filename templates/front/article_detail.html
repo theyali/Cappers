@@ -23,8 +23,8 @@
                 <header class="article-detail-head">
                     <a class="article-back" href="{{ article_back_url }}">← {{ article_back_label|default:"Все статьи" }}</a>
                     <div class="article-detail-meta">
-                        <span>{{ article.created_at|date:"d.m.Y" }}</span>
-                        <span>{{ article_detail_source|default:"КапперХаб" }}</span>
+                        <span>{{ article.published_at|default:article.created_at|date:"d.m.Y" }}</span>
+                        <span>{% if article_author_url %}<a href="{{ article_author_url }}">{{ article_detail_source }}</a>{% else %}{{ article_detail_source|default:"КапперХаб" }}{% endif %}</span>
                     </div>
                     <h1>{{ article.title }}</h1>
                     {% if article.description %}
@@ -76,7 +76,7 @@
                             {% endif %}
                         </a>
                         <div>
-                            <span>{{ related.created_at|date:"d.m.Y" }}</span>
+                            <span>{{ related.published_at|default:related.created_at|date:"d.m.Y" }}</span>
                             <div class="related-article-title heading-style-h3"><a href="{{ related.get_absolute_url }}">{{ related.title }}</a></div>
                             <a href="{{ related.get_absolute_url }}">Читать →</a>
                         </div>

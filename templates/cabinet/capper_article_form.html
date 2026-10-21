@@ -6,7 +6,7 @@
 {% block extra_css %}{{ form.media }}{% endblock %}
 
 {% block content %}
-<section class="profile-page matches-page container capper-article-form-page">
+<section class="profile-page matches-page container article-editor-page">
     <div class="matches-shell">
         {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
 
@@ -17,80 +17,176 @@
                 </nav>
             </div>
 
-            <header class="bonus-page-head">
-                <div>
-                    <h1>{{ page_title }}</h1>
-                    <p>Отправьте материал на модерацию сразу или сохраните его как черновик.</p>
-                </div>
-                <a class="profile-save-button" href="{% url 'cabinet:capper_articles' %}">К списку</a>
-            </header>
-
-            {% if article %}
-            <section class="profile-list-card">
-                <div class="profile-list-head">
-                    <div>
-                        <h2>Статус статьи</h2>
-                        <p>Текущий этап публикации материала.</p>
-                    </div>
-                    <span class="profile-coupon-status is-{{ article.status }}">{{ article.get_status_display }}</span>
-                </div>
-                {% if article.status == "rejected" and article.moderation_note %}
-                    <div class="profile-empty-state">
-                        <p>{{ article.moderation_note }}</p>
-                    </div>
-                {% endif %}
-            </section>
-            {% endif %}
-
-            <form class="profile-form-card capper-article-form" method="post" enctype="multipart/form-data" data-disable-on-submit>
+            <form class="article-editor" method="post" enctype="multipart/form-data" novalidate data-disable-on-submit data-article-editor data-max-tags="{{ max_tags }}">
                 {% csrf_token %}
-
-                <div class="profile-section-heading">
-                    <div>
-                        <h2>Материал</h2>
-                        <p>Заголовок, обложка, краткое описание и основной текст.</p>
+                <header class="article-editor-head">
+                    <div class="article-editor-heading">
+                        <a class="article-editor-back" href="{% url 'cabinet:capper_articles' %}">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>
+                            Мои статьи
+                        </a>
+                        <p class="article-editor-eyebrow">Публикации каппера</p>
+                        <div class="article-editor-title-row">
+                            <h1>{{ page_title }}</h1>
+                            <span class="article-editor-status is-{{ article_status }}">{{ article_status_label }}</span>
+                        </div>
                     </div>
-                    <div class="capper-article-actions">
-                        <button class="profile-save-button" type="submit" name="article_action" value="submit">{{ submit_label }}</button>
-                        <button class="profile-row-action" type="submit" name="article_action" value="draft">Сохранить черновик</button>
+                    <div class="article-editor-actions">
+                        <button class="article-editor-draft" type="submit" name="article_action" value="draft">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11l3 3v13H5z"/><path d="M8 4v5h7V4M8 20v-6h8v6"/></svg>
+                            <span class="article-editor-wide-only">Сохранить черновик</span><span class="article-editor-narrow-only">Черновик</span>
+                        </button>
+                        <button class="article-editor-submit" type="submit" name="article_action" value="submit">
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/></svg>
+                            <span class="article-editor-wide-only">Отправить на модерацию</span><span class="article-editor-narrow-only">На модерацию</span>
+                        </button>
                     </div>
-                </div>
+                </header>
 
-                {% if form.non_field_errors %}
-                    <div class="profile-empty-state" role="alert">{{ form.non_field_errors }}</div>
+                <p class="article-editor-quota">Сегодня отправлено на модерацию: {{ article_daily_quota.used }} из {{ article_daily_quota.limit }}. Осталось: {{ article_daily_quota.remaining }}. Черновики без ограничений.</p>
+
+                {% if rejection_note %}
+                <section class="article-editor-alert" role="status">
+                    <strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20zM12 10v5M12 18h.01"/></svg>Статья отклонена модератором</strong>
+                    <blockquote>«{{ rejection_note }}»</blockquote>
+                    <p>Исправьте и отправьте снова — повторная проверка занимает до 24 часов.</p>
+                </section>
                 {% endif %}
-                <div class="profile-empty-state" role="alert" data-form-client-error hidden tabindex="-1"></div>
 
-                <div class="profile-fields-grid">
-                    <label class="capper-field">
-                        <span class="capper-field-label">{{ form.title.label }}</span>
-                        {{ form.title }}
-                        {% if form.title.errors %}<span class="capper-field-errors">{{ form.title.errors }}</span>{% endif %}
-                    </label>
+                {% if editor_errors %}
+                <section class="article-editor-alert" role="alert">
+                    <strong><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 21h20zM12 10v5M12 18h.01"/></svg>Не отправили: {% if editor_errors|length == 1 %}одно поле требует{% else %}поля требуют{% endif %} внимания</strong>
+                    <ul>
+                        {% for field_id, message in editor_errors %}
+                            <li><span>{{ message }}</span>{% if field_id %}<a href="#{{ field_id }}">Перейти к полю →</a>{% endif %}</li>
+                        {% endfor %}
+                    </ul>
+                </section>
+                {% endif %}
+                <div class="article-editor-alert" role="alert" data-form-client-error hidden tabindex="-1"></div>
 
-                    <label class="capper-field">
-                        <span class="capper-field-label">{{ form.cover_image.label }}</span>
-                        {{ form.cover_image }}
-                        <span class="capper-field-help">JPG, PNG или WebP, до 5 МБ.</span>
-                        {% if form.cover_image.errors %}<span class="capper-field-errors">{{ form.cover_image.errors }}</span>{% endif %}
-                    </label>
+                <div class="article-editor-body">
+                    <div class="article-editor-main">
+                        <div class="article-editor-field{% if form.cover_image.errors %} is-invalid{% endif %}">
+                            <div class="article-editor-label"><label for="{{ form.cover_image.id_for_label }}">Обложка</label><small>16:9, до 5 МБ</small></div>
+                            <div class="article-cover{% if cover_url %} has-image{% endif %}" data-article-cover>
+                                <input class="article-cover-input" type="file" name="{{ form.cover_image.html_name }}" id="{{ form.cover_image.id_for_label }}" accept="image/jpeg,image/png,image/webp" data-article-cover-input>
+                                <input type="checkbox" name="{{ form.cover_image.html_name }}-clear" hidden data-article-cover-clear>
+                                <div class="article-cover-empty">
+                                    <span class="article-cover-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg></span>
+                                    <strong data-article-cover-title>{% if form.cover_image.errors %}Файл не загружен: он больше 5 МБ{% else %}Перетащите изображение или выберите файл{% endif %}</strong>
+                                    <small>JPG, PNG или WebP · до 5 МБ · лучше 1600×900</small>
+                                    <label class="article-cover-pick" for="{{ form.cover_image.id_for_label }}">{% if form.cover_image.errors %}Выбрать другой файл{% else %}Выбрать файл{% endif %}</label>
+                                </div>
+                                <img class="article-cover-image" src="{{ cover_url }}" alt="" data-article-cover-image{% if not cover_url %} hidden{% endif %}>
+                                <span class="article-cover-meta" data-article-cover-meta hidden></span>
+                                <div class="article-cover-tools">
+                                    <label class="article-cover-tool" for="{{ form.cover_image.id_for_label }}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg>Заменить</label>
+                                    <button class="article-cover-tool" type="button" aria-label="Удалить обложку" data-article-cover-remove><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V4h4v3M7 7l1 13h8l1-13"/></svg></button>
+                                </div>
+                            </div>
+                            <p class="article-editor-error" data-article-cover-error{% if not form.cover_image.errors %} hidden{% endif %}>{% for error in form.cover_image.errors %}{{ error }}{% endfor %}</p>
+                        </div>
 
-                    <label class="capper-field">
-                        <span class="capper-field-label">{{ form.excerpt.label }}</span>
-                        {{ form.excerpt }}
-                        {% if form.excerpt.errors %}<span class="capper-field-errors">{{ form.excerpt.errors }}</span>{% endif %}
-                    </label>
+                        <div class="article-editor-field{% if form.title.errors %} is-invalid{% endif %}">
+                            <div class="article-editor-label"><label for="{{ form.title.id_for_label }}">Заголовок</label><b class="article-editor-counter" data-article-counter="{{ form.title.id_for_label }}">0 / 180</b></div>
+                            {{ form.title }}
+                            {% for error in form.title.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
+                        </div>
 
-                    <div class="capper-field">
-                        <span class="capper-field-label">{{ form.content.label }}</span>
-                        {{ form.content }}
-                        {% if form.content.errors %}<span class="capper-field-errors">{{ form.content.errors }}</span>{% endif %}
+                        <div class="article-editor-field{% if form.excerpt.errors %} is-invalid{% endif %}">
+                            <div class="article-editor-label"><label for="{{ form.excerpt.id_for_label }}">Краткое описание</label><small>Показывается в карточке статьи и в поиске</small><b class="article-editor-counter" data-article-counter="{{ form.excerpt.id_for_label }}">0 / {{ excerpt_max_length }}</b></div>
+                            {{ form.excerpt }}
+                            {% for error in form.excerpt.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
+                        </div>
+
+                        <div class="article-editor-pair">
+                            <fieldset class="article-editor-field{% if form.category.errors %} is-invalid{% endif %}" id="{{ form.category.id_for_label }}">
+                                <legend class="article-editor-label"><span>Категория</span><small>одна на статью</small></legend>
+                                <div class="article-editor-chips">
+                                    {% for choice in form.category %}
+                                        <label class="article-editor-chip">{{ choice.tag }}<span>{{ choice.choice_label }}</span></label>
+                                    {% endfor %}
+                                </div>
+                                {% for error in form.category.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
+                            </fieldset>
+
+                            <div class="article-editor-field{% if form.tags.errors %} is-invalid{% endif %}">
+                                <div class="article-editor-label"><label for="article-tag-input">Теги</label><small>до {{ max_tags }} тегов</small><b class="article-editor-counter" data-article-tags-count>{{ editor_tags|length }} / {{ max_tags }}</b></div>
+                                <div class="article-tags" data-article-tags>
+                                    {{ form.tags }}
+                                    {% for tag in editor_tags %}
+                                        <span class="article-tag" data-article-tag>{{ tag }}<button type="button" aria-label="Удалить тег">×</button></span>
+                                    {% endfor %}
+                                    <input class="article-tag-input" id="article-tag-input" type="text" maxlength="30" placeholder="Введите тег и нажмите Enter" data-article-tag-input>
+                                    <button class="article-tag-add" type="button" data-article-tag-add>+ Добавить</button>
+                                </div>
+                                {% for error in form.tags.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
+                            </div>
+                        </div>
+
+                        <div class="article-editor-field{% if form.content.errors %} is-invalid{% endif %}">
+                            <div class="article-editor-label"><label for="{{ form.content.id_for_label }}">Текст статьи</label></div>
+                            <div class="article-editor-text">
+                                {{ form.content }}
+                                <div class="article-editor-text-foot">
+                                    <span><b data-article-words>0</b> слов · <span data-article-minutes>0 мин</span></span>
+                                    <button type="button" aria-label="На весь экран" data-article-fullscreen><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+                                </div>
+                            </div>
+                            {% for error in form.content.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
+                        </div>
                     </div>
-                </div>
 
-                <div class="profile-mobile-save">
-                    <button class="profile-save-button" type="submit" name="article_action" value="submit">{{ submit_label }}</button>
-                    <button class="profile-row-action" type="submit" name="article_action" value="draft">Сохранить черновик</button>
+                    <details class="article-editor-card article-ready" open data-article-ready>
+                        <summary>
+                            <span class="article-ready-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m5 12.5 4.5 4.5L19 7"/></svg></span>
+                            <span class="article-ready-title" data-article-ready-title>Готовность к отправке</span>
+                            <b data-article-ready-count>0 из 5</b>
+                        </summary>
+                        <span class="article-ready-bar" aria-hidden="true"><span data-article-ready-bar></span></span>
+                        <ul>
+                            <li data-article-check="title">Заголовок</li>
+                            <li data-article-check="cover">Обложка</li>
+                            <li data-article-check="excerpt">Описание от 100 символов</li>
+                            <li data-article-check="category">Категория</li>
+                            <li data-article-check="content">Текст от 300 слов</li>
+                        </ul>
+                        <p>Отправить можно и раньше — модератор вернёт с комментарием, если чего-то не хватит.</p>
+                    </details>
+
+                    <details class="article-editor-card article-preview" open data-article-collapsible>
+                        <summary>
+                            <span>Как увидят читатели</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
+                        </summary>
+                        <article class="article-preview-card">
+                            <span class="article-preview-media">
+                                <img src="{{ cover_url }}" alt="" data-article-preview-image{% if not cover_url %} hidden{% endif %}>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>
+                            </span>
+                            <span class="article-preview-meta"><b data-article-preview-category>Категория</b><span data-article-preview-minutes>1 мин чтения</span></span>
+                            <strong data-article-preview-title>Заголовок статьи</strong>
+                            <p data-article-preview-excerpt>Краткое описание появится здесь</p>
+                            <span class="article-preview-author">
+                                {% if preview_author.avatar_url %}<img src="{{ preview_author.avatar_url }}" alt="" width="34" height="34">{% else %}<i>{{ preview_author.initials }}</i>{% endif %}
+                                <span><b>{{ preview_author.name }}</b>{% if preview_author.verified %}{% include "cabinet/includes/_capper_verified_badge.html" %}{% endif %}<small>VIP-каппер</small></span>
+                            </span>
+                        </article>
+                    </details>
+
+                    <details class="article-editor-card article-rules" open data-article-collapsible>
+                        <summary>
+                            <span>Правила модерации</span>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                        </summary>
+                        <ul>
+                            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 6 0l3-3a4 4 0 0 0-6-6l-1 1M14 10a4 4 0 0 0-6 0l-3 3a4 4 0 0 0 6 6l1-1"/></svg>Без ссылок на букмекеров и рефералок</li>
+                            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>Без мата и оскорблений</li>
+                            <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h7l5 5v13H7zM14 3v5h5"/></svg>Свой текст, не копия чужой статьи</li>
+                            <li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Проверка обычно занимает до 24 часов</li>
+                        </ul>
+                    </details>
                 </div>
             </form>
         </section>
@@ -100,4 +196,5 @@
 
 {% block extra_js %}
 <script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>
+<script src="{% static 'front/js/article-editor.js' %}" defer></script>
 {% endblock %}

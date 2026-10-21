@@ -1,18 +1,25 @@
 from django.core.paginator import Paginator
-from django.db.models import Q
+from django.db.models import BooleanField, CharField, DateTimeField, F, Q, Value
+from django.db.models.functions import Coalesce
 from django.http import JsonResponse
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
+from django.urls import reverse
+
+from cabinet.models import CapperArticle, User
 
 from .models import Article, ArticleCategory, News, NewsCategory
 
 
 ARTICLES_PAGE_SIZE = 9
+# Columns of a listing row; editorial and capper articles share them in one sorted union.
 ARTICLE_SORT_OPTIONS = {
-    "new": ("-is_main", "-created_at", "-id"),
-    "old": ("is_main", "created_at", "id"),
-    "read_time": ("reading_time_minutes", "-created_at", "-id"),
+    "new": ("-is_main", "-published", "-id"),
+    "old": ("is_main", "published", "id"),
+    "read_time": ("reading_time_minutes", "-published", "-id"),
 }
+ARTICLE_SOURCES = (("", "Все"), ("editorial", "Редакция"), ("cappers", "Капперы"))
+EDITORIAL, CAPPER = "editorial", "capper"
 
 
 def _is_ajax(request):
@@ -25,31 +32,30 @@ def _base_querystring(request):
     return query.urlencode()
 
 
-def _filter_publications(request, *, model, category_model):
+def _search_q(query: str, description_field: str) -> Q:
+    return (
+        Q(title__icontains=query)
+        | Q(**{f"{description_field}__icontains": query})
+        | Q(tags__icontains=query)
+        | Q(category__name__icontains=query)
+    )
+
+
+def _filter_publications(request, *, rows, category_model):
+    """Category, search, sort and page over listing rows: a callable (category, query) -> queryset
+    of values with the ARTICLE_SORT_OPTIONS columns and "id"."""
     categories = category_model.objects.filter(is_active=True)
     selected_category = None
-    queryset = model.objects.filter(is_published=True).select_related("category")
-
     category_slug = request.GET.get("category") or ""
     if category_slug:
         selected_category = get_object_or_404(categories, slug=category_slug)
-        queryset = queryset.filter(category=selected_category)
-
     search_query = (request.GET.get("q") or "").strip()
-    if search_query:
-        queryset = queryset.filter(
-            Q(title__icontains=search_query)
-            | Q(description__icontains=search_query)
-            | Q(tags__icontains=search_query)
-            | Q(category__name__icontains=search_query)
-        )
 
     sort = request.GET.get("sort") or "new"
     if sort not in ARTICLE_SORT_OPTIONS:
         sort = "new"
 
-    queryset = queryset.order_by(*ARTICLE_SORT_OPTIONS[sort])
-    paginator = Paginator(queryset, ARTICLES_PAGE_SIZE)
+    paginator = Paginator(rows(selected_category, search_query).order_by(*ARTICLE_SORT_OPTIONS[sort]), ARTICLES_PAGE_SIZE)
     page_obj = paginator.get_page(request.GET.get("page") or 1)
 
     return {
@@ -62,6 +68,83 @@ def _filter_publications(request, *, model, category_model):
         "total_count": paginator.count,
         "base_querystring": _base_querystring(request),
     }
+
+
+def _news_rows(category, query):
+    queryset = News.objects.filter(is_published=True)
+    if category:
+        queryset = queryset.filter(category=category)
+    if query:
+        queryset = queryset.filter(_search_q(query, "description"))
+    return queryset.select_related("category").annotate(published=F("created_at"))
+
+
+def _public_capper_articles():
+    return CapperArticle.objects.filter(
+        status=CapperArticle.Status.APPROVED,
+        author__role=User.Role.ANALYST,
+        author__analyst_profile__is_public=True,
+    )
+
+
+def _article_rows(source: str):
+    def rows(category, query):
+        editorial = Article.objects.filter(is_published=True)
+        cappers = _public_capper_articles()
+        if category:
+            editorial = editorial.filter(category=category)
+            cappers = cappers.filter(category=category)
+        if query:
+            editorial = editorial.filter(_search_q(query, "description"))
+            cappers = cappers.filter(_search_q(query, "excerpt"))
+        if source == "editorial":
+            cappers = cappers.none()
+        elif source == "cappers":
+            editorial = editorial.none()
+        columns = ("id", "reading_time_minutes", "kind", "published", "is_main")
+        editorial = editorial.annotate(
+            kind=Value(EDITORIAL, output_field=CharField()),
+            published=F("created_at"),
+        ).values(*columns)
+        cappers = cappers.annotate(
+            kind=Value(CAPPER, output_field=CharField()),
+            published=Coalesce("published_at", "created_at", output_field=DateTimeField()),
+            is_main=Value(False, output_field=BooleanField()),
+        ).values(*columns)
+        return editorial.union(cappers, all=True)
+
+    return rows
+
+
+def _article_page_items(rows) -> list:
+    """The page's union rows as Article and CapperArticle objects, in the page's order."""
+    ids = {EDITORIAL: [], CAPPER: []}
+    for row in rows:
+        ids[row["kind"]].append(row["id"])
+    editorial = Article.objects.select_related("category").in_bulk(ids[EDITORIAL])
+    cappers = CapperArticle.objects.select_related("category", "author", "author__analyst_profile").in_bulk(ids[CAPPER])
+    items = []
+    for row in rows:
+        if row["kind"] == EDITORIAL:
+            items.append(editorial[row["id"]])
+            continue
+        article = cappers[row["id"]]
+        article.author_name = str(article.author.analyst_profile)
+        article.author_url = reverse("front:expert_profile", args=[article.author.username])
+        items.append(article)
+    return items
+
+
+def _source_tabs(request, current: str) -> list[dict]:
+    tabs = []
+    for value, label in ARTICLE_SOURCES:
+        query = request.GET.copy()
+        query.pop("page", None)
+        query.pop("source", None)
+        if value:
+            query["source"] = value
+        tabs.append({"label": label, "value": value, "active": value == current, "url": f"?{query.urlencode()}" if query else "?"})
+    return tabs
 
 
 def _render_publication_listing(request, *, template_name, context):
@@ -77,22 +160,29 @@ def _render_publication_listing(request, *, template_name, context):
 
 
 def articles(request):
+    source = request.GET.get("source") or ""
+    if source not in dict(ARTICLE_SOURCES):
+        source = ""
     listing_context = _filter_publications(
         request,
-        model=Article,
+        rows=_article_rows(source),
         category_model=ArticleCategory,
     )
+    page_obj = listing_context["page_obj"]
+    page_obj.object_list = _article_page_items(list(page_obj.object_list))
     listing_context.update(
         {
+            "current_source": source,
+            "source_tabs": _source_tabs(request, source),
             "article_categories": listing_context["categories"],
             "total_articles": listing_context["total_count"],
             "page_title": "Все статьи",
-            "page_intro": "Актуальные материалы, аналитика и советы от экспертов КапперХаб.",
+            "page_intro": "Аналитика, стратегии и разборы от редакции и капперов КапперХаб.",
             "page_kind": "articles",
             "list_url_name": "front:articles",
             "read_label": "Читать статью",
             "empty_title": "Статей пока нет",
-            "empty_text": "Новые материалы появятся здесь после публикации через админку.",
+            "empty_text": "Новые материалы редакции и капперов появятся здесь после публикации.",
             "search_placeholder": "Поиск по статьям...",
             "all_category_label": "Все статьи",
             "breadcrumbs": [],
@@ -108,7 +198,7 @@ def articles(request):
 def sports_news(request):
     listing_context = _filter_publications(
         request,
-        model=News,
+        rows=_news_rows,
         category_model=NewsCategory,
     )
     listing_context.update(
@@ -180,5 +270,35 @@ def article_detail(request, slug: str):
         {
             "article": article,
             "related_articles": related_articles,
+        },
+    )
+
+
+def capper_article_detail(request, username: str, article_id: int, slug: str):
+    article = get_object_or_404(
+        _public_capper_articles().select_related("category", "author", "author__analyst_profile"),
+        pk=article_id,
+        author__username=username,
+    )
+    if article.slug != slug:
+        return redirect(article.get_absolute_url(), permanent=True)
+
+    related_articles = (
+        _public_capper_articles().filter(author=article.author)
+        .exclude(pk=article.pk)
+        .order_by("-published_at", "-id")[:3]
+    )
+    author_name = str(article.author.analyst_profile)
+    return render(
+        request,
+        "front/article_detail.html",
+        {
+            "article": article,
+            "related_articles": related_articles,
+            "article_detail_source": author_name,
+            "article_author_url": reverse("front:expert_profile", args=[username]),
+            "related_eyebrow": "Ещё от каппера",
+            "related_title": f"Статьи: {author_name}",
+            "related_all_label": "Все статьи",
         },
     )

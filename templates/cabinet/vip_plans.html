@@ -18,16 +18,12 @@
             <header class="vip-hero">
                 <div class="vip-hero-copy">
                     <h1>{{ page.heading }}</h1>
-                    <p>Получите доступ к эксклюзивным прогнозам, расширенной аналитике и дополнительным возможностям. Выберите тариф и начните зарабатывать больше.</p>
+                    <p>Публикуйте статьи и текстовые прогнозы, меняйте обложки и продвигайте профиль в VIP-блоках и рекомендациях. Участвуйте в VIP-турнирах.</p>
                 </div>
 
                 <article class="vip-current-card{% if active_vip %} is-active{% endif %}">
                     <span class="vip-icon-card vip-icon-card--gold" aria-hidden="true">
-                        {% if active_vip and active_vip.plan and active_vip.plan.icon %}
-                        <img src="{{ active_vip.plan.icon.url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
-                        {% else %}
-                        <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path><path d="M5 20h14"></path></svg>
-                        {% endif %}
+                        {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                     </span>
                     <div>
                         <span>Ваш текущий статус</span>
@@ -53,28 +49,23 @@
                     {% if plan.is_featured %}<span class="vip-plan-badge">Рекомендуем</span>{% endif %}
                     <div class="vip-plan-card-head">
                         <span class="vip-icon-card" aria-hidden="true">
-                            {% if plan.icon %}
-                            <img src="{{ plan.icon.url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
-                            {% else %}
-                            <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path><path d="M5 20h14"></path></svg>
-                            {% endif %}
+                            {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                         </span>
                         <div>
                             <h2>{{ plan.title }}</h2>
-                            <span>{% if forloop.counter == 1 %}Для уверенного начала{% elif forloop.counter == 2 %}Больше возможностей{% else %}Максимальная выгода{% endif %}</span>
+                            <span>VIP для развития профиля</span>
                         </div>
                     </div>
-                    <p>
-                        {% if plan.description %}
-                            {{ plan.description }}
-                        {% elif forloop.counter == 1 %}
-                            Базовый доступ к VIP-прогнозам и ключевым возможностям.
-                        {% elif forloop.counter == 2 %}
-                            Расширенный доступ, приоритетные прогнозы и максимальная аналитика.
-                        {% else %}
-                            Полный доступ ко всем функциям и персональные условия.
-                        {% endif %}
-                    </p>
+                    <p>Публикуйте прогнозы и статьи, выделяйте свои прогнозы обложками и развивайте аудиторию в VIP-блоках платформы.</p>
+                    <ul class="vip-plan-benefits">
+                        <li>{% include "front/includes/_solar_icon.html" with name="articles" icon_size=16 only %}Текстовые прогнозы и свои обложки</li>
+                        <li>{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" icon_size=16 only %}Продвижение в VIP-блоках и рекомендациях</li>
+                        <li>{% include "front/includes/_solar_icon.html" with name="tournaments" icon_size=16 only %}Участие в VIP-турнирах</li>
+                    </ul>
+                    <div class="vip-plan-article-limit" title="Лимит отправок на модерацию. Черновики без ограничений.">
+                        {% include "front/includes/_solar_icon.html" with name="articles" icon_size=20 only %}
+                        <span>{{ plan.article_limit_label }}</span>
+                    </div>
                     <strong class="vip-plan-price">{{ plan.price_display }} ₽</strong>
                     <small>на {{ plan.duration_days }} дней</small>
                     <form
@@ -128,24 +119,26 @@
                     </div>
                 </div>
 
-                {% if comparison_rows and plans %}
+                {% if plans %}
                 <div class="vip-compare-table" role="table" aria-label="Сравнение VIP-тарифов" style="--vip-plan-count: {{ plans|length }};">
                     <div class="vip-compare-row vip-compare-row--head" role="row">
                         <div role="columnheader">Возможности</div>
                         {% for plan in plans %}
                         <div role="columnheader"{% if plan.is_featured %} class="is-pro"{% endif %}>
                             <span class="vip-mini-crown" aria-hidden="true">
-                                {% if plan.icon %}
-                                <img src="{{ plan.icon.url }}" alt="" width="34" height="34" loading="lazy" decoding="async">
-                                {% else %}
-                                <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg>
-                                {% endif %}
+                                {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                             </span>
                             {{ plan.title }}
                         </div>
                         {% endfor %}
                     </div>
 
+                    <div class="vip-compare-row" role="row">
+                        <div role="cell">Статей в день</div>
+                        {% for plan in plans %}
+                        <div role="cell"{% if plan.is_featured %} class="is-pro"{% endif %}>{% if plan.daily_article_limit %}{{ plan.daily_article_limit }}{% else %}Недоступно{% endif %}</div>
+                        {% endfor %}
+                    </div>
                     {% for row in comparison_rows %}
                     <div class="vip-compare-row" role="row">
                         <div role="cell">

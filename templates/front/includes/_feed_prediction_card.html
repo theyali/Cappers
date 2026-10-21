@@ -48,9 +48,15 @@
             </span>
         </span>
 
+        {% if prediction.is_paid_locked %}
+        <span class="feed-prediction-cover-status is-paid">
+            {% include "front/includes/_paid_prediction_marker.html" only %}
+        </span>
+        {% else %}
         <span class="feed-prediction-cover-status is-{{ prediction.state_status }}" aria-label="{{ prediction.coupon.get_state_status_display }}">
             {% include "front/includes/_prediction_status_icon.html" with status=prediction.state_status only %}
         </span>
+        {% endif %}
 
         {% if prediction.coupon.author.is_vip %}
         <span class="feed-prediction-cover-format is-vip" role="img" aria-label="VIP прогноз" title="VIP прогноз">
@@ -89,9 +95,9 @@
         </div>
 
         {% if prediction.is_paid_locked %}
-        <a class="feed-prediction-bet is-locked" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}" aria-label="Платный прогноз{% if prediction.single_purchase_price %}, {{ prediction.single_purchase_price|money }} рублей{% endif %}">
+        <a class="feed-prediction-bet is-locked" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}" aria-label="Платный прогноз">
             <span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="10" width="16" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>
-            <strong>{% if prediction.single_purchase_price %}{{ prediction.single_purchase_price|money }} ₽{% else %}Платный{% endif %}</strong>
+            <strong>Платный</strong>
         </a>
         {% else %}
         <a class="feed-prediction-bet" href="{% url 'front:prediction_detail' prediction_id=prediction.coupon.id %}" aria-label="Ставка {{ prediction.bet_label }} с коэффициентом {{ prediction.coefficient|floatformat:2 }}">
@@ -101,7 +107,8 @@
         {% endif %}
     </div>
 
-    <a class="feed-prediction-author{% if prediction.coupon.audience == 'paid' %} is-paid{% endif %}" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
+    <div class="feed-prediction-author-row">
+    <a class="feed-prediction-author" href="{% url 'front:expert_profile' username=prediction.coupon.author.username %}" aria-label="Профиль эксперта {{ prediction.expert_name }}">
         <span class="feed-prediction-avatar{% if prediction.coupon.author.is_vip %} is-vip{% endif %}"{% if prediction.expert_avatar_url or prediction.coupon.author.avatar %} data-skeleton-image{% endif %}>
             {% capper_trust_badge prediction.expert_trust_index %}
             {% if prediction.expert_avatar_url %}
@@ -125,10 +132,29 @@
                 </span>
                 {% endif %}
             </span>
-            <span>{{ prediction.followers_count }} подписчиков</span>
+            <span><span data-author-followers-count="{{ prediction.coupon.author_id }}">{{ prediction.followers_count }}</span> подписчиков</span>
         </span>
-        {% if prediction.coupon.audience == "paid" %}{% include "front/includes/_paid_prediction_marker.html" only %}{% endif %}
     </a>
+    {% if not prediction.is_own %}
+        {% if request.user.is_authenticated %}
+        <button class="feed-prediction-follow{% if prediction.is_following_author %} is-active{% endif %}" type="button"
+                data-prediction-follow data-analyst-id="{{ prediction.coupon.author_id }}"
+                data-url="{% url 'cabinet:toggle_follow' user_id=prediction.coupon.author_id %}"
+                aria-pressed="{% if prediction.is_following_author %}true{% else %}false{% endif %}"
+                aria-label="{% if prediction.is_following_author %}Отписаться от эксперта{% else %}Подписаться на эксперта{% endif %}"
+                title="{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}">
+            <span data-follow-icon="subscribe"{% if prediction.is_following_author %} hidden{% endif %}>{% include "front/includes/_solar_icon.html" with name="following" icon_size=20 only %}</span>
+            <span data-follow-icon="unsubscribe"{% if not prediction.is_following_author %} hidden{% endif %}>{% include "front/includes/_solar_icon.html" with name="match_finished" icon_size=20 only %}</span>
+            <span data-follow-label>{% if prediction.is_following_author %}Отписаться{% else %}Подписаться{% endif %}</span>
+        </button>
+        {% else %}
+        <a class="feed-prediction-follow" href="{% url 'cabinet:login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Подписаться на эксперта" title="Подписаться">
+            {% include "front/includes/_solar_icon.html" with name="following" icon_size=20 only %}
+            <span data-follow-label>Подписаться</span>
+        </a>
+        {% endif %}
+    {% endif %}
+    </div>
 
     <div class="feed-prediction-actions" aria-label="Действия с прогнозом">
         <button

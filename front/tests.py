@@ -1452,6 +1452,29 @@ class FollowingFeedPaidDiscoveryTests(TestCase):
         PaidPredictionPurchase.objects.create(buyer=self.reader, analyst=self.author, coupon=self.coupon, status="paid", price=50, platform_fee_percent=0, platform_fee_amount=0, capper_income=50, paid_at=timezone.now())
         self.assertFalse(self.feed().context["page_obj"][0].is_paid_locked)
 
+    def test_locked_grid_card_uses_paid_cover_marker_and_consistent_label(self):
+        response = self.feed()
+        card = response.context["page_obj"][0]
+        card.state_status = "lose"
+        for price in (None, Decimal("50.00")):
+            card.single_purchase_price = price
+            html = render_to_string("front/includes/_feed_prediction_card.html", {"prediction": card}, request=response.wsgi_request)
+            self.assertIn('feed-prediction-cover-status is-paid', html)
+            self.assertNotIn('feed-prediction-cover-status is-lose', html)
+            self.assertEqual(html.count('real_coin.png'), 1)
+            self.assertIn('<strong>Платный</strong>', html)
+            self.assertIn('data-prediction-follow', html)
+            self.assertIn('solar-icons.svg#following', html)
+            self.assertIn(reverse("cabinet:toggle_follow", kwargs={"user_id": self.author.pk}), html)
+
+        card.is_paid_locked = False
+        html = render_to_string("front/includes/_feed_prediction_card.html", {"prediction": card}, request=response.wsgi_request)
+        self.assertIn('feed-prediction-cover-status is-lose', html)
+        self.assertNotIn('real_coin.png', html)
+        card.is_own = True
+        html = render_to_string("front/includes/_feed_prediction_card.html", {"prediction": card}, request=response.wsgi_request)
+        self.assertNotIn('data-prediction-follow', html)
+
     def test_default_feed_combines_all_formats_and_payment_types(self):
         created = []
         for audience, prediction_format in [("free", "quick"), ("free", "rich"), ("paid", "rich")]:
@@ -1495,6 +1518,29 @@ class FollowingFeedPaidDiscoveryTests(TestCase):
 
 
 class VipStoriesPresentationTests(TestCase):
+    @override_settings(STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    })
+    def test_vip_recommendations_do_not_turn_empty_personal_feed_into_filtered_feed(self):
+        from cabinet.models import AnalystFollow
+
+        cache.clear()
+        self.client.force_login(self.reader)
+        response = self.client.get(reverse("front:following_feed"))
+        self.assertFalse(response.context["has_personal_feed_sources"])
+        self.assertContains(response, "Вы пока ни на кого не подписаны")
+        self.assertContains(response, "vip-prediction-rail")
+        self.assertContains(response, "Капперы с VIP-доступом")
+        self.assertNotContains(response, "По этим условиям прогнозов нет")
+        self.assertNotContains(response, "data-matches-head-sentinel")
+
+        AnalystFollow.objects.create(follower=self.reader, analyst=self.author)
+        response = self.client.get(reverse("front:following_feed"))
+        self.assertTrue(response.context["has_personal_feed_sources"])
+        self.assertContains(response, "data-matches-head-sentinel")
+        self.assertNotContains(response, "Вы пока ни на кого не подписаны")
+
     @classmethod
     def setUpTestData(cls):
         from datetime import timedelta
@@ -1529,6 +1575,46 @@ class VipStoriesPresentationTests(TestCase):
             title="Новый прогноз",
             event_key="vip-story-test-new-prediction",
         )
+
+    @override_settings(STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    })
+    def test_vip_tabs_discover_unfollowed_authors_all_formats_and_keep_paid_locked(self):
+        cache.clear()
+        self.client.force_login(self.reader)
+        sport = Sport.objects.create(code="football", name="Football")
+        match = Match.objects.create(external_id=930109, sport=sport, starts_at=timezone.now() + timedelta(days=1))
+        ids = set()
+        for audience, prediction_format in [("free", "quick"), ("free", "rich"), ("paid", "rich")]:
+            coupon = PredictionCoupon.objects.create(author=self.author, published_status="published",
+                audience=audience, prediction_format=prediction_format, total_stake=100,
+                description="PRIVATE VIP ANALYSIS" if audience == "paid" else "Public analysis")
+            Prediction.objects.create(coupon=coupon, match=match, coefficient=2, stake=100,
+                market="winner", selection="PRIVATE VIP PICK" if audience == "paid" else "П1")
+            ids.add(coupon.pk)
+        for route in ("front:following_feed", "front:predictions"):
+            response = self.client.get(reverse(route), {"prediction_type": "vip"})
+            self.assertEqual(response.status_code, 200)
+            cards = list(response.context["page_obj"])
+            self.assertEqual({card.id for card in cards}, ids)
+            self.assertEqual(sum(bool(getattr(card, "is_paid_locked", False)) for card in cards), 1)
+            self.assertNotContains(response, "PRIVATE VIP PICK")
+            self.assertNotContains(response, "PRIVATE VIP ANALYSIS")
+        regular_feed = self.client.get(reverse("front:following_feed"))
+        self.assertEqual(regular_feed.context["feed_total_count"], 0)
+
+    def test_active_vip_is_recommended_without_editorial_recommendation_flag(self):
+        from django.test import RequestFactory
+        from cabinet.expert_profile_views import _recommended_experts
+        AnalystProfile.objects.filter(user=self.author).update(is_recommended=False)
+        request = RequestFactory().get("/")
+        request.user = self.reader
+        cards = _recommended_experts(request)
+        self.assertIn(self.author.pk, [card["id"] for card in cards])
+        from cabinet.models import UserVipSubscription
+        UserVipSubscription.objects.filter(user=self.author).update(is_active=False)
+        self.assertNotIn(self.author.pk, [card["id"] for card in _recommended_experts(request)])
 
     def test_vip_stories_include_real_unread_counts_and_roi(self):
         from front.feed_views import _vip_story_payloads

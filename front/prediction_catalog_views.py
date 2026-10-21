@@ -66,7 +66,7 @@ PREDICTION_TYPE_CHOICES = {
 
 def _catalog_cache_key(namespace: str, *parts) -> str:
     signature = hashlib.sha1(repr(parts).encode("utf-8")).hexdigest()[:20]
-    return f"front:predictions:{namespace}:v5:{signature}"
+    return f"front:predictions:{namespace}:v6:{signature}"
 
 
 def _rich_path(sport_code: str | None = None, *, express_only: bool = False) -> str:
@@ -192,11 +192,9 @@ def apply_prediction_type_scope(queryset, active_prediction_type: str, user):
         # The paid catalog is public: access controls protect the coupon payload,
         # not discovery. Locked cards are rendered with deliberately redacted data.
         return queryset.filter(audience=PredictionCoupon.Audience.PAID)
-    queryset = queryset.filter(audience=PredictionCoupon.Audience.FREE)
     if active_prediction_type == PREDICTION_TYPE_VIP:
-        queryset = annotate_vip_status(queryset, user_outer_ref="author_id")
-        queryset = queryset.filter(is_vip_active=True)
-    return queryset
+        return annotate_vip_status(queryset, user_outer_ref="author_id").filter(is_vip_active=True)
+    return queryset.filter(audience=PredictionCoupon.Audience.FREE)
 
 
 def build_vip_prediction_rail_context(limit=10):
@@ -694,7 +692,7 @@ def predictions(
     active_prediction_type = prediction_type_context["active_prediction_type"]
     is_paid_predictions = prediction_type_context["is_paid_predictions"]
     is_unified_catalog = active_prediction_type in {PREDICTION_TYPE_CLASSIC, PREDICTION_TYPE_RICH}
-    include_paid = is_paid_predictions or is_unified_catalog
+    include_paid = is_paid_predictions or is_unified_catalog or active_prediction_type == PREDICTION_TYPE_VIP
 
     if express_only:
         active_sport = None
@@ -745,7 +743,7 @@ def predictions(
     top_profiles = ranked_expert_profiles(limit=TOP_EXPERTS_LIMIT)
     top_expert_ids = [profile.user_id for profile in top_profiles]
 
-    format_filter = Q() if is_unified_catalog else Q(prediction_format=prediction_format)
+    format_filter = Q() if is_unified_catalog or active_prediction_type == PREDICTION_TYPE_VIP else Q(prediction_format=prediction_format)
     base_meta_queryset = _catalog_meta_queryset(include_paid=include_paid).filter(format_filter)
     filtered = _published_queryset(include_paid=include_paid).filter(format_filter)
     if not is_unified_catalog:

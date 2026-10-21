@@ -2,7 +2,7 @@ from math import ceil
 
 from django.db.models import Count, Q, Sum
 from django.db.models.functions import Coalesce
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.formats import date_format
 from django.utils.html import strip_tags
@@ -150,7 +150,6 @@ def _recommended_experts(
     profiles = AnalystProfile.objects.filter(
         user__role=User.Role.ANALYST,
         is_public=True,
-        is_recommended=True,
     )
     if current_profile is not None:
         profiles = profiles.exclude(pk=current_profile.pk)
@@ -162,11 +161,11 @@ def _recommended_experts(
         profiles.select_related("user"),
         user_outer_ref="user_id",
         activated_annotation_name="active_vip_activated_at",
-    )
+    ).filter(Q(is_recommended=True) | Q(is_vip_active=True))
     profiles = list(
         profiles
         .annotate(followers_count=Count("user__analyst_followers", distinct=True))
-        .order_by("-followers_count", "-is_verified", "display_name", "user__username")[
+        .order_by("-is_vip_active", "-active_vip_activated_at", "-followers_count", "-is_verified", "display_name", "user__username")[
             :RECOMMENDED_EXPERTS_LIMIT
         ]
     )
@@ -613,40 +612,4 @@ def expert_profile(request, username: str):
         request,
         "cabinet/expert_profile_performance.html",
         context,
-    )
-
-
-def capper_article_detail(request, username: str, article_id: int, slug: str):
-    article = get_object_or_404(
-        CapperArticle.objects.select_related("author", "author__analyst_profile"),
-        pk=article_id,
-        author__username=username,
-        author__role=User.Role.ANALYST,
-        author__analyst_profile__is_public=True,
-        status=CapperArticle.Status.APPROVED,
-    )
-    if article.slug != slug:
-        return redirect(article.get_absolute_url(), permanent=True)
-
-    related_articles = list(
-        CapperArticle.objects.filter(
-            author=article.author,
-            status=CapperArticle.Status.APPROVED,
-        )
-        .exclude(pk=article.pk)
-        .order_by("-published_at", "-id")[:3]
-    )
-    profile = article.author.analyst_profile
-    expert_name = profile.display_name or article.author.get_full_name() or article.author.username
-
-    return render(
-        request,
-        "cabinet/capper_article_detail.html",
-        {
-            "article": article,
-            "profile": profile,
-            "expert": article.author,
-            "expert_name": expert_name,
-            "related_articles": related_articles,
-        },
     )

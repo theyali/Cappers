@@ -5,7 +5,10 @@ from django.contrib.auth.forms import AuthenticationForm, UserCreationForm
 from django.core.exceptions import ValidationError
 from django.utils.html import format_html
 
+from tinymce.widgets import TinyMCE
+
 from cappers.ratelimit import count_attempt, limit_reached
+from front.models import ArticleCategory
 from game.models import Country, League, Sport
 
 from .models import (
@@ -22,6 +25,29 @@ from .mobile_quick_access import (
 )
 from .services.registration_guard import client_ip
 
+
+# The capper's article editor: dark like the site, one compact toolbar row, our own word counter below.
+CAPPER_ARTICLE_EDITOR = {
+    "height": 420,
+    "menubar": False,
+    "statusbar": False,
+    "promotion": False,
+    "branding": False,
+    "skin": "oxide-dark",
+    "content_css": "dark",
+    "toolbar": "undo redo | blocks | bold italic underline | bullist numlist | link image media table | blockquote removeformat",
+    "toolbar_mode": "sliding",
+    "block_formats": "Абзац=p; Заголовок=h2; Подзаголовок=h3",
+    "placeholder": "Начните писать статью: разбор матча, стратегия или ошибки новичков. Минимум 300 слов.",
+    "content_style": (
+        "body { background: #171718; color: #f7f8ff; font-family: Manrope, system-ui, sans-serif; "
+        "font-size: 15px; line-height: 1.7; margin: 18px 20px; } "
+        "h2, h3 { line-height: 1.25; } a { color: #5b8bff; } "
+        "blockquote { margin: 16px 0; padding: 12px 16px; border-left: 3px solid #fbf110; "
+        "background: rgba(251, 241, 16, 0.08); border-radius: 0 12px 12px 0; } "
+        ".mce-content-body[data-mce-placeholder]:not(.mce-visualblocks)::before { color: #707072; }"
+    ),
+}
 
 LOGIN_FAILURES_LIMIT = 10
 LOGIN_FAILURES_WINDOW_SECONDS = 15 * 60
@@ -409,16 +435,30 @@ class AnalystPaidPlanSettingsForm(forms.Form):
 class CapperArticleForm(forms.ModelForm):
     class Meta:
         model = CapperArticle
-        fields = ("title", "cover_image", "excerpt", "content")
+        fields = ("title", "cover_image", "excerpt", "category", "tags", "content")
         widgets = {
-            "title": forms.TextInput(attrs={"placeholder": "Заголовок статьи"}),
+            "title": forms.TextInput(attrs={"placeholder": "Например: Как я выбираю тоталы в АПЛ", "maxlength": 180}),
             "excerpt": forms.Textarea(
                 attrs={
-                    "rows": 4,
-                    "placeholder": "Коротко опишите, о чём статья",
+                    "rows": 3,
+                    "maxlength": 300,
+                    "placeholder": "Коротко о чём статья: 2–3 предложения, которые увидят в ленте",
                 }
             ),
+            "category": forms.RadioSelect,
+            "tags": forms.HiddenInput,
+            "content": TinyMCE(mce_attrs=CAPPER_ARTICLE_EDITOR),
         }
+        error_messages = {
+            "title": {"required": "Укажите заголовок статьи"},
+            "content": {"required": "Добавьте текст статьи"},
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["category"].queryset = ArticleCategory.objects.filter(is_active=True).order_by("sort_order", "name")
+        self.fields["category"].empty_label = None
+        self.fields["cover_image"].widget.attrs["accept"] = "image/jpeg,image/png,image/webp"
 
     def clean_cover_image(self):
         image = self.cleaned_data.get("cover_image")

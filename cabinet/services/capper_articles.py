@@ -11,7 +11,8 @@ from cabinet.comments.services.moderation import (
     contains_profanity,
     normalize_comment_text,
 )
-from cabinet.models import CapperArticle
+from cabinet.models import CapperArticle, CapperArticleDailyUsage, User
+from cabinet.vip import get_active_vip
 
 
 _CYRILLIC_TRANSLIT = str.maketrans(
@@ -86,6 +87,39 @@ _CYRILLIC_TRANSLIT = str.maketrans(
 )
 
 
+MAX_ARTICLE_TAGS = 5
+MAX_ARTICLE_TAG_LENGTH = 30
+EXCERPT_MAX_LENGTH = 300
+WORDS_PER_MINUTE = 200
+DEFAULT_DAILY_ARTICLE_LIMIT = 2
+
+
+def get_article_daily_limit(user, *, at=None) -> int:
+    subscription = get_active_vip(user, at=at)
+    return subscription.plan.daily_article_limit if subscription and subscription.plan else DEFAULT_DAILY_ARTICLE_LIMIT
+
+
+def build_article_daily_quota(user, *, at=None) -> dict:
+    now = at or timezone.now()
+    limit = get_article_daily_limit(user, at=now)
+    used = CapperArticleDailyUsage.objects.filter(author=user, date=timezone.localdate(now)).values_list("submitted_count", flat=True).first() or 0
+    return {"limit": limit, "used": used, "remaining": max(0, limit - used)}
+
+
+def article_reading_minutes(content: str) -> int:
+    return max(1, (len(strip_tags(content or "").split()) + WORDS_PER_MINUTE - 1) // WORDS_PER_MINUTE)
+
+
+def normalize_article_tags(value: str) -> str:
+    """Comma-separated tags without repeats, up to MAX_ARTICLE_TAGS."""
+    tags = []
+    for raw in str(value or "").split(","):
+        tag = normalize_comment_text(raw).strip(" #")[:MAX_ARTICLE_TAG_LENGTH]
+        if tag and tag.lower() not in {existing.lower() for existing in tags}:
+            tags.append(tag)
+    return ", ".join(tags[:MAX_ARTICLE_TAGS])
+
+
 _ARTICLE_VISUAL_TONES = (
     "football",
     "hockey",
@@ -99,8 +133,7 @@ _ARTICLE_VISUAL_TONES = (
 def decorate_capper_articles(articles) -> list:
     decorated = list(articles)
     for index, article in enumerate(decorated):
-        word_count = len(strip_tags(article.content).split())
-        article.reading_minutes = max(1, (word_count + 199) // 200)
+        article.reading_minutes = article.reading_time_minutes
         article.article_visual_tone = _ARTICLE_VISUAL_TONES[index % len(_ARTICLE_VISUAL_TONES)]
         article.article_views_count = int(getattr(article, "views_count", 0) or 0)
         article.article_comments_count = int(getattr(article, "comments_count", 0) or 0)
@@ -159,6 +192,7 @@ def build_capper_articles_context(user) -> dict:
         "vip_locked_label": "Стать VIP, чтобы публиковать статьи",
         "vip_upgrade_url": reverse("cabinet:vip_plans"),
         "article_create_url": reverse("cabinet:capper_article_create"),
+        "article_daily_quota": build_article_daily_quota(user) if can_create else None,
     }
 
 
@@ -184,11 +218,16 @@ def save_capper_article(user, data, files, article=None) -> CapperArticle:
         raise ValidationError({"title": "Заголовок не может быть длиннее 180 символов."})
     if not normalize_comment_text(strip_tags(content)):
         raise ValidationError({"content": "Добавьте текст статьи."})
+    if len(excerpt) > EXCERPT_MAX_LENGTH:
+        raise ValidationError({"excerpt": f"Краткое описание не может быть длиннее {EXCERPT_MAX_LENGTH} символов."})
 
     article.title = title
     article.slug = _article_slug(title)
     article.excerpt = excerpt
     article.content = content
+    article.category = data.get("category")
+    article.tags = normalize_article_tags(data.get("tags", ""))
+    article.reading_time_minutes = article_reading_minutes(content)
 
     cover_image = files.get("cover_image") if files else None
     if cover_image is not None:
@@ -213,9 +252,46 @@ def _article_slug(title: str) -> str:
     return slugify(transliterated, allow_unicode=False)[:220] or "article"
 
 
+# Field order of the editor, for the error summary at the top.
+EDITOR_FIELDS = ("cover_image", "title", "excerpt", "category", "tags", "content")
+
+
+def build_article_editor_context(user, form, article=None) -> dict:
+    profile = getattr(user, "analyst_profile", None)
+    author_name = str(profile) if profile else user.get_full_name() or user.username
+    errors = [(None, error) for error in form.non_field_errors()]
+    for name in EDITOR_FIELDS:
+        label = form.fields[name].label
+        errors += [(form[name].id_for_label, f"{label}: {error}" if name == "cover_image" else error) for error in form.errors.get(name, [])]
+    status = article.status if article else CapperArticle.Status.DRAFT
+    return {
+        "form": form,
+        "article": article,
+        "page_title": "Редактирование статьи" if article else "Новая статья",
+        "article_status": status,
+        "article_status_label": CapperArticle.Status(status).label,
+        "rejection_note": article.moderation_note if article and status == CapperArticle.Status.REJECTED else "",
+        "editor_errors": errors,
+        "cover_url": article.cover_image.url if article and article.cover_image else "",
+        "editor_tags": [tag.strip() for tag in str(form["tags"].value() or "").split(",") if tag.strip()],
+        "preview_author": {
+            "name": author_name,
+            "initials": "".join(part[0] for part in author_name.split()[:2]).upper() or "К",
+            "avatar_url": user.avatar.url if user.avatar else "",
+            "verified": bool(profile and profile.is_verified),
+        },
+        "max_tags": MAX_ARTICLE_TAGS,
+        "article_daily_quota": build_article_daily_quota(user),
+        "excerpt_max_length": EXCERPT_MAX_LENGTH,
+        "active_tab": "articles",
+    }
+
+
 @transaction.atomic
 def submit_capper_article_for_moderation(user, article) -> CapperArticle:
     _ensure_article_access(user)
+    # All submissions for an author share this lock, including different articles.
+    User.objects.select_for_update().get(pk=user.pk)
     article = CapperArticle.objects.select_for_update().get(pk=article.pk)
     _ensure_article_owner(user, article)
 
@@ -225,9 +301,16 @@ def submit_capper_article_for_moderation(user, article) -> CapperArticle:
     }:
         raise ValidationError("Эту статью нельзя повторно отправить на модерацию.")
 
+    now = timezone.now()
+    limit = get_article_daily_limit(user, at=now)
+    usage, _ = CapperArticleDailyUsage.objects.get_or_create(author=user, date=timezone.localdate(now))
+    if usage.submitted_count >= limit:
+        raise ValidationError(
+            f"Дневной лимит статей исчерпан: {usage.submitted_count} из {limit}. Можно сохранить черновик и отправить его завтра."
+            if limit else "Отправка статей отключена для вашего VIP-тарифа. Черновики можно сохранять."
+        )
     _validate_article_text(article, user=user, check_spam=True)
 
-    now = timezone.now()
     article.status = CapperArticle.Status.PENDING
     article.submitted_at = now
     article.published_at = None
@@ -245,6 +328,8 @@ def submit_capper_article_for_moderation(user, article) -> CapperArticle:
             "updated_at",
         ]
     )
+    usage.submitted_count += 1
+    usage.save(update_fields=["submitted_count"])
     return article
 
 

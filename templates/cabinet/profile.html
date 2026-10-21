@@ -88,7 +88,7 @@
                     {% comment %} {% if request.user.is_analyst %}
                     <section class="profile-hero-status" aria-label="Статус и заполнение профиля">
                         <div class="profile-status-heading">
-                            <span class="profile-status-crown" aria-hidden="true">♛</span>
+                            <span class="profile-status-crown" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="crown-bold" icon_size=30 only %}</span>
                             <div>
                                 <small>Ваш статус</small>
                                 <strong>{% if request.user.is_vip %}PRO-АНАЛИТИК{% else %}АНАЛИТИК{% endif %}</strong>

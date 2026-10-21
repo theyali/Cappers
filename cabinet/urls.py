@@ -55,11 +55,6 @@ urlpatterns = [
         name="capper_article_edit",
     ),
     path(
-        "articles/<int:article_id>/submit/",
-        views.capper_article_submit,
-        name="capper_article_submit",
-    ),
-    path(
         "profile/promo-banner/",
         profile_promo_views.profile_promo_banner,
         name="profile_promo_banner",
