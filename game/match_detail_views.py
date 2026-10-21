@@ -14,6 +14,7 @@ from django.views.decorators.http import require_GET
 
 from cabinet.models import MatchPredictionRequest, User
 from front.metrics import increment_match_views
+from front.prediction_catalog_views import build_vip_prediction_rail_context
 from game.models import Match, MatchEvent, MatchStatistic, Prediction, PredictionCoupon
 from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
 from game.services.odds_comparison import build_match_odds_comparison_ui
@@ -895,6 +896,7 @@ def match_detail(request, slug: str):
     )
     context = {
         "match": match,
+        "vip_prediction_rail": build_vip_prediction_rail_context(),
         "match_metrics": match_metrics,
         "can_write_coupon": can_write_coupon,
         "latest_predictions": legacy_views._latest_predictions(),
