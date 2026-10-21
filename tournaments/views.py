@@ -6,8 +6,7 @@ from urllib.parse import urlencode
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
 from django.core.exceptions import ValidationError
-from django.db.models import Count, F, IntegerField, Prefetch, Q, Sum, Value
-from django.db.models.functions import Coalesce
+from django.db.models import Count, Prefetch, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -17,11 +16,8 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 
-from cabinet.models import AnalystFollow
-from cabinet.vip import active_vip_subscriptions, annotate_vip_status, attach_vip_status_to_user, plural_ru
-from front.models import PredictionFavorite, PredictionLike
-from front.views import _initials
-from game.models import Prediction, PredictionCoupon, Sport
+from cabinet.vip import active_vip_subscriptions, plural_ru
+from game.models import Sport
 from tournaments.models import (
     Tournament,
     TournamentAchievement,
@@ -154,7 +150,6 @@ def detail(request, slug: str):
     )
     participant = get_active_participant(request.user, tournament)
     leaderboard = tournament_leaderboard(tournament)
-    prediction_cards = _tournament_prediction_cards(request, tournament)
     now = timezone.now()
     runtime_status = _runtime_status(tournament, now)
     allowed_sports = list(tournament.allowed_sports.all())
@@ -202,7 +197,6 @@ def detail(request, slug: str):
             "participants_count": participants_count,
             "about_stages": about_stages,
             "leaderboard": leaderboard[:20],
-            "prediction_cards": prediction_cards,
             "allowed_sports": allowed_sports,
             "achievements": list(tournament.achievements.all()),
             "breadcrumbs": [
@@ -1195,7 +1189,7 @@ def _tournament_results_tab(request, tournament: Tournament, leaderboard: list[d
 def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
     user = row["user"]
     display_name = (
-        getattr(user.analyst_profile, "display_name", "")
+        getattr(getattr(user, "analyst_profile", None), "display_name", "")
         or user.get_full_name()
         or user.username
     )
@@ -1300,137 +1294,3 @@ def _runtime_status(tournament: Tournament, now) -> dict:
         "target_at": tournament.ends_at,
         "target_label": "До окончания",
     }
-
-
-def _tournament_prediction_cards(request, tournament: Tournament):
-    coupons = (
-        PredictionCoupon.objects.filter(
-            tournament_link__tournament=tournament,
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        )
-        .select_related("author", "author__analyst_profile", "metrics")
-        .prefetch_related(
-            Prefetch(
-                "predictions",
-                queryset=Prediction.objects.select_related(
-                    "match__sport",
-                    "match__league__country",
-                    "match__home_team",
-                    "match__away_team",
-                ).order_by("id"),
-                to_attr="card_positions",
-            )
-        )
-        .annotate(
-            likes_count=Coalesce(
-                F("metrics__likes_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            favorites_count=Coalesce(
-                F("metrics__favorites_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            comments_count=Coalesce(
-                F("metrics__comments_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            views_count=Coalesce(
-                F("metrics__views_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-        )
-    )
-    coupons = annotate_vip_status(coupons, user_outer_ref="author_id").order_by(
-        "-published_at",
-        "-created_at",
-    )[:12]
-
-    liked_ids: set[int] = set()
-    favorite_ids: set[int] = set()
-    following_ids: set[int] = set()
-    if request.user.is_authenticated:
-        coupon_ids = [coupon.id for coupon in coupons]
-        liked_ids = set(
-            PredictionLike.objects.filter(
-                user=request.user,
-                prediction_id__in=coupon_ids,
-            ).values_list("prediction_id", flat=True)
-        )
-        favorite_ids = set(
-            PredictionFavorite.objects.filter(
-                user=request.user,
-                prediction_id__in=coupon_ids,
-            ).values_list("prediction_id", flat=True)
-        )
-        following_ids = set(
-            AnalystFollow.objects.filter(follower=request.user).values_list(
-                "analyst_id",
-                flat=True,
-            )
-        )
-
-    cards = []
-    for coupon in coupons:
-        card = _prediction_card(coupon)
-        if card is None:
-            continue
-        author = coupon.author
-        attach_vip_status_to_user(author, coupon)
-        card.is_liked = coupon.id in liked_ids
-        card.is_favorite = coupon.id in favorite_ids
-        card.is_own = request.user.is_authenticated and request.user.id == author.id
-        card.is_following_author = author.id in following_ids and not card.is_own
-        cards.append(card)
-    return cards
-
-
-def _prediction_card(coupon: PredictionCoupon):
-    positions = list(getattr(coupon, "card_positions", []) or [])
-    if not positions:
-        return None
-
-    item = positions[0]
-    count = getattr(coupon, "positions_count", None) or len(positions)
-    coefficient = _combined_coefficient(coupon)
-    selection = item.selection
-    market = item.market
-    if count > 1:
-        market = f"Экспресс · {count} игр"
-        selection = f"{item.selection} + ещё {count - 1}"
-
-    profile = getattr(coupon.author, "analyst_profile", None)
-    expert_name = (
-        profile.display_name
-        if profile and profile.display_name
-        else coupon.author.get_full_name() or coupon.author.username
-    )
-
-    return SimpleNamespace(
-        id=coupon.id,
-        coupon=coupon,
-        match=item.match,
-        market=market,
-        selection=selection,
-        coefficient=coefficient,
-        state_status=coupon.state_status,
-        created_at=coupon.published_at or coupon.created_at,
-        positions_count=count,
-        likes_count=getattr(coupon, "likes_count", 0),
-        favorites_count=getattr(coupon, "favorites_count", 0),
-        comments_count=getattr(coupon, "comments_count", 0),
-        views_count=getattr(coupon, "views_count", 0),
-        expert_name=expert_name,
-        expert_initials=_initials(expert_name),
-        expert_avatar_url=coupon.author.avatar.url if coupon.author.avatar else "",
-        expert_verified=bool(profile and profile.is_verified),
-    )
-
-
-def _combined_coefficient(coupon: PredictionCoupon) -> Decimal:
-    if not coupon.total_stake:
-        return Decimal("0.00")
-    return (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"))

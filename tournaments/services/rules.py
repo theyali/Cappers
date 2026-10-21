@@ -49,9 +49,21 @@ def validate_tournament_coupon(
     if tournament.coupon_type_rule == Tournament.CouponTypeRule.EXPRESS and len(items) < 2:
         raise TournamentRuleError("В этом турнире доступны только экспрессы.")
 
+    _validate_match_window(tournament, items)
     _validate_min_coefficients(tournament, items)
     _validate_allowed_sports(tournament, items)
     _validate_match_not_used(tournament, participant, items)
+
+
+def _validate_match_window(tournament: Tournament, items: list[dict]) -> None:
+    # A match after the end would keep the coupon unsettled and hold back results and prizes for everyone.
+    for item in items:
+        match = item["match"]
+        if match.starts_at is None or match.starts_at > tournament.ends_at:
+            raise TournamentRuleError(
+                f"Матч «{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}» "
+                "начинается после окончания турнира."
+            )
 
 
 def _validate_min_coefficients(tournament: Tournament, items: list[dict]) -> None:

@@ -107,6 +107,7 @@ def _serialize_prediction(prediction: Prediction) -> dict:
         "sport": match.sport_code,
         "league": match.league_name or "Лига не указана",
         "time": starts_at,
+        "startsAt": match.starts_at.isoformat() if match.starts_at else "",
         "betKey": "restored",
         "market": prediction.market,
         "selection": prediction.selection,

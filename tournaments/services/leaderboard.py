@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def _leaderboard_cache_key(tournament: Tournament) -> str:
-    return f"tournaments:leaderboard:v3:{tournament.pk}"
+    return f"tournaments:leaderboard:v4:{tournament.pk}"
 
 
 def tournament_leaderboard(
@@ -78,9 +78,12 @@ def tournament_leaderboard(
         row["roi_percent"] = _percent(row["profit"], row["total_stake"])
         normalized_rows.append(row)
 
+    # Participants without a settled coupon have no result yet and go below everyone who has one,
+    # so a zero profit from doing nothing cannot outrank a loss.
     ordered = sorted(
         normalized_rows,
         key=lambda row: (
+            has_tournament_result(row),
             row["profit"],
             row["roi_percent"],
             row["wins_count"],
@@ -113,7 +116,10 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
         )
 
     rows = tournament_leaderboard(tournament, use_cache=False)
-    prizes = {row["rank"]: prize_for_rank(tournament, row["rank"]) for row in rows}
+    prizes = {
+        row["rank"]: prize_for_rank(tournament, row["rank"]) if has_tournament_result(row) else Decimal("0.00")
+        for row in rows
+    }
     for row in rows:
         if prizes[row["rank"]] > 0 and not row["user"].is_analyst:
             raise ValidationError(
@@ -136,7 +142,7 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
             profit=row["profit"],
             roi_percent=row["roi_percent"],
             prize_amount=prizes[row["rank"]],
-            achievement=achievement_for_rank(tournament, row["rank"]),
+            achievement=achievement_for_rank(tournament, row["rank"]) if has_tournament_result(row) else None,
         )
         for row in rows
     ]
@@ -240,6 +246,11 @@ def _final_rows(tournament: Tournament) -> list[dict]:
         )
         rows.append(row)
     return rows
+
+
+def has_tournament_result(row: dict) -> bool:
+    """A participant places only with at least one settled tournament coupon."""
+    return bool(row["wins_count"] or row["losses_count"] or row["refunds_count"])
 
 
 def _empty_rows(tournament: Tournament) -> dict[int, dict]:

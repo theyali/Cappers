@@ -237,17 +237,14 @@ class MoneyTournamentReaderTests(TestCase):
             prize_first=Decimal("1000.00"),
         )
 
-    def test_reader_cannot_join_tournament_with_money_prizes(self):
+    def test_reader_cannot_join_tournament_with_or_without_money_prizes(self):
         eligibility = check_tournament_eligibility(self.reader, self.tournament)
-
         self.assertFalse(eligibility["allowed"])
-        self.assertIn("В турнирах с денежными призами участвуют только капперы.", eligibility["reasons"])
+        self.assertIn("Участвовать могут только капперы.", eligibility["reasons"])
 
-    def test_reader_can_join_tournament_without_money_prizes(self):
         Tournament.objects.filter(pk=self.tournament.pk).update(prize_first=0)
         self.tournament.refresh_from_db()
-
-        self.assertTrue(check_tournament_eligibility(self.reader, self.tournament)["hard_allowed"])
+        self.assertFalse(check_tournament_eligibility(self.reader, self.tournament)["hard_allowed"])
 
     def test_reader_in_money_place_stops_finalization_with_a_clear_error(self):
         participant = TournamentParticipant.objects.create(tournament=self.tournament, user=self.reader)

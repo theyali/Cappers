@@ -106,8 +106,10 @@ class RichPredictionCouponForm(forms.Form):
                 self.fields[field_name].required = False
 
         if coupon is not None and coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
-            # The stake was charged on publish; the stake, the audience and the tournament stay fixed afterwards.
+            # The stake was charged on publish; the stake, the confidence, the audience and the tournament
+            # stay fixed afterwards.
             self.fields["total_stake"].disabled = True
+            self.fields["confidence"].disabled = True
             self.fields["is_paid"].disabled = True
             self.fields["tournament"].disabled = True
 

@@ -291,6 +291,7 @@
         matchTitle: group.dataset.title,
         league: group.dataset.league,
         time: group.dataset.time,
+        startsAt: group.closest("[data-match-starts-at]")?.dataset.matchStartsAt || "",
         betKey: option.dataset.betKey,
         market: option.dataset.market,
         selection: option.dataset.selection,
@@ -311,6 +312,7 @@
     const updateCouponItem = (node, item) => {
         node.dataset.sport = item.sport || "";
         node.dataset.coefficient = String(item.coefficient);
+        node.dataset.startsAt = item.startsAt || "";
         node.querySelector("[data-coupon-selection]").textContent = item.selection;
         node.querySelector("[data-coupon-short]").textContent = item.shortLabel;
         node.querySelector("[data-coupon-item-odd]").textContent = formatOdd(item.coefficient);
@@ -660,11 +662,18 @@
     };
 
     // The draft keeps the tournament picked in another tab or page.
+    // A saved draft decides the tournament, including "none" set in another tab or a tournament that is over.
+    // Without a draft the current choice (e.g. from a tournament page link) stays.
+    let linkedTournament = new URLSearchParams(window.location.search).get("tournament") || "";
     const restoreTournament = (draft) => {
-        if (!tournamentSelect || !draft?.tournament_id) return;
-        const value = String(draft.tournament_id);
-        const hasOption = [...tournamentSelect.options].some((option) => option.value === value);
-        if (!hasOption || tournamentSelect.value === value) return;
+        if (!tournamentSelect || !draft) return;
+        const hasOption = (value) => [...tournamentSelect.options].some((option) => option.value === value);
+        // A tournament page link wins over the draft once, then gets saved into it.
+        const saved = linkedTournament && hasOption(linkedTournament) ? linkedTournament : String(draft.tournament_id || "");
+        linkedTournament = "";
+        const value = hasOption(saved) ? saved : "";
+        // The change event also saves the choice when the draft holds another (or an ended) tournament.
+        if (tournamentSelect.value === value && String(draft.tournament_id || "") === value) return;
         tournamentSelect.value = value;
         tournamentSelect.dispatchEvent(new Event("change", { bubbles: true }));
     };

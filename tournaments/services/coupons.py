@@ -58,6 +58,7 @@ def tournament_rules(user, tournaments: list[Tournament] | None = None) -> list[
             "min_coefficient": float(tournament.min_coefficient or 0),
             "min_confidence": tournament.min_confidence or 0,
             "coupon_type": tournament.coupon_type_rule,
+            "ends_at": tournament.ends_at.isoformat(),
             "used_match_ids": used.get(tournament.pk, []),
         }
         for tournament in tournaments

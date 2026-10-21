@@ -2,12 +2,14 @@ import json
 from datetime import timedelta
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
-from cabinet.models import User
+from cabinet.models import User, UserVipSubscription
 from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
+from game.services.prediction_editor import update_rich_prediction
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
 from tournaments.services.coupons import TOURNAMENT_QUICK_PUBLISH_MESSAGE
 
@@ -101,9 +103,15 @@ class TournamentCouponFlowTests(TestCase):
         self.coupon.refresh_from_db()
         self.assertEqual(self.coupon.published_status, PredictionCoupon.PublishedStatus.DRAFT)
 
-    def test_foreign_tournament_is_refused_in_the_coupon(self):
+    def test_unavailable_tournament_is_dropped_on_autosave_and_refused_on_publish(self):
+        self.coupon.tournament = self.tournament
+        self.coupon.save(update_fields=["tournament"])
         TournamentParticipant.objects.filter(user=self.analyst).delete()
-        self.assertEqual(self._coupon_request().status_code, 400)
+
+        self.assertEqual(self._coupon_request().status_code, 200)
+        self.coupon.refresh_from_db()
+        self.assertIsNone(self.coupon.tournament)
+        self.assertEqual(self._coupon_request(autosave=False).status_code, 400)
 
     def test_participant_without_vip_publishes_tournament_prediction_with_text(self):
         self.assertEqual(self.client.get(reverse("game:rich_prediction_create")).status_code, 200)
@@ -150,3 +158,73 @@ class TournamentCouponFlowTests(TestCase):
         self.coupon.save(update_fields=["tournament"])
         response = self.client.get(reverse("game:rich_prediction_create"))
         self.assertContains(response, "data-rich-access-card data-tournament-hidden hidden")
+
+    def _published(self):
+        self.assertEqual(self._publish().status_code, 302)
+        self.coupon.refresh_from_db()
+        return self.coupon
+
+    def _edit_data(self, coupon, **overrides):
+        data = {
+            "total_stake": str(coupon.total_stake),
+            "confidence": str(coupon.confidence),
+            "headline": coupon.headline,
+            "description": coupon.description,
+            "published_status": PredictionCoupon.PublishedStatus.PUBLISHED,
+        }
+        data.update(overrides)
+        return data
+
+    def test_published_tournament_prediction_keeps_confidence_and_text(self):
+        coupon = self._published()
+        for overrides, field in (
+            ({"confidence": "5"}, "confidence"),
+            ({"headline": ""}, "headline"),
+            ({"description": ""}, "description"),
+        ):
+            with self.assertRaises(ValidationError) as caught:
+                update_rich_prediction(self.analyst, coupon, self._edit_data(coupon, **overrides), {})
+            self.assertIn(field, caught.exception.message_dict)
+        coupon.refresh_from_db()
+        self.assertEqual(coupon.confidence, 70)
+        self.assertTrue(coupon.headline)
+
+    def test_editing_settled_prediction_keeps_its_payout(self):
+        coupon = self._published()
+        PredictionCoupon.objects.filter(pk=coupon.pk).update(
+            state_status=PredictionCoupon.StateStatus.WIN, possible_payout=Decimal("500.00"),
+        )
+        coupon.refresh_from_db()
+
+        update_rich_prediction(self.analyst, coupon, self._edit_data(coupon, headline="Новый заголовок"), {})
+
+        coupon.refresh_from_db()
+        self.assertEqual(coupon.headline, "Новый заголовок")
+        self.assertEqual(coupon.possible_payout, Decimal("500.00"))
+
+    def test_author_edits_tournament_prediction_after_the_tournament(self):
+        coupon = self._published()
+        Tournament.objects.filter(pk=self.tournament.pk).update(
+            starts_at=timezone.now() - timedelta(days=3), ends_at=timezone.now() - timedelta(minutes=1),
+        )
+        url = reverse("game:rich_prediction_edit", kwargs={"coupon_id": coupon.pk})
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.assertEqual(self.client.get(reverse("game:rich_prediction_create")).status_code, 403)
+
+    def test_stale_draft_tournament_keeps_access_choice(self):
+        UserVipSubscription.objects.create(
+            user=self.analyst,
+            starts_at=timezone.now() - timedelta(minutes=1),
+            ends_at=timezone.now() + timedelta(days=30),
+            duration_days=30,
+            source=UserVipSubscription.Source.ADMIN,
+        )
+        self.coupon.tournament = self.tournament
+        self.coupon.save(update_fields=["tournament"])
+        TournamentParticipant.objects.filter(user=self.analyst).delete()
+
+        response = self.client.get(reverse("game:rich_prediction_create"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["form"]["tournament"].value(), "")
+        self.assertNotContains(response, "data-rich-access-card data-tournament-hidden hidden")

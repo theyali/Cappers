@@ -241,13 +241,12 @@ def rich_prediction_create(request):
 
 @login_required
 def rich_prediction_edit(request, coupon_id):
-    if not can_open_rich_editor(request.user):
-        raise PermissionDenied("Расширенные прогнозы доступны VIP-капперам и участникам турниров.")
-
     coupon = get_object_or_404(
         PredictionCoupon.objects.select_related("cover_image"),
         pk=coupon_id,
     )
+    if not can_open_rich_editor(request.user, coupon):
+        raise PermissionDenied("Расширенные прогнозы доступны VIP-капперам и участникам турниров.")
     was_published = coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED
     context = build_prediction_editor_context(request, coupon=coupon)
     form = RichPredictionCouponForm(
@@ -312,7 +311,10 @@ def create_coupon(request):
     try:
         tournament = resolve_tournament_choice(request.user, payload.get("tournament_id"))
     except ValidationError as exc:
-        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
+        if not autosave:
+            return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
+        # A tab left open past the tournament's end keeps saving the coupon, just without the tournament.
+        tournament = None
     if tournament is not None and not autosave:
         return JsonResponse({"ok": False, "error": TOURNAMENT_QUICK_PUBLISH_MESSAGE}, status=400)
     if not autosave and coupon_publish_limited(request.user):

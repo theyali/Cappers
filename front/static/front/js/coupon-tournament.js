@@ -12,7 +12,6 @@
     } catch (_error) {
         rules.clear();
     }
-    const STORAGE_KEY = "cappers:coupon-tournament";
     const FADE_MS = 240;
 
     const current = () => (select ? rules.get(select.value) || null : null);
@@ -25,9 +24,15 @@
 
     const sportAllowed = (rule, sport) => !rule || !rule.sports.length || !sport || rule.sports.includes(sport);
     const matchUsed = (rule, matchId) => Boolean(rule && rule.used_match_ids.map(String).includes(String(matchId)));
+    // Matches starting after the tournament ends cannot enter it.
+    const startsInTime = (rule, startsAt) => {
+        if (!rule || !rule.ends_at || !startsAt) return true;
+        const starts = Date.parse(startsAt);
+        return Number.isNaN(starts) || starts <= Date.parse(rule.ends_at);
+    };
 
     // Why a coupon position cannot go into the tournament; empty when it can.
-    const problems = ({ sport, coefficient, matchId }, rule = current()) => {
+    const problems = ({ sport, coefficient, matchId, startsAt }, rule = current()) => {
         if (!rule) return [];
         const found = [];
         if (!sportAllowed(rule, sport)) found.push(`Турнир принимает только: ${rule.sport_names.join(", ")}`);
@@ -36,6 +41,7 @@
             found.push(`Кф ниже минимального для турнира — ${formatOdd(rule.min_coefficient)}`);
         }
         if (matchUsed(rule, matchId)) found.push("На этот матч уже есть ваш прогноз в турнире");
+        if (!startsInTime(rule, startsAt)) found.push("Матч начинается после окончания турнира");
         return found;
     };
 
@@ -63,7 +69,8 @@
         });
         scope.querySelectorAll("[data-match-sport]").forEach((node) => {
             const matchId = node.dataset.matchId || node.dataset.matchShellId;
-            setVisible(node, sportAllowed(rule, node.dataset.matchSport) && !matchUsed(rule, matchId));
+            setVisible(node, sportAllowed(rule, node.dataset.matchSport) && !matchUsed(rule, matchId)
+                && startsInTime(rule, node.dataset.matchStartsAt));
         });
         scope.querySelectorAll("[data-bet-option][data-coefficient]").forEach((button) => {
             const odd = toNumber(button.dataset.coefficient);
@@ -84,6 +91,7 @@
                 sport: node.dataset.sport || node.dataset.matchSport,
                 coefficient: node.dataset.coefficient,
                 matchId: node.dataset.couponMatchId,
+                startsAt: node.dataset.startsAt,
             }, rule);
             node.classList.toggle("is-tournament-invalid", found.length > 0);
             let note = node.querySelector("[data-tournament-item-warning]");
@@ -141,10 +149,7 @@
     window.CappersCouponTournament = { current, problems, markItems, apply, select };
     if (!select) return;
 
-    select.addEventListener("change", () => {
-        try { window.localStorage.setItem(STORAGE_KEY, select.value); } catch (_error) { /* private mode */ }
-        apply();
-    });
+    select.addEventListener("change", apply);
 
     // Odds below the tournament minimum stay visible but cannot be picked.
     document.addEventListener("click", (event) => {
@@ -161,11 +166,8 @@
         else applyToPage();
     });
 
-    // A link from a tournament page picks it; otherwise the last choice of this browser is kept.
+    // A link from a tournament page picks it; otherwise the choice comes from the saved coupon draft.
     const fromUrl = new URLSearchParams(window.location.search).get("tournament");
-    let remembered = "";
-    try { remembered = window.localStorage.getItem(STORAGE_KEY) || ""; } catch (_error) { remembered = ""; }
-    const initial = rules.has(fromUrl || "") ? fromUrl : (!select.value && rules.has(remembered) ? remembered : "");
-    if (initial && select.value !== initial) select.value = initial;
+    if (rules.has(fromUrl || "") && select.value !== fromUrl) select.value = fromUrl;
     apply();
 })();

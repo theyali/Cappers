@@ -262,6 +262,35 @@ class TournamentServiceTests(TestCase):
         with self.assertRaisesMessage(TournamentRuleError, "недоступен Баскетбол"):
             attach_coupon_to_tournament(self._coupon(match=self.basketball_match), self.tournament)
 
+    def test_participant_without_settled_coupons_ranks_last_and_wins_nothing(self):
+        idle = User.objects.create_user(username="idle-capper", password="safe-test-password", role=User.Role.ANALYST)
+        idle_participant = TournamentParticipant.objects.create(tournament=self.tournament, user=idle)
+        losing = self._coupon()
+        PredictionCoupon.objects.filter(pk=losing.pk).update(state_status=PredictionCoupon.StateStatus.LOSE)
+        TournamentCoupon.objects.create(tournament=self.tournament, participant=self.participant, coupon=losing)
+
+        rows = tournament_leaderboard(self.tournament, use_cache=False)
+        self.assertEqual([row["participant"] for row in rows], [self.participant, idle_participant])
+
+        self.tournament.ends_at = timezone.now() - timedelta(minutes=1)
+        self.tournament.save(update_fields=("ends_at", "updated_at"))
+        results = {result.participant_id: result for result in finalize_tournament_results(self.tournament)}
+        self.assertEqual(results[self.participant.pk].prize_amount, Decimal("1000.00"))
+        self.assertEqual(results[idle_participant.pk].rank, 2)
+        self.assertEqual(results[idle_participant.pk].prize_amount, Decimal("0.00"))
+        self.assertIsNone(results[idle_participant.pk].achievement)
+
+    def test_match_after_tournament_end_is_refused(self):
+        late_match = Match.objects.create(
+            external_id=880003,
+            sport=self.football,
+            sync_scope=Match.SyncScope.PREMATCH,
+            starts_at=self.tournament.ends_at + timedelta(days=1),
+        )
+        with self.assertRaisesMessage(TournamentRuleError, "после окончания турнира"):
+            attach_coupon_to_tournament(self._coupon(match=late_match), self.tournament)
+        self.assertFalse(TournamentCoupon.objects.exists())
+
     def test_leaderboard_and_finalization_calculate_places(self):
         second = User.objects.create_user(
             username="second-capper",
@@ -645,7 +674,7 @@ class TournamentAccessRewardTests(TestCase):
         wallet.balance = 100
         wallet.save(update_fields=("balance", "updated_at"))
 
-        with self.assertRaisesMessage(TournamentJoinError, "Недостаточно коинов"):
+        with self.assertRaisesMessage(TournamentJoinError, "Недостаточно средств на виртуальном счете"):
             join_tournament(self.analyst, tournament)
 
         self.assertFalse(TournamentParticipant.objects.filter(tournament=tournament, user=self.analyst).exists())
@@ -743,6 +772,19 @@ class TournamentPageTests(TestCase):
         join_tournament(self.analyst, self.tournament)
         self.assertEqual(len(tournament_leaderboard(self.tournament)), 1)
 
+    def test_reader_cannot_join_and_a_stray_reader_participant_does_not_break_the_page(self):
+        reader = User.objects.create_user(username="page-reader", role=User.Role.READER)
+        self.tournament.analysts_only = False
+        self.tournament.starts_at = timezone.now() + timedelta(hours=1)
+        self.tournament.save(update_fields=["analysts_only", "starts_at"])
+        Tournament.objects.filter(pk=self.tournament.pk).update(prize_first=0, prize_second=0, prize_third=0)
+        self.tournament.refresh_from_db()
+        with self.assertRaises(TournamentJoinError):
+            join_tournament(reader, self.tournament)
+
+        TournamentParticipant.objects.create(tournament=self.tournament, user=reader)
+        self.assertEqual(self.client.get(self.tournament.get_absolute_url()).status_code, 200)
+
     def test_joined_user_sees_start_time_and_later_a_persistent_prediction_action(self):
         TournamentParticipant.objects.create(tournament=self.tournament, user=self.analyst)
         self.client.force_login(self.analyst)
@@ -814,8 +856,8 @@ class TournamentPageTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Page Cup")
         self.assertContains(response, "Принять участие")
-        self.assertContains(response, "Таблица турнира")
-        self.assertContains(response, "Прогнозы турнира")
+        self.assertContains(response, "Результаты")
+        self.assertContains(response, "Призы")
 
     def test_detail_hides_join_action_after_registration_closed(self):
         self.client.force_login(self.analyst)
@@ -862,7 +904,7 @@ class TournamentPageTests(TestCase):
             ).exists()
         )
 
-    def test_detail_shows_tournament_predictions(self):
+    def test_detail_results_show_participant_coupons(self):
         participant = TournamentParticipant.objects.create(
             tournament=self.tournament,
             user=self.analyst,
@@ -902,9 +944,8 @@ class TournamentPageTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Хозяева")
         self.assertContains(response, "page-capper")
-        self.assertContains(response, 'data-prediction-card="')
+        self.assertContains(response, "1 прогнозов")
 
 
 class TournamentCatalogCardTests(TestCase):
