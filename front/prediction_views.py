@@ -52,6 +52,7 @@ from .metrics import (
     toggle_prediction_like_metric,
 )
 from .models import PredictionFavorite, PredictionLike
+from .og_cards.data import coupon_card_url
 from .prediction_metrics import annotate_author_roi
 from .sport_tabs import SPORT_TILE_KEYS, build_mobile_prediction_filter_tabs, build_mobile_prediction_match_scope_tabs
 from .views import PREDICTION_STATUS_FILTERS, _initials
@@ -165,6 +166,7 @@ def _paid_prediction_paywall_context(request, coupon: PredictionCoupon) -> dict:
         "access_available": access_available,
         "is_purchase_closed": is_purchase_closed,
         "checkout_url": checkout_url,
+        "og_card_url": coupon_card_url(request, coupon),
     }
 
 
@@ -1247,6 +1249,7 @@ def prediction_detail(request, prediction_id: int):
             "comments_previous_page": comments_previous_page,
             "comments_total_count": comments_total_count,
             "similar_coupons": similar_coupons,
+            "og_card_url": coupon_card_url(request, coupon),
         },
     )
 

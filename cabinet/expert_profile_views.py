@@ -16,6 +16,7 @@ from front.expert_ranking import (
     current_month_top_expert_ids,
 )
 from front.expert_awards import build_leader_profile_context, leader_badges_for_users
+from front.og_cards.data import profile_card_url
 from front.prediction_views import _decorate_predictions, _published_queryset
 from game.models import PredictionCoupon
 from game.services.bet_options import MARKET_TITLES, human_market_label
@@ -606,6 +607,7 @@ def expert_profile(request, username: str):
         and not context["coupon_feed_available"]
     )
     context["recommended_experts"] = _recommended_experts(request, profile)
+    context["og_card_url"] = profile_card_url(request, profile)
 
     return render(
         request,
