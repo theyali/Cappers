@@ -107,6 +107,63 @@ class TelegramLinkToken(models.Model):
         return self.used_at is None and self.expires_at > timezone.now()
 
 
+class TelegramChannel(models.Model):
+    """A capper's channel where the bot, added as an admin, posts new coupons and their results."""
+
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="telegram_channel",
+        verbose_name="Каппер",
+    )
+    chat_id = models.CharField("ID канала", max_length=40, unique=True)
+    title = models.CharField("Название", max_length=255, blank=True)
+    username = models.CharField("Username канала", max_length=80, blank=True)
+    is_active = models.BooleanField("Бот может публиковать", default=True)
+    post_paid = models.BooleanField("Анонсы платных прогнозов", default=True)
+    last_error = models.CharField("Последняя ошибка", max_length=255, blank=True)
+    connected_at = models.DateTimeField("Подключён", default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Telegram-канал каппера"
+        verbose_name_plural = "Telegram-каналы капперов"
+
+    def __str__(self) -> str:
+        return f"{self.user} → {self.title or self.chat_id}"
+
+
+class TelegramChannelPost(models.Model):
+    """A message the bot posted to a channel; the result goes as a reply to the coupon's post."""
+
+    class Kind(models.TextChoices):
+        PREDICTION = "prediction", "Прогноз"
+        RESULT = "result", "Итог"
+
+    channel = models.ForeignKey(TelegramChannel, on_delete=models.CASCADE, related_name="posts", verbose_name="Канал")
+    coupon = models.ForeignKey(
+        PredictionCoupon,
+        on_delete=models.CASCADE,
+        related_name="telegram_channel_posts",
+        verbose_name="Прогноз",
+    )
+    kind = models.CharField("Тип", max_length=16, choices=Kind.choices)
+    # Empty while the message is being sent.
+    message_id = models.BigIntegerField("ID сообщения", null=True, blank=True)
+    state = models.CharField("Итог купона", max_length=16, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Публикация в Telegram-канале"
+        verbose_name_plural = "Публикации в Telegram-каналах"
+        constraints = [
+            models.UniqueConstraint(fields=("channel", "coupon", "kind"), name="notif_tg_channel_post_unique"),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.channel} · #{self.coupon_id} · {self.get_kind_display()}"
+
+
 class Notification(models.Model):
     class Kind(models.TextChoices):
         PREDICTION_LIKE = "prediction_like", "Лайк прогноза"

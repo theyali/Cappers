@@ -1,4 +1,5 @@
-"""What a card shows, taken from a coupon or a capper profile, and the version that keys its cache.
+"""What a card shows, taken from a coupon or a capper profile, and the drawn card kept in the cache
+under a version of that content.
 
 Paid coupons follow the feed's rule for the public: teams, league and start time are shown, while
 the pick, the odds and the money (which give the odds away) stay hidden, also after settlement.
@@ -11,7 +12,8 @@ from decimal import Decimal
 from urllib.parse import urlsplit
 
 from django.conf import settings
-from django.db.models import Count, Max, Q, Subquery
+from django.core.cache import cache
+from django.db.models import Count, Max, Prefetch, Q, Subquery
 from django.urls import reverse
 from django.utils import timezone
 from PIL import Image
@@ -28,8 +30,11 @@ from game.models import Prediction, PredictionCoupon
 from game.services.bet_options import compact_pick_label
 from wallets.services import format_money
 
+from .cards import coupon_card, profile_card
+
 # Bump when the card design changes so that cached images are drawn again.
 DESIGN_VERSION = 1
+CACHE_SECONDS = 60 * 60 * 24 * 7
 NEWBIE_SETTLED = 10
 ROI_DAYS = 90
 # The ROI note needs this many cappers with a ROI to compare with.
@@ -43,6 +48,14 @@ WINNER_PICK = re.compile(r"(^|· )([12])$")
 def host() -> str:
     name = urlsplit(settings.SITE_BASE_URL).hostname or ""
     return name.removeprefix("www.")
+
+
+def _cached_png(key: str, render) -> bytes:
+    png = cache.get(key)
+    if png is None:
+        png = render()
+        cache.set(key, png, CACHE_SECONDS)
+    return png
 
 
 def _version(*parts) -> str:
@@ -166,6 +179,23 @@ def coupon_card_data(coupon, positions: list) -> dict:
     if locked and coupon.state_status == PredictionCoupon.StateStatus.PENDING:
         data["offer"], data["price"] = _paid_offer(coupon)
     return data
+
+
+def card_coupons():
+    """Published coupons with what their card needs; the events are in card_positions."""
+    from front.prediction_views import _positions_queryset
+
+    return (
+        PredictionCoupon.objects.filter(published_status=PredictionCoupon.PublishedStatus.PUBLISHED)
+        .select_related("author", "author__analyst_profile")
+        .prefetch_related(Prefetch("predictions", queryset=_positions_queryset(), to_attr="card_positions"))
+    )
+
+
+def coupon_card_png(coupon) -> bytes:
+    """The card of a coupon from card_coupons(), drawn once per version."""
+    key = f"og-card:coupon:{coupon.pk}:{coupon_card_version(coupon)}"
+    return _cached_png(key, lambda: coupon_card(coupon_card_data(coupon, coupon.card_positions)))
 
 
 def coupon_card_version(coupon) -> str:
@@ -298,6 +328,11 @@ def profile_card_version(profile) -> str:
         "capper", profile.user_id, profile.updated_at.timestamp(), profile.user.avatar.name if profile.user.avatar else "",
         latest["changed"], latest["total"], timezone.localdate(timezone=timezone.get_default_timezone()),
     )
+
+
+def profile_card_png(profile) -> bytes:
+    key = f"og-card:capper:{profile.user_id}:{profile_card_version(profile)}"
+    return _cached_png(key, lambda: profile_card(profile_card_data(profile)))
 
 
 def profile_card_url(request, profile) -> str:
