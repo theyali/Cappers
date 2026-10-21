@@ -100,7 +100,7 @@
                 <span hidden data-rich-cover-options>{% for cover in available_covers %}{% if cover.image %}<i data-rich-cover-option data-cover-id="{{ cover.id }}" data-cover-url="{{ cover.image.url }}"></i>{% endif %}{% endfor %}</span>
             </section>
 
-            <section class="rich-prediction-section rich-prediction-access-card">
+            <section class="rich-prediction-section rich-prediction-access-card" data-rich-access-card{% if form.tournament.value or published_tournament %} data-tournament-hidden hidden{% endif %}>
                 <div class="rich-prediction-section-head"><h2>Доступ к прогнозу</h2></div><p class="rich-prediction-section-note">Кто сможет видеть этот прогноз</p>
                 <div class="rich-prediction-access-options">
                     <label class="rich-prediction-access-option"><input type="radio" name="is_paid" value="" {% if not form.is_paid.value %}checked{% endif %} {% if is_published %}disabled{% endif %}><span class="rich-prediction-radio"></span><span class="rich-prediction-access-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.2 9.5h17.6M3.2 14.5h17.6M12 3a15 15 0 0 1 0 18A15 15 0 0 1 12 3z"/></svg></span><span><strong>Бесплатный</strong><small>Увидят все пользователи</small></span></label>

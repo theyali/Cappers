@@ -282,7 +282,9 @@ def remove_draft_prediction(user, coupon_id, prediction_id) -> dict:
     target = next((item for item in predictions if item.pk == prediction_id), None)
     if target is not None:
         if len(predictions) <= 1:
-            raise ValidationError("В купоне должна остаться минимум одна позиция.")
+            # The last position goes together with the draft, like an emptied coupon panel.
+            coupon.delete()
+            return {"positions_count": 0, "total_coefficient": "0", "cleared": True}
         target.delete()
         predictions = [item for item in predictions if item is not target]
     coefficient = _coupon_total_coefficient(predictions)

@@ -510,11 +510,6 @@
             if (!predictionId || form.dataset.removingPrediction === "true") return;
 
             const item = button.closest("[data-rich-coupon-item]");
-            const visibleItems = visibleCouponItems();
-            if (visibleItems.length <= 1) {
-                showFormError(form, "В купоне должна остаться минимум одна позиция.");
-                return;
-            }
 
             form.dataset.removingPrediction = "true";
             const buttons = Array.from(document.querySelectorAll(
@@ -535,6 +530,11 @@
                 });
                 const payload = await response.json();
                 if (!response.ok || !payload.ok) throw new Error(payload.error || "Не удалось удалить матч.");
+                if (payload.cleared) {
+                    // The last match took the draft with it: show the empty editor.
+                    window.location.reload();
+                    return;
+                }
                 removed.add(predictionId);
                 syncRemoved();
                 item?.remove();

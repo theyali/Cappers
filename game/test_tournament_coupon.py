@@ -144,3 +144,9 @@ class TournamentCouponFlowTests(TestCase):
         self.assertIn("tournament", response.context["form"].errors)
         self.coupon.refresh_from_db()
         self.assertEqual(self.coupon.published_status, PredictionCoupon.PublishedStatus.DRAFT)
+
+    def test_editor_hides_access_choice_for_tournament_draft(self):
+        self.coupon.tournament = self.tournament
+        self.coupon.save(update_fields=["tournament"])
+        response = self.client.get(reverse("game:rich_prediction_create"))
+        self.assertContains(response, "data-rich-access-card data-tournament-hidden hidden")
