@@ -122,6 +122,16 @@
             rulesNode.hidden = !rule;
         }
         applyToPage();
+        // Tournament predictions are always free, so the editor drops its access choice.
+        const accessCard = document.querySelector("[data-rich-access-card]");
+        if (accessCard) {
+            setVisible(accessCard, !rule);
+            const free = accessCard.querySelector('[name="is_paid"][value=""]');
+            if (rule && free && !free.checked) {
+                free.checked = true;
+                free.dispatchEvent(new Event("change", { bubbles: true }));
+            }
+        }
         const invalid = markItems();
         const editorWarning = document.querySelector("[data-tournament-editor-warning]");
         if (editorWarning) editorWarning.hidden = !invalid;

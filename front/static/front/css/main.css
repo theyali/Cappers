@@ -31259,7 +31259,8 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 [data-tournament-hidden][hidden] { display: none !important; }
 .matches-sport-tile,
 .matches-sport-chip,
-[data-match-sport] { transition: opacity 0.24s ease, transform 0.24s ease; }
+[data-match-sport],
+[data-rich-access-card] { transition: opacity 0.24s ease, transform 0.24s ease; }
 .is-tournament-locked[data-bet-option] { opacity: 0.38; cursor: not-allowed; }
 .coupon-item.is-tournament-invalid,
 .rich-prediction-coupon-item.is-tournament-invalid {
