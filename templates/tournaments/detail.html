@@ -42,13 +42,13 @@
                     <div class="tournament-participant-guide-copy">
                         <strong>Вы участвуете в турнире</strong>
                         {% if runtime_status.key == 'live' %}
-                        <p>Выберите матч и исход, укажите ставку в купоне и опубликуйте прогноз. Он появится в прогнозах турнира и в вашей статистике.</p>
+                        <p>Выберите матчи, в купоне укажите этот турнир и опубликуйте расширенный прогноз с названием и описанием. Он появится в прогнозах турнира и в вашей статистике.</p>
                         {% else %}
                         <p>Вы уже в списке участников. Создание прогнозов откроется <time datetime="{{ tournament.starts_at|date:'c' }}">{{ tournament.starts_at|date:"d.m.Y в H:i" }}</time>, когда начнётся турнир.</p>
                         {% endif %}
                     </div>
                     {% if runtime_status.key == 'live' %}
-                    <a class="tournament-primary-action" href="{% url 'tournaments:predict' slug=tournament.slug %}">Сделать прогноз {% include "front/includes/_solar_icon.html" with name="match_next" icon_size=18 only %}</a>
+                    <a class="tournament-primary-action" href="{% url 'game:match_list' %}?match_filter=predictable&amp;tournament={{ tournament.pk }}">Сделать прогноз {% include "front/includes/_solar_icon.html" with name="match_next" icon_size=18 only %}</a>
                     {% else %}
                     <button class="tournament-primary-action" type="button" disabled>Прогнозы после старта</button>
                     {% endif %}
@@ -81,7 +81,7 @@
                                 {% endif %}
                                 {% if participant %}
                                     {% if runtime_status.key == 'live' %}
-                                        <a class="tournament-primary-action" href="{% url 'tournaments:predict' slug=tournament.slug %}">Сделать прогноз <span aria-hidden="true">→</span></a>
+                                        <a class="tournament-primary-action" href="{% url 'game:match_list' %}?match_filter=predictable&amp;tournament={{ tournament.pk }}">Сделать прогноз <span aria-hidden="true">→</span></a>
                                     {% else %}
                                         <span class="tournament-action-note">
                                             {% if runtime_status.key == "finished" %}

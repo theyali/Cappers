@@ -312,8 +312,7 @@ mark { color: var(--blue); background: 0 0; }
 .site-nav-center .site-nav-cappers-dropdown a.is-active,
 .site-nav-center a.is-active,
 .slider-arrow-accent,
-.tournament-detail-title-panel .verified-badge,
-.tournament-match-expand:hover {
+.tournament-detail-title-panel .verified-badge {
     color: var(--ink);
     background: var(--yellow);
 }
@@ -364,8 +363,6 @@ mark { color: var(--blue); background: 0 0; }
 .referrals-step strong,
 .related-articles-head h2,
 .site-nav-actions .nav-form,
-.tournament-predict-rules dd,
-.tournament-predict-rules dt,
 .wallet-topup-page .wallet-balance-card h2,
 .wallet-topup-page .wallet-balance-card p,
 .wallet-topup-page .wallet-hero h1,
@@ -696,7 +693,6 @@ mark { color: var(--blue); background: 0 0; }
     font-size: 17px;
     font-weight: 600;
 }
-
 
 .wallet-topup-page .wallet-balance-value span,
 .wallet-topup-page .wallet-method-bonus span,
@@ -3214,8 +3210,7 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .capper-discovery-section.is-rising {
     background: #171718;
 }
-.cappers-ranking-table tbody tr:hover td,
-.tournament-match-row.is-expanded {
+.cappers-ranking-table tbody tr:hover td {
     background: #2a2a2d;
 }
 .prediction-league-row { justify-content: space-between; gap: 14px; }
@@ -3535,10 +3530,7 @@ html:has(> body.is-telegram-app)::view-transition-new(root) {
 .prediction-reaction.prediction-like.is-active { color: var(--danger); }
 .prediction-reaction.prediction-favorite.is-active { color: var(--yellow); }
 .content-sport-accordion[data-sport-locked="true"] > .content-sport-summary,
-.prediction-views,
-.tournament-predict-page .match-card-main-static,
-.tournament-predict-page .match-table-event-static,
-.tournament-predict-page .match-table-score-static {
+.prediction-views {
     cursor: default;
 }
 .prediction-views:hover { color: var(--muted); background: #2a2a2d; transform: none; }
@@ -6312,8 +6304,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .coupon-head,
 .coupon-item-top,
 .coupon-total,
-.match-card-head,
-.tournament-predict-page .match-table-event-static {
+.match-card-head {
     justify-content: space-between;
     gap: 12px;
 }
@@ -6613,8 +6604,7 @@ body:has(.home-layout) .site-main h2 { font-size: clamp(29px, 3.6vw, 30px) !impo
 .coupon-item.is-collapsed .coupon-item-toggle,
 .expert-monthly-more[aria-expanded="true"] svg,
 .expert-sport-profit-filter.is-open .expert-sport-profit-toggle svg,
-.match-odds-panel.is-odds-collapsed .match-odds-accordion-toggle svg,
-.tournament-match-row.is-expanded .tournament-match-expand svg {
+.match-odds-panel.is-odds-collapsed .match-odds-accordion-toggle svg {
     transform: rotate(180deg);
 }
 .auth-telegram-button:hover:not(:disabled),
@@ -9041,8 +9031,7 @@ html:has(.matches-head) { overflow-anchor: none; }
 .auth-input-wrap select,
 .prediction-filter-field select,
 .prediction-table-row[data-coupon-url] a,
-.prediction-table-row[data-coupon-url] button,
-.tournament-match-row {
+.prediction-table-row[data-coupon-url] button {
     cursor: pointer;
 }
 .prediction-filter-field input::placeholder { color: #555558; }
@@ -10107,8 +10096,7 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 }
 .league-picker-actions strong { color: #fff; font-size: 12px; }
 .following-capper-pill.is-active small,
-.tournament-back-link.is-dark,
-.tournament-predict-hero p {
+.tournament-back-link.is-dark {
     color: rgba(255, 255, 255, 0.72);
 }
 .cabinet-bonuses-page .bonus-task-row-empty,
@@ -10624,8 +10612,6 @@ body.layout-columns-center_right .predictions-layout > .predictions-ad-sidebar {
 .profile-mobile-save,
 .profile-tab-panel,
 .profile-user-row.is-hidden,
-.tournament-match-full-odds .odds-button .match-odd-lock,
-.tournament-predict-page .content-view-toolbar,
 body.auth footer,
 body.register footer {
     display: none;
@@ -16781,7 +16767,6 @@ body.register {
 .profile-demand-error {
     color: #ff7b70;
 }
-.tournament-predict-page { margin: 0 auto; }
 .profile-user-row.is-profile-link {
     cursor: pointer;
     transition:
@@ -18098,7 +18083,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .tournament-leaderboard { min-width: 0; overflow-x: auto; }
 .is-positive { color: #15803d; }
 .is-negative { color: #dc2626; }
-.tournament-predictions-table .content-table-scroll { max-width: 100%; }
 .tournament-achievements { display: grid; gap: 12px; margin-top: 16px; }
 .tournament-achievement { display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 12px; align-items: center; }
 .tournament-achievement > span {
@@ -18126,97 +18110,6 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 .tournament-empty-block.is-compact {
     padding: 16px;
 }
-.tournament-predict-hero { align-items: flex-end; margin-bottom: 8px; color: #fff; }
-.tournament-predict-hero .tournament-back-link { margin: 0 0 10px; }
-.tournament-predict-hero .tournament-status { position: static; margin-bottom: 8px; }
-.tournament-predict-hero h1 { margin: 0; font-size: 26px; line-height: 1; letter-spacing: 0; }
-.tournament-predict-hero p { margin: 8px 0 0; font-size: 14px; font-weight: 700; }
-.tournament-predict-hero .tournament-predict-rules { max-width: 520px; margin-top: 12px; }
-.tournament-predict-rules { display: grid; grid-template-columns: repeat(3, minmax(92px, 1fr)); gap: 10px; margin: 0; }
-.tournament-predict-rules div {
-    display: grid;
-    gap: 4px;
-    min-width: 0;
-    padding: 12px;
-    border-radius: 8px;
-    background: #2a2a2d;
-}
-.tournament-predict-rules dt { color: rgba(255, 255, 255, 0.56); font-size: 12px; font-weight: 800; }
-.tournament-predict-rules dd { color: #fff; font-size: 14px; font-weight: 900; }
-.match-card-tournament-used { color: #dc2626; font-size: 12px; font-weight: 900; }
-.tournament-predict-page .match-table-watch { display: flex; align-items: center; justify-content: center; gap: 6px; }
-.tournament-match-expand {
-    width: auto;
-    height: 34px;
-    min-width: 34px;
-    display: inline-grid;
-    grid-auto-flow: column;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    padding: 0;
-    border: 0;
-    border-radius: 9px;
-    color: var(--text);
-    background: #303034;
-    cursor: pointer;
-}
-.tournament-match-expand-inline {
-    flex: 0 0 auto;
-    min-width: 78px;
-    padding: 0 9px;
-    font-size: 9px;
-    font-weight: 600;
-    text-transform: uppercase;
-}
-.tournament-match-expand svg {
-    width: 15px;
-    height: 15px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 2;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    transition: transform 0.22s;
-}
-.tournament-match-odds-row { min-width: 980px; margin: 1px 0 8px; padding: 0; }
-.tournament-match-odds-panel {
-    overflow-x: auto;
-    overflow-y: hidden;
-    padding: 8px 10px 10px;
-    background: #202022;
-    scrollbar-width: thin;
-    scrollbar-color: #3a3a3e transparent;
-}
-.tournament-match-odds-strip { width: max-content; min-width: 100%; display: flex; align-items: stretch; gap: 6px; }
-.tournament-match-odds-panel::-webkit-scrollbar { height: 8px; }
-.tournament-match-odds-panel::-webkit-scrollbar-track { background: 0 0; }
-.tournament-match-odds-panel::-webkit-scrollbar-thumb { border-radius: 999px; background: #3a3a3e; }
-.tournament-match-full-odds .odds-button {
-    flex: 0 0 78px;
-    width: 78px;
-    min-width: 78px;
-    min-height: 42px;
-    grid-template-columns: 1fr;
-    grid-template-rows: auto auto;
-    justify-items: center;
-    gap: 2px;
-    padding: 6px 8px;
-    border-radius: 7px;
-    text-align: center;
-}
-.tournament-match-full-odds .odds-button span { max-width: 100%; font-size: 10px; line-height: 1; }
-.tournament-match-full-odds .odds-button b { grid-column: 1; grid-row: auto; font-size: 13px; line-height: 1; }
-.tournament-match-odds-error,
-.tournament-match-odds-loading {
-    min-height: 56px;
-    display: grid;
-    place-items: center;
-    color: var(--muted);
-    font-size: 13px;
-    font-weight: 800;
-}
-.tournament-match-odds-error { color: #f87171; }
 .tournaments-page .tournaments-layout { grid-template-columns: minmax(260px, 322px) minmax(0, 1fr); }
 .tournaments-page .tournaments-content { align-content: start; grid-auto-rows: max-content; gap: 14px; padding: 0 8px 40px; }
 .tournaments-page .tournaments-sidebar { display: grid; align-content: start; gap: 14px; }
@@ -21772,7 +21665,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     transform: translate(-50%, -50%);
 }
 
-
 .prediction-card.feed-prediction-card .feed-prediction-cover-league {
     width: 32px;
     height: 32px;
@@ -24545,7 +24437,8 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .rich-prediction-coupon-item .rich-prediction-match-warning,
 .rich-prediction-timing-warning { color: #ff8b8b; }
 .rich-prediction-timing-warning { margin: 12px 0; font-size: 13px; }
-.rich-prediction-coupon-item .rich-prediction-match-warning { white-space: normal; }
+.rich-prediction-coupon-item .rich-prediction-match-warning,
+.rich-prediction-coupon-item .coupon-item-tournament-warning { white-space: normal; }
 .rich-prediction-item-number { color: #6b6e78; font-family: var(--font-display); font-size: 11px; font-weight: 800; text-align: center; }
 .rich-prediction-coupon-match { min-width: 0; display: flex; align-items: center; gap: 11px; color: #fff; }
 .rich-prediction-coupon-logo {
@@ -24655,7 +24548,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     grid-template-columns: auto repeat(3, auto);
     gap: 10px;
 }
-
 
 .rich-cover-option {
     position: relative;
@@ -25561,7 +25453,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     line-height: 1;
     white-space: nowrap;
 }
-
 
 .predictions-content.articles-content .articles-categories a.is-active,
 .predictions-content.articles-content .articles-categories a:hover {
@@ -26847,7 +26738,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     color:white;
 }
 
-
 /* Desktop predictions tab: high-odds carousel, stats, and compact coupon cards. */
 :is(#profile-tab-predictions, .expert-public-page) .profile-predictions-feature {
     display: grid;
@@ -27425,8 +27315,6 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .forecast-vertical-card.is-light .forecast-vertical-feature-main h2 { color: var(--ink); }
 .forecast-vertical-card.is-light .forecast-vertical-feature-top .forecast-vertical-reactions { color: var(--ink); }
 .forecast-vertical-card.is-light .forecast-vertical-feature-bottom { color: #fff; }
-
-
 
 /* Homepage hero: decorative coupon columns, no database lookups. */
 .home-search-hero {
@@ -30195,7 +30083,6 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .profile-coupon-access-card .paid-prediction-offer a,
 .profile-coupon-access-card .paid-prediction-offer-soon { min-height: 42px; border-radius: 12px; font-size: 13px; }
 
-
 .rich-prediction-paid-settings-note { margin: 12px 0 0; color: #a3a6b0; font-size: 12px; line-height: 1.6; }
 .rich-prediction-paid-settings-note a { color: var(--yellow); font-size: 11px; text-decoration: underline; text-underline-offset: 3px; }
 .rich-prediction-paid-settings-note a:hover { color: var(--text); }
@@ -31310,3 +31197,75 @@ html:root .match-comparison-leaders h3 { margin: 4px 0 8px; color: #C4C7D0; font
 .vip-plan-benefits { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; color: var(--text); font-size: 12px; line-height: 1.45; }
 .vip-plan-benefits li { display: flex; align-items: flex-start; gap: 8px; }
 .vip-plan-benefits .solar-icon { flex: none; color: var(--yellow); }
+
+/* Tournament choice of the coupon (coupon panel and rich editor) */
+.coupon-tournament { display: grid; gap: 8px; margin-bottom: 14px; }
+.coupon-tournament-select {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 46px;
+    border-radius: 12px;
+    background: var(--ink);
+    outline: 1px solid rgba(255, 255, 255, 0.08);
+}
+.coupon-tournament-select:focus-within { outline: 2px solid var(--blue); }
+.coupon-tournament-select svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.9;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.coupon-tournament-icon {
+    position: absolute;
+    left: 8px;
+    width: 30px;
+    height: 30px;
+    display: grid;
+    place-items: center;
+    border-radius: 9px;
+    color: var(--ink);
+    background: var(--yellow);
+    pointer-events: none;
+}
+.coupon-tournament-chevron { position: absolute; right: 14px; color: var(--muted); pointer-events: none; }
+.coupon-tournament-select select {
+    width: 100%;
+    min-height: 46px;
+    padding: 0 40px 0 48px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 12px;
+    color: #f7f8ff;
+    background: transparent;
+    outline: 0;
+    font: 800 13px/1 var(--font-body);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    appearance: none;
+    cursor: pointer;
+}
+.coupon-tournament-select select option { color: #f7f8ff; background: var(--panel); }
+.coupon-tournament-rules { margin: 0; color: var(--muted); font-size: 11.5px; font-weight: 600; line-height: 1.45; }
+.coupon-tournament-rules[hidden] { display: none; }
+.is-tournament-leaving {
+    opacity: 0;
+    transform: scale(0.96);
+    transition: opacity 0.24s ease, transform 0.24s ease;
+}
+[data-tournament-hidden][hidden] { display: none !important; }
+.matches-sport-tile,
+.matches-sport-chip,
+[data-match-sport] { transition: opacity 0.24s ease, transform 0.24s ease; }
+.is-tournament-locked[data-bet-option] { opacity: 0.38; cursor: not-allowed; }
+.coupon-item.is-tournament-invalid,
+.rich-prediction-coupon-item.is-tournament-invalid {
+    background: rgba(255, 77, 85, 0.1);
+    outline: 1px solid rgba(255, 77, 85, 0.6);
+}
+.coupon-item-tournament-warning { display: block; margin-top: 6px; color: #ff4d55; font-size: 11.5px; font-weight: 700; line-height: 1.4; }
+.coupon-item-tournament-warning[hidden] { display: none; }
+.rich-prediction-tournament-card .coupon-tournament { margin-bottom: 0; }

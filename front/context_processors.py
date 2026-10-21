@@ -342,10 +342,6 @@ def _breadcrumbs_for_request(request):
             {"title": "Турниры", "url": _route_url("tournaments:index")},
             {"title": "Турнир"},
         ],
-        "tournaments:predict": [
-            {"title": "Турниры", "url": _route_url("tournaments:index")},
-            {"title": "Прогноз"},
-        ],
     }
 
     trail = dynamic.get(view_name) or items.get(view_name)

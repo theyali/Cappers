@@ -492,13 +492,6 @@ body.expert-public-details-open {
   .tournament-prize-grid {
     grid-template-columns: 1fr;
   }
-  .tournament-predict-page {
-    width: min(100% - 20px, 720px);
-  }
-
-  .tournament-predict-shell {
-    grid-template-columns: 1fr;
-  }
 
   .wiki-video-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -612,8 +605,6 @@ body.expert-public-details-open {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-
-
 
 @media (min-width: 1121px) {
   .matches-page .matches-shell:has(> .coupon-sidebar-auth) {
@@ -1210,13 +1201,6 @@ body.expert-public-details-open {
   }
   .match-detail-scoreboard > .match-detail-team:nth-child(3) small {
     grid-area: sub;
-  }
-  .matches-page.tournament-predict-page {
-    grid-template-rows: 0 0 0 minmax(0, 1fr);
-    gap: 0;
-  }
-  .matches-page.tournament-predict-page .matches-shell {
-    grid-row: 4;
   }
 }
 
@@ -3129,10 +3113,6 @@ body.expert-public-details-open {
   .match-detail-sidebar {
     display: none !important;
   }
-
-
-
-
 
 }
 
@@ -7398,15 +7378,6 @@ body.expert-public-details-open {
     font-size: 24px;
   }
 
-  .tournament-predict-hero h1 {
-    font-size: 28px;
-  }
-
-  .tournament-predict-rules {
-    grid-template-columns: 1fr;
-    width: 100%;
-  }
-
   .tournament-section-head {
     align-items: flex-start;
     flex-direction: column;
@@ -7444,26 +7415,6 @@ body.expert-public-details-open {
   .expert-recommendation-body {
     min-height: 0;
   }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   .profile-xp-card {
     min-height: 154px;
@@ -7526,13 +7477,6 @@ body.expert-public-details-open {
   .odds-button b {
     font-size: 13px;
   }
-
-
-
-
-
-
-
 
 }
 
@@ -10651,23 +10595,9 @@ body.expert-public-details-open {
     grid-column: auto;
   }
 
-  .rich-prediction-coupon-item {
-    grid-template-columns: minmax(0, 1fr) 44px;
-    gap: 10px;
-  }
-
-  .rich-prediction-coupon-versus,
-  .rich-prediction-coupon-away {
-    display: none;
-  }
-
-  .rich-prediction-coupon-odd {
-    text-align: right;
-  }
-
-  .rich-prediction-coupon-remove {
-    grid-column: 2;
-    justify-self: end;
+  .rich-prediction-coupon-item.is-tournament-invalid {
+    padding: 8px 6px;
+    border-radius: 12px;
   }
 
   .rich-cover-grid {
@@ -12700,7 +12630,6 @@ body.expert-public-details-open {
   .tournaments-page .tournament-card-action { min-height: 46px; font-size: 14px; }
   .tournaments-page .tournament-card.is-no-cover .tournament-card-body { padding-top: 18px; }
   .tournaments-page .tournament-card.is-no-cover .tournament-card-heading { align-items: start; }
-
 
   .tournaments-page .tournaments-hero,
   .tournament-detail-page .tournament-detail-hero {

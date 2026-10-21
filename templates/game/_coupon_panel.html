@@ -1,6 +1,6 @@
-{% load static %}
+{% load static coupon_options %}
 
-<form class="coupon-panel" data-coupon-form data-no-transition>
+<form class="coupon-panel" data-coupon-form data-no-transition data-rich-url="{% url 'game:rich_prediction_create' %}">
     {% csrf_token %}
 
     <button
@@ -14,6 +14,10 @@
         <h2>Новый прогноз</h2>
         <span class="coupon-count" data-coupon-count>0/20</span>
     </div>
+    {% if request.user.is_authenticated and request.user.is_analyst %}
+        {% coupon_tournament_rules request.user as tournament_rules %}
+        {% if tournament_rules %}{% include "game/includes/_coupon_tournament_select.html" with select_name="tournament_id" %}{% endif %}
+    {% endif %}
     <div class="coupon-body" data-sidebar-body>
         <div class="coupon-empty" data-coupon-empty>
             <span class="brand-logo" data-skeleton-image>
@@ -96,3 +100,4 @@
     </div>
 </form>
 <script src="{% static 'front/js/coupon-constraints.js' %}" defer></script>
+<script src="{% static 'front/js/coupon-tournament.js' %}" defer></script>

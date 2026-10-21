@@ -13,7 +13,6 @@ SECTION_BY_VIEW = {
     "tournaments:index": "tournaments",
     "tournaments:detail": "tournaments",
     "tournaments:results": "tournaments",
-    "tournaments:predict": "tournaments",
     "cabinet:bonuses": "bonuses",
     "cabinet:bonus_tasks": "bonus_tasks",
     "cabinet:bonus_levels": "bonus_levels",

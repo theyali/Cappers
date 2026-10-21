@@ -98,8 +98,13 @@
     const createUrl = root.dataset.createUrl;
     const staleSeconds = Number.parseInt(root.dataset.staleSeconds || "60", 10) || 60;
     const autosaveEnabled = root.dataset.autosave !== "false";
-    const minConfidence = Math.max(0, Math.min(100, Number.parseInt(root.dataset.minConfidence || "0", 10) || 0));
-    const couponTypeRule = root.dataset.couponTypeRule || "any";
+    const tournamentSelect = form.querySelector("[data-coupon-tournament]");
+    const submitLabel = submitButton?.querySelector(".coupon-submit-label");
+    const richUrl = form.dataset.richUrl || "";
+    // A tournament chosen in the coupon sets its rules; such coupons are published as rich predictions.
+    const activeTournament = () => window.CappersCouponTournament?.current() || null;
+    const minConfidenceOf = () => Math.max(0, Math.min(100, activeTournament()?.min_confidence || 0));
+    const couponTypeRuleOf = () => activeTournament()?.coupon_type || "any";
     const sharedDraft = autosaveEnabled ? window.CappersCouponDraft : null;
     const items = new Map();
 
@@ -120,8 +125,8 @@
 
     const normalizeConfidence = (value) => {
         const parsed = Number.parseInt(String(value ?? "50"), 10);
-        if (!Number.isFinite(parsed)) return Math.max(50, minConfidence);
-        return Math.max(minConfidence, Math.min(100, parsed));
+        if (!Number.isFinite(parsed)) return Math.max(50, minConfidenceOf());
+        return Math.max(minConfidenceOf(), Math.min(100, parsed));
     };
 
     const currentConfidence = () => normalizeConfidence(confidenceInput?.value);
@@ -149,15 +154,22 @@
 
     const couponCountMatchesRule = () => {
         if (items.size < 1 || items.size > 20) return false;
-        if (couponTypeRule === "single") return items.size === 1;
-        if (couponTypeRule === "express") return items.size >= 2;
+        if (couponTypeRuleOf() === "single") return items.size === 1;
+        if (couponTypeRuleOf() === "express") return items.size >= 2;
         return true;
     };
+
+    const tournamentProblems = () => [...items.values()].filter((item) => (
+        window.CappersCouponTournament?.problems(item).length
+    )).length;
+
+    // A tournament coupon only needs valid positions here: stake, text and the rest are set in the editor.
+    const tournamentCouponReady = () => couponCountMatchesRule() && !tournamentProblems();
 
     const couponIsComplete = () => (
         couponCountMatchesRule()
         && hasPositiveStake()
-        && currentConfidence() >= minConfidence
+        && currentConfidence() >= minConfidenceOf()
         && currentConfidence() <= 100
         && [...items.values()].every((item) => (
             String(item.selection || "").trim().length > 0
@@ -221,7 +233,7 @@
     const updateConfidenceVisual = () => {
         const value = currentConfidence();
         if (confidenceInput) {
-            confidenceInput.min = String(minConfidence);
+            confidenceInput.min = String(minConfidenceOf());
         }
         if (confidenceInput && Number.parseInt(confidenceInput.value, 10) !== value) {
             confidenceInput.value = String(value);
@@ -257,9 +269,14 @@
     const updateState = () => {
         root.classList.toggle("has-coupon", items.size > 0);
         if (countNode) countNode.textContent = `${items.size}/20`;
+        const tournament = activeTournament();
         if (submitButton) {
-            submitButton.disabled = !canWrite || !couponIsComplete() || submitButton.classList.contains("is-loading");
+            const ready = tournament ? tournamentCouponReady() : couponIsComplete();
+            submitButton.disabled = !canWrite || !ready || submitButton.classList.contains("is-loading");
         }
+        if (submitLabel) submitLabel.textContent = tournament ? "Перейти к расширенному прогнозу" : "Сделать прогноз";
+        form.classList.toggle("is-tournament-coupon", Boolean(tournament));
+        window.CappersCouponTournament?.markItems();
         if (richAction) {
             richAction.hidden = items.size < 1 || !draftId;
         }
@@ -270,6 +287,7 @@
 
     const buildItem = (group, option) => ({
         matchId: group.dataset.matchId,
+        sport: group.closest("[data-match-sport]")?.dataset.matchSport || "",
         matchTitle: group.dataset.title,
         league: group.dataset.league,
         time: group.dataset.time,
@@ -291,6 +309,8 @@
     });
 
     const updateCouponItem = (node, item) => {
+        node.dataset.sport = item.sport || "";
+        node.dataset.coefficient = String(item.coefficient);
         node.querySelector("[data-coupon-selection]").textContent = item.selection;
         node.querySelector("[data-coupon-short]").textContent = item.shortLabel;
         node.querySelector("[data-coupon-item-odd]").textContent = formatOdd(item.coefficient);
@@ -421,6 +441,7 @@
         confidence: currentConfidence(),
         use_free_prediction: useFreePrediction(),
         audience: "free",
+        tournament_id: activeTournament()?.id || null,
         items: [...items.values()].map((item) => ({
             match_id: item.matchId,
             market: item.market,
@@ -607,7 +628,7 @@
 
     const upsertItem = (item) => {
         const existing = items.get(item.matchId);
-        if (!existing && couponTypeRule === "single" && items.size >= 1) {
+        if (!existing && couponTypeRuleOf() === "single" && items.size >= 1) {
             items.clear();
             itemsRoot.replaceChildren();
         }
@@ -624,7 +645,7 @@
         } else {
             items.set(item.matchId, item);
             renderItem(item);
-            setNote(couponTypeRule === "single" ? "Игра выбрана для одиночного прогноза." : "Игра добавлена в прогноз.");
+            setNote(couponTypeRuleOf() === "single" ? "Игра выбрана для одиночного прогноза." : "Игра добавлена в прогноз.");
         }
 
         if (sidebar && sidebar.classList.contains("is-collapsed")) {
@@ -636,6 +657,16 @@
         markDraftChanged(true);
         syncDraft(false);
         itemsRoot.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    };
+
+    // The draft keeps the tournament picked in another tab or page.
+    const restoreTournament = (draft) => {
+        if (!tournamentSelect || !draft?.tournament_id) return;
+        const value = String(draft.tournament_id);
+        const hasOption = [...tournamentSelect.options].some((option) => option.value === value);
+        if (!hasOption || tournamentSelect.value === value) return;
+        tournamentSelect.value = value;
+        tournamentSelect.dispatchEvent(new Event("change", { bubbles: true }));
     };
 
     const replaceCanonicalDraft = (draft) => {
@@ -656,6 +687,7 @@
             renderItem(item);
         });
         restoring = false;
+        restoreTournament(draft);
         updateState();
     };
 
@@ -675,19 +707,30 @@
         replaceCanonicalDraft(draft);
         setNote(draft ? "Купон обновлён." : "Купон пуст.");
     });
-    richAction?.addEventListener("click", async (event) => {
-        if (!sharedDraft) return;
-        event.preventDefault();
+    const openRichEditor = async (url) => {
         try {
+            markDraftChanged(true);
             while (dirty || autosaveRequest) {
                 const request = autosaveRequest || syncDraft(false);
                 if (!request) break;
                 const result = await request;
                 if (!result?.ok) return;
             }
-            if (!dirty && draftId && items.size) window.location.assign(richAction.href);
+            if (!dirty && draftId && items.size) window.location.assign(url);
         } catch (_error) { setNote("Не удалось сохранить купон. Повторите переход после сохранения.", "error"); }
+    };
+
+    richAction?.addEventListener("click", (event) => {
+        if (!sharedDraft) return;
+        event.preventDefault();
+        openRichEditor(richAction.href);
     });
+
+    tournamentSelect?.addEventListener("change", () => {
+        updateState();
+        scheduleDraftSync();
+    });
+    window.addEventListener("coupon:tournament-changed", () => updateState());
 
     stakeInput?.addEventListener("input", () => {
         stakeInput.closest(".coupon-field")?.classList.toggle(
@@ -725,20 +768,33 @@
             setNote("Сохранять прогнозы могут только эксперты.", "error");
             return;
         }
+        if (activeTournament()) {
+            if (tournamentProblems()) {
+                setNote("Уберите из купона отмеченные красным матчи — они не подходят турниру.", "error");
+                return;
+            }
+            if (!couponCountMatchesRule()) {
+                setNote(couponTypeRuleOf() === "single" ? "В этом турнире доступны только одиночные прогнозы." : "Добавьте матчи: в этом турнире нужны экспрессы.", "error");
+                return;
+            }
+            setNote("Сохраняем купон и открываем расширенный прогноз...");
+            openRichEditor(richUrl);
+            return;
+        }
         if (items.size < 1 || items.size > 20) {
             setNote("В прогнозе должно быть от 1 до 20 игр.", "error");
             return;
         }
-        if (couponTypeRule === "single" && items.size !== 1) {
+        if (couponTypeRuleOf() === "single" && items.size !== 1) {
             setNote("В этом турнире доступны только одиночные прогнозы.", "error");
             return;
         }
-        if (couponTypeRule === "express" && items.size < 2) {
+        if (couponTypeRuleOf() === "express" && items.size < 2) {
             setNote("В этом турнире доступны только экспрессы.", "error");
             return;
         }
-        if (currentConfidence() < minConfidence) {
-            setNote(`Минимальная уверенность для турнира — ${minConfidence}%.`, "error");
+        if (currentConfidence() < minConfidenceOf()) {
+            setNote(`Минимальная уверенность для турнира — ${minConfidenceOf()}%.`, "error");
             return;
         }
         if (!couponIsComplete()) {

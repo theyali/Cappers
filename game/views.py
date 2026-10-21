@@ -49,12 +49,14 @@ from game.services.coupon_validation import (
 from game.services.match_sync import MatchSyncService
 from game.services.prediction_editor import (
     build_prediction_editor_context,
+    can_open_rich_editor,
     create_rich_prediction,
     update_rich_prediction,
     remove_draft_prediction,
 )
 from game.services.providers.neurokeff import NeurokeffProviderError
 from notifications.models import MatchWatch
+from tournaments.services.coupons import TOURNAMENT_QUICK_PUBLISH_MESSAGE, resolve_tournament_choice
 from wallets.services import (
     InsufficientCoins,
     charge_prediction_stake,
@@ -188,8 +190,8 @@ def match_detail(request, slug: str):
 
 @login_required
 def rich_prediction_create(request):
-    if not request.user.is_analyst or not request.user.is_vip:
-        raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
+    if not can_open_rich_editor(request.user):
+        raise PermissionDenied("Расширенные прогнозы доступны VIP-капперам и участникам турниров.")
 
     published_coupon = None
     if request.method == "GET":
@@ -239,8 +241,8 @@ def rich_prediction_create(request):
 
 @login_required
 def rich_prediction_edit(request, coupon_id):
-    if not request.user.is_analyst or not request.user.is_vip:
-        raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
+    if not can_open_rich_editor(request.user):
+        raise PermissionDenied("Расширенные прогнозы доступны VIP-капперам и участникам турниров.")
 
     coupon = get_object_or_404(
         PredictionCoupon.objects.select_related("cover_image"),
@@ -307,6 +309,12 @@ def create_coupon(request):
         return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
 
     autosave = bool(payload.get("autosave"))
+    try:
+        tournament = resolve_tournament_choice(request.user, payload.get("tournament_id"))
+    except ValidationError as exc:
+        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
+    if tournament is not None and not autosave:
+        return JsonResponse({"ok": False, "error": TOURNAMENT_QUICK_PUBLISH_MESSAGE}, status=400)
     if not autosave and coupon_publish_limited(request.user):
         return JsonResponse({"ok": False, "error": COUPON_PUBLISH_LIMIT_MESSAGE}, status=429)
     use_free_prediction = payload.get("use_free_prediction") is True and not autosave
@@ -429,6 +437,7 @@ def create_coupon(request):
             else PredictionCoupon.PublishedStatus.PUBLISHED
         )
         coupon.audience = audience
+        coupon.tournament = tournament
         coupon.published_at = None if autosave else timezone.now()
         coupon.save()
 
