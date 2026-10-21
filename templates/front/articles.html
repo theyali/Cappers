@@ -38,6 +38,7 @@
                             <input type="search" name="q" value="{{ current_query }}" placeholder="{{ search_placeholder }}" autocomplete="off" data-articles-search>
                         </label>
                         <input type="hidden" name="category" value="{{ selected_category_slug }}" data-articles-category-input>
+                        {% if source_tabs %}<input type="hidden" name="source" value="{{ current_source }}">{% endif %}
                         <input type="hidden" name="sort" value="{{ current_sort }}" data-articles-sort-input>
                     </form>
                 </div>

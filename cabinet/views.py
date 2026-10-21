@@ -90,6 +90,7 @@ from .referrals import mark_referral_registration
 from .services.account_deletion import account_deletion_blockers, delete_user_account
 from .services.bonus_center import build_profile_bonus_summary
 from .services.capper_articles import (
+    build_article_editor_context,
     build_capper_articles_context,
     can_create_capper_article,
     can_edit_capper_article,
@@ -730,18 +731,7 @@ def capper_article_create(request):
             messages.success(request, "Статья отправлена на модерацию.")
             return redirect("cabinet:capper_articles")
 
-    return render(
-        request,
-        "cabinet/capper_article_form.html",
-        {
-            "form": form,
-            "article": article,
-            "page_title": "Новая статья",
-            "submit_label": "Отправить на модерацию",
-            "active_tab": "articles",
-            "can_submit_article": bool(article and can_edit_capper_article(request.user, article)),
-        },
-    )
+    return render(request, "cabinet/capper_article_form.html", build_article_editor_context(request.user, form, article))
 
 
 @login_required
@@ -790,40 +780,7 @@ def capper_article_edit(request, article_id):
             messages.success(request, "Статья отправлена на модерацию.")
             return redirect("cabinet:capper_articles")
 
-    return render(
-        request,
-        "cabinet/capper_article_form.html",
-        {
-            "form": form,
-            "article": article,
-            "page_title": "Редактирование статьи",
-            "submit_label": "Отправить на модерацию",
-            "active_tab": "articles",
-            "can_submit_article": can_edit_capper_article(request.user, article),
-        },
-    )
-
-
-@login_required
-@require_POST
-def capper_article_submit(request, article_id):
-    if not request.user.is_analyst:
-        messages.info(request, "Сначала станьте каппером, чтобы работать со статьями.")
-        return redirect("cabinet:become_capper")
-
-    article = get_object_or_404(
-        CapperArticle,
-        pk=article_id,
-        author=request.user,
-    )
-    try:
-        submit_capper_article_for_moderation(request.user, article)
-    except ValidationError as exc:
-        messages.error(request, "; ".join(exc.messages))
-        return redirect("cabinet:capper_article_edit", article_id=article.pk)
-
-    messages.success(request, "Статья отправлена на модерацию.")
-    return redirect("cabinet:capper_articles")
+    return render(request, "cabinet/capper_article_form.html", build_article_editor_context(request.user, form, article))
 
 
 @require_http_methods(["GET", "POST"])

@@ -4869,8 +4869,7 @@ body.expert-public-details-open {
   .profile-list-head {
     flex-direction: column;
   }
-  .profile-section-heading > .profile-save-button,
-  .profile-section-heading > .capper-article-actions {
+  .profile-section-heading > .profile-save-button {
     display: none;
   }
   .profile-mobile-save {
@@ -10693,23 +10692,16 @@ body.expert-public-details-open {
     align-items: stretch;
   }
 
-  .capper-articles-page .bonus-page-head,
-  .capper-article-form-page .bonus-page-head,
-  .capper-article-form .profile-section-heading {
+  .capper-articles-page .bonus-page-head {
     display: grid;
     gap: 12px;
   }
 
-  .capper-articles-page .bonus-page-head .profile-save-button,
-  .capper-article-form-page .bonus-page-head .profile-save-button,
-  .capper-article-form .profile-section-heading .profile-save-button,
-  .capper-article-form-page form[action*="/submit/"] .profile-save-button {
+  .capper-articles-page .bonus-page-head .profile-save-button {
     width: 100%;
   }
 
-  .capper-articles-page .profile-list-card,
-  .capper-article-form-page .profile-list-card,
-  .capper-article-form {
+  .capper-articles-page .profile-list-card {
     padding: 14px;
     border-radius: 14px;
   }
@@ -10928,14 +10920,6 @@ body.expert-public-details-open {
 
   .capper-articles-page .capper-article-row .profile-coupon-status {
     justify-self: start;
-  }
-
-  .capper-article-form .tox-tinymce {
-    min-height: 340px;
-  }
-
-  .capper-article-form-page form[action*="/submit/"] {
-    display: block;
   }
 
   .earnings-hero {
@@ -14619,4 +14603,71 @@ body.expert-public-details-open {
 
 @media (max-width: 760px) {
   .feed-prediction-follow [data-follow-label] { display: none; }
+}
+
+/* Capper article editor: one column, then the phone layout with sticky actions. */
+@media (max-width: 1120px) {
+  .article-editor-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: none; }
+  .article-editor-main { grid-row: auto; }
+  .article-ready { order: -1; }
+}
+
+@media (max-width: 760px) {
+  /* The panel does not scroll on phones; as a scroll box it would keep the actions from sticking. */
+  .article-editor-page .matches-shell,
+  .article-editor-page .matches-list-panel { overflow: visible; }
+  .article-editor {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 16px 16px 0;
+    border-radius: 16px;
+  }
+  .article-editor-head { display: contents; }
+  .article-editor-heading { order: 0; }
+  .article-editor-alert { order: 1; }
+  .article-editor-body { order: 2; gap: 16px; }
+  .article-editor-title-row { justify-content: space-between; }
+  .article-editor-title-row h1 { font-size: 22px; }
+  .article-editor-alert blockquote,
+  .article-editor-alert p,
+  .article-editor-alert ul { margin-left: 0; }
+  .article-editor-alert li { display: grid; gap: 4px; }
+  .article-editor-actions {
+    order: 3;
+    position: sticky;
+    bottom: calc(66px + env(safe-area-inset-bottom, 0px));
+    z-index: 5;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    margin: 0 -16px;
+    padding: 12px 16px;
+    background: var(--panel);
+    box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .article-editor-wide-only { display: none; }
+  .article-editor-narrow-only { display: inline; }
+  .article-cover:not(.has-image) { aspect-ratio: auto; min-height: 190px; }
+  .article-editor-main { gap: 18px; }
+  .article-editor-pair { grid-template-columns: minmax(0, 1fr); gap: 18px; }
+  .article-editor-label { flex-wrap: wrap; row-gap: 4px; }
+  .article-editor-field input[name="title"] { font-size: 16px; }
+  .article-cover-empty { gap: 8px; padding: 14px; }
+  .article-cover-icon { width: 40px; height: 40px; margin: 0; }
+  .article-cover-empty strong { font-size: 13px; }
+  .article-cover-empty small { font-size: 11px; }
+  .article-cover-pick { padding: 9px 14px; font-size: 12px; }
+  .article-editor-card summary { pointer-events: auto; cursor: pointer; }
+  .article-editor-card:not([open]) summary > svg { transform: rotate(0); }
+  .article-ready-mark {
+    width: 26px;
+    height: 26px;
+    display: none;
+    place-items: center;
+    border-radius: 8px;
+    color: #5be38a;
+    background: rgba(91, 227, 138, 0.14);
+  }
+  .article-ready.is-complete .article-ready-mark { display: grid; }
+  .article-ready.is-complete:not([open]) .article-ready-bar { display: none; }
 }

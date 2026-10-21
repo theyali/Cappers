@@ -1,16 +1,23 @@
 {% url list_url_name as articles_list_url %}
 <div class="articles-controls" data-articles-controls>
+    {% if source_tabs %}
+    <nav class="articles-categories articles-sources" aria-label="Авторы">
+        {% for tab in source_tabs %}
+            <a class="{% if tab.active %}is-active{% endif %}" href="{{ articles_list_url }}{{ tab.url }}" data-articles-source-link data-source="{{ tab.value }}">{{ tab.label }}</a>
+        {% endfor %}
+    </nav>
+    {% endif %}
     <nav class="articles-categories" aria-label="Категории">
         <a
             class="{% if not selected_category %}is-active{% endif %}"
-            href="{{ articles_list_url }}{% if current_query or current_sort != 'new' %}?{% if current_query %}q={{ current_query|urlencode }}{% endif %}{% if current_query and current_sort != 'new' %}&{% endif %}{% if current_sort != 'new' %}sort={{ current_sort }}{% endif %}{% endif %}"
+            href="{{ articles_list_url }}?{% if current_source %}source={{ current_source }}&{% endif %}{% if current_query %}q={{ current_query|urlencode }}&{% endif %}{% if current_sort != 'new' %}sort={{ current_sort }}{% endif %}"
             data-articles-category-link
             data-category=""
         >{{ all_category_label }}</a>
         {% for category in categories %}
             <a
                 class="{% if selected_category == category %}is-active{% endif %}"
-                href="{{ articles_list_url }}?category={{ category.slug }}{% if current_query %}&q={{ current_query|urlencode }}{% endif %}{% if current_sort != 'new' %}&sort={{ current_sort }}{% endif %}"
+                href="{{ articles_list_url }}?category={{ category.slug }}{% if current_source %}&source={{ current_source }}{% endif %}{% if current_query %}&q={{ current_query|urlencode }}{% endif %}{% if current_sort != 'new' %}&sort={{ current_sort }}{% endif %}"
                 data-articles-category-link
                 data-category="{{ category.slug }}"
             >{{ category.name }}</a>
@@ -43,12 +50,13 @@
                 {% if article.category %}
                     <span class="article-list-category">{{ article.category.name }}</span>
                 {% endif %}
-                <span>{{ article.created_at|date:"j M Y" }}</span>
+                <span>{{ article.published_at|default:article.created_at|date:"j M Y" }}</span>
                 <span>{{ article.reading_time_minutes }} мин</span>
             </div>
             <div class="article-list-title"><a href="{{ article.get_absolute_url }}">{{ article.title }}</a></div>
             <p>{{ article.description|truncatechars:190 }}</p>
             <div class="article-list-bottom">
+                {% if article.author_url %}<a class="article-list-author" href="{{ article.author_url }}">{{ article.author_name }}</a>{% endif %}
                 <a class="article-list-read" href="{{ article.get_absolute_url }}">{{ read_label }} <span aria-hidden="true">→</span></a>
             </div>
         </div>

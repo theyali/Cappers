@@ -16,6 +16,7 @@
         const params = new URLSearchParams();
         const query = ($form.find("[name='q']").val() || "").trim();
         const category = options.category ?? ($form.find("[name='category']").val() || "");
+        const source = options.source ?? ($form.find("[name='source']").val() || "");
         const sort =
             options.sort ??
             (getResults().find("[data-articles-sort]").val() || $form.find("[name='sort']").val() || "new");
@@ -23,6 +24,7 @@
 
         if (query) params.set("q", query);
         if (category) params.set("category", category);
+        if (source) params.set("source", source);
         if (sort && sort !== "new") params.set("sort", sort);
         if (page) params.set("page", page);
 
@@ -41,6 +43,7 @@
         const $form = getForm();
         $form.find("[name='q']").val(parsedUrl.searchParams.get("q") || "");
         $form.find("[name='category']").val(parsedUrl.searchParams.get("category") || "");
+        $form.find("[name='source']").val(parsedUrl.searchParams.get("source") || "");
         $form.find("[name='sort']").val(parsedUrl.searchParams.get("sort") || "new");
     };
 
@@ -101,6 +104,13 @@
         event.preventDefault();
         const category = $(this).data("category") || "";
         loadResults(buildUrl({ category }), { category });
+    });
+
+    $(document).on("click", "[data-articles-source-link]", function handleSource(event) {
+        event.preventDefault();
+        const source = $(this).data("source") || "";
+        getForm().find("[name='source']").val(source);
+        loadResults(buildUrl({ source }));
     });
 
     $(document).on("change", "[data-articles-sort]", function handleSort() {

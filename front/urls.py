@@ -128,7 +128,7 @@ urlpatterns = [
     path("articles/<slug:slug>/", article_views.article_detail, name="article_detail"),
     path(
         "experts/<str:username>/articles/<int:article_id>-<slug:slug>/",
-        cabinet_expert_profile_views.capper_article_detail,
+        article_views.capper_article_detail,
         name="capper_article_detail",
     ),
     path("experts/<str:username>/predictions/", coupon_views.expert_coupons, name="expert_coupons"),
