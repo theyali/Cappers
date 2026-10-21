@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.db.utils import OperationalError, ProgrammingError
 from django.db.models import F, Q
@@ -25,6 +26,7 @@ from game.cover_images import assign_prediction_cover_images
 from game.models import Match, Prediction, PredictionCoupon
 from notifications.models import MatchWatch
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant, TournamentPredictionEntry
+from tournaments.services.coupons import attach_coupon_to_tournament
 from tournaments.services.join import TournamentJoinError, join_tournament
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
 
@@ -136,6 +138,7 @@ BOT_TOURNAMENT_MAX_JOINS_PER_RUN = 3
 BOT_TOURNAMENT_MAX_COUPONS_PER_RUN = 2
 BOT_TOURNAMENT_MIN_MINUTES_AFTER_JOIN = 30
 BOT_TOURNAMENT_MIN_HOURS_BETWEEN_COUPONS = 8
+BOT_TOURNAMENT_JOIN_HORIZON = timedelta(days=7)
 BOT_PRESENCE_ONLINE_SHARE_RANGE = (0.16, 0.32)
 BOT_PRESENCE_RECENT_SHARE_RANGE = (0.24, 0.42)
 BOT_PRESENCE_RECENT_MINUTES_RANGE = (7, 180)
@@ -975,17 +978,9 @@ def run_bot_tournament_activity(now=None) -> dict:
     now = now or timezone.now()
     if not _runtime_feature_enabled("tournaments"):
         return {"joined": 0, "created": 0, "skipped": 0, "reason": "bot_runtime_disabled"}
-    tournaments = list(
-        Tournament.objects.prefetch_related("allowed_sports")
-        .filter(
-            status=Tournament.Status.PUBLISHED,
-            starts_at__lte=now,
-            ends_at__gt=now,
-        )
-        .order_by("-is_featured", "ends_at", "id")[:10]
-    )
+    tournaments = _bot_tournaments(now)
     if not tournaments:
-        return {"joined": 0, "created": 0, "skipped": 0, "reason": "no_live_tournaments"}
+        return {"joined": 0, "created": 0, "skipped": 0, "reason": "no_bot_tournaments"}
 
     joined = 0
     created = 0
@@ -1003,8 +998,11 @@ def run_bot_tournament_activity(now=None) -> dict:
 
     random.shuffle(tournaments)
     for tournament in tournaments:
-        if joined < BOT_TOURNAMENT_MAX_JOINS_PER_RUN:
-            joined += _join_tournament_bots(tournament, expert_bots, now)
+        # Registration closes at the start: bots join upcoming tournaments and predict in live ones.
+        if now < tournament.starts_at:
+            if joined < BOT_TOURNAMENT_MAX_JOINS_PER_RUN:
+                joined += _join_tournament_bots(tournament, expert_bots, now)
+            continue
 
         if created >= BOT_TOURNAMENT_MAX_COUPONS_PER_RUN:
             continue
@@ -1052,24 +1050,30 @@ def run_bot_tournament_activity(now=None) -> dict:
     }
 
 
-def preview_bot_tournament_activity(now=None, *, limit: int = 10) -> dict:
-    now = now or timezone.now()
-    tournaments = list(
+def _bot_tournaments(now) -> list[Tournament]:
+    """Tournaments bots take part in: only ordinary (no text) predictions, upcoming soon or live."""
+    return list(
         Tournament.objects.prefetch_related("allowed_sports")
         .filter(
             status=Tournament.Status.PUBLISHED,
-            starts_at__lte=now,
+            prediction_format=Tournament.PredictionFormat.QUICK,
+            starts_at__lte=now + BOT_TOURNAMENT_JOIN_HORIZON,
             ends_at__gt=now,
         )
         .order_by("-is_featured", "ends_at", "id")[:10]
     )
+
+
+def preview_bot_tournament_activity(now=None, *, limit: int = 10) -> dict:
+    now = now or timezone.now()
+    tournaments = _bot_tournaments(now)
     if not tournaments:
         return {
             "tournaments": 0,
             "join_previews": [],
             "coupon_previews": [],
             "skipped": 0,
-            "skip_reasons": {"no_live_tournaments": 1},
+            "skip_reasons": {"no_bot_tournaments": 1},
         }
 
     expert_bots = list(
@@ -1094,15 +1098,17 @@ def preview_bot_tournament_activity(now=None, *, limit: int = 10) -> dict:
     skip_reasons = Counter()
 
     for tournament in tournaments:
-        if len(join_previews) < limit:
-            join_previews.extend(
-                _preview_tournament_joins(
-                    tournament,
-                    expert_bots,
-                    now,
-                    limit=limit - len(join_previews),
+        if now < tournament.starts_at:
+            if len(join_previews) < limit:
+                join_previews.extend(
+                    _preview_tournament_joins(
+                        tournament,
+                        expert_bots,
+                        now,
+                        limit=limit - len(join_previews),
+                    )
                 )
-            )
+            continue
 
         if len(coupon_previews) >= limit:
             continue
@@ -1511,24 +1517,14 @@ def _create_tournament_coupon(
             if not was_created:
                 return None
             coupon.confidence = confidence
-            coupon.save(update_fields=["confidence", "updated_at"])
-            tournament_coupon = TournamentCoupon.objects.create(
-                tournament=tournament,
-                participant=locked,
-                coupon=coupon,
-            )
-            TournamentPredictionEntry.objects.bulk_create(
-                [
-                    TournamentPredictionEntry(
-                        tournament=tournament,
-                        participant=locked,
-                        tournament_coupon=tournament_coupon,
-                        prediction=prediction,
-                        match=prediction.match,
-                    )
-                    for prediction in predictions
-                ]
-            )
+            coupon.tournament = tournament
+            coupon.save(update_fields=["confidence", "tournament", "updated_at"])
+            try:
+                with transaction.atomic():
+                    tournament_coupon = attach_coupon_to_tournament(coupon, tournament)
+            except ValidationError:
+                transaction.set_rollback(True)
+                return None
             BotActionLog.objects.create(
                 bot=locked.user.bot_account,
                 action=BotActionLog.Action.PREDICTION,
