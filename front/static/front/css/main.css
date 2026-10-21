@@ -22872,6 +22872,9 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-weight: 700;
 }
 .capper-profile-demo-stat-icon.is-green { color: #16c779; background: #153d30; }
+.capper-landing .solar-icon { flex-shrink: 0; vertical-align: middle; }
+.profile-wallet-card-label { display: flex; align-items: center; gap: 8px; }
+.profile-wallet-card-label .solar-icon { flex-shrink: 0; }
 .capper-profile-demo-stats em,
 .capper-profile-demo-stats small,
 .capper-profile-demo-stats strong {

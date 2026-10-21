@@ -136,7 +136,7 @@
             {% widthratio achievement_overview.metrics.wins achievement_overview.metrics.predictions 100 as profile_win_rate %}
                 <section class="expert-public-stats-compact profile-wallet-grid profile-copy-audience-summary" aria-label="Ключевые показатели">
                     <article class="expert-public-stat-card">
-                        <span class="expert-public-stat-icon" aria-hidden="true">₽</span>
+                        <span class="expert-public-stat-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="earnings" only %}</span>
                         <div>
                             <span>Доход за всё время</span>
                             <strong>{{ earnings_all_time.total_display }} ₽</strong>
@@ -145,7 +145,7 @@
                     </article>
                     <article class="expert-public-stat-card is-roi">
                         <span class="expert-public-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M4 19V9"></path><path d="M10 19V5"></path><path d="M16 19v-7"></path><path d="m4 7 6-4 6 5 4-3"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="chart-2-bold" only %}
                         </span>
                         <div>
                             <span>ROI</span>
@@ -155,7 +155,7 @@
                     </article>
                     <article class="expert-public-stat-card is-winrate">
                         <span class="expert-public-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"></circle><path d="m8.5 12 2.3 2.3 4.8-5"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="match_finished" only %}
                         </span>
                         <div>
                             <span>Проходимость</span>
@@ -165,7 +165,7 @@
                     </article>
                     <article class="expert-public-stat-card is-predictions">
                         <span class="expert-public-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M5 20V10"></path><path d="M12 20V4"></path><path d="M19 20v-7"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="ticket-bold" only %}
                         </span>
                         <div>
                             <span>Всего прогнозов</span>
@@ -175,7 +175,7 @@
                     </article>
                     <article class="expert-public-stat-card">
                         <span class="expert-public-stat-icon" aria-hidden="true">
-                            <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                            {% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}
                         </span>
                         <div>
                             <span>Подписчики</span>
