@@ -759,6 +759,7 @@ def _default_format_rules(tournament: Tournament, *, allowed_sports_label: str) 
         f"Прогнозы только на матчи: {allowed_sports_label}",
         f"Минимальный коэффициент прогноза — {tournament.min_coefficient:.2f}",
         f"Тип прогноза: {tournament.get_coupon_type_rule_display()}",
+        f"Формат прогнозов: {tournament.get_prediction_format_display()}",
         (
             f"Минимальная уверенность прогноза — {tournament.min_confidence}%"
             if tournament.min_confidence

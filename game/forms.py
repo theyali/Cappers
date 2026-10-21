@@ -113,6 +113,12 @@ class RichPredictionCouponForm(forms.Form):
             self.fields["is_paid"].disabled = True
             self.fields["tournament"].disabled = True
 
+    def _tournament_requires_text(self, tournament_id) -> bool:
+        # A published coupon keeps its tournament even after the tournament leaves the user's live list.
+        known = list(self.tournaments) + ([self.coupon.tournament] if self.coupon and self.coupon.tournament_id else [])
+        tournament = next((item for item in known if str(item.pk) == str(tournament_id)), None)
+        return tournament is None or tournament.requires_prediction_text
+
     def clean_custom_cover_image(self):
         image = self.cleaned_data.get("custom_cover_image")
         if not image:
@@ -179,7 +185,7 @@ class RichPredictionCouponForm(forms.Form):
         publishing = cleaned_data.get("published_status") == PredictionCoupon.PublishedStatus.PUBLISHED
         if tournament and is_paid:
             self.add_error("is_paid", "Платный прогноз нельзя отправить в турнир.")
-        if tournament and publishing:
+        if tournament and publishing and self._tournament_requires_text(tournament):
             try:
                 validate_paid_prediction_content(cleaned_data.get("headline"), description, kind="турнирного прогноза")
             except ValidationError as exc:

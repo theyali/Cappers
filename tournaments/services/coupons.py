@@ -11,7 +11,7 @@ from tournaments.services.rules import TournamentRuleError, validate_tournament_
 
 
 TOURNAMENT_QUICK_PUBLISH_MESSAGE = (
-    "В турнирах публикуются только расширенные прогнозы с названием и описанием. "
+    "В этом турнире публикуются только расширенные прогнозы с названием и описанием. "
     "Откройте расширенный прогноз."
 )
 
@@ -58,6 +58,7 @@ def tournament_rules(user, tournaments: list[Tournament] | None = None) -> list[
             "min_coefficient": float(tournament.min_coefficient or 0),
             "min_confidence": tournament.min_confidence or 0,
             "coupon_type": tournament.coupon_type_rule,
+            "requires_text": tournament.requires_prediction_text,
             "ends_at": tournament.ends_at.isoformat(),
             "used_match_ids": used.get(tournament.pk, []),
         }

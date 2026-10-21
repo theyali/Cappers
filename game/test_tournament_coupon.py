@@ -228,3 +228,39 @@ class TournamentCouponFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.context["form"]["tournament"].value(), "")
         self.assertNotContains(response, "data-rich-access-card data-tournament-hidden hidden")
+
+    def _quick_tournament(self):
+        Tournament.objects.filter(pk=self.tournament.pk).update(prediction_format=Tournament.PredictionFormat.QUICK)
+        self.tournament.refresh_from_db()
+
+    def test_ordinary_tournament_takes_coupon_published_from_panel(self):
+        self._quick_tournament()
+
+        response = self._coupon_request(autosave=False)
+
+        self.assertEqual(response.status_code, 200, response.content)
+        coupon = PredictionCoupon.objects.get(pk=response.json()["coupon_id"])
+        self.assertEqual(coupon.published_status, PredictionCoupon.PublishedStatus.PUBLISHED)
+        self.assertEqual(coupon.prediction_format, PredictionCoupon.PredictionFormat.QUICK)
+        self.assertTrue(TournamentCoupon.objects.filter(tournament=self.tournament, coupon=coupon).exists())
+
+    def test_ordinary_tournament_rule_violation_keeps_the_draft(self):
+        self._quick_tournament()
+        Tournament.objects.filter(pk=self.tournament.pk).update(min_coefficient=Decimal("2.00"))
+
+        response = self._coupon_request(autosave=False)
+
+        self.assertEqual(response.status_code, 400)
+        self.coupon.refresh_from_db()
+        self.assertEqual(self.coupon.published_status, PredictionCoupon.PublishedStatus.DRAFT)
+        self.assertFalse(TournamentCoupon.objects.exists())
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+
+    def test_ordinary_tournament_prediction_from_editor_needs_no_text(self):
+        self._quick_tournament()
+
+        response = self._publish(headline="", description="")
+
+        self.assertEqual(response.status_code, 302, response.context and response.context["form"].errors)
+        self.assertTrue(TournamentCoupon.objects.filter(tournament=self.tournament, coupon=self.coupon).exists())

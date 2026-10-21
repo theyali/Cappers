@@ -117,7 +117,7 @@
         if (rule.min_confidence > 0) parts.push(`уверенность от ${rule.min_confidence}%`);
         if (rule.coupon_type === "single") parts.push("только одиночные");
         if (rule.coupon_type === "express") parts.push("только экспрессы");
-        parts.push("название и описание обязательны");
+        parts.push(rule.requires_text ? "название и описание обязательны" : "публикация прямо из купона");
         return parts.join(" · ");
     };
 

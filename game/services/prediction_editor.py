@@ -455,10 +455,10 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     tags = _normalize_tags(data.get("tags", [] if is_new else coupon.tags))
     status = _resolve_published_status(data, coupon, is_new=is_new)
     publishing = status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published
-    # A tournament prediction keeps its title and description for as long as it is published.
-    if status == PredictionCoupon.PublishedStatus.PUBLISHED and tournament is not None:
+    # A prediction in a tournament with written predictions keeps its title and description while published.
+    if status == PredictionCoupon.PublishedStatus.PUBLISHED and tournament is not None and tournament.requires_prediction_text:
         validate_paid_prediction_content(headline, description, kind="турнирного прогноза")
-    elif publishing and not can_use_rich_fields:
+    if publishing and tournament is None and not can_use_rich_fields:
         raise ValidationError({"tournament": "Без турнира расширенные прогнозы доступны VIP-капперам. Выберите турнир."})
     if was_published and status != PredictionCoupon.PublishedStatus.PUBLISHED:
         raise ValidationError("Опубликованный прогноз нельзя вернуть в черновик.")

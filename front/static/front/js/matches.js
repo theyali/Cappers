@@ -163,7 +163,10 @@
         window.CappersCouponTournament?.problems(item).length
     )).length;
 
-    // A tournament coupon only needs valid positions here: stake, text and the rest are set in the editor.
+    // Tournaments with written predictions are finished in the rich editor; others publish from the coupon.
+    const richTournament = () => Boolean(activeTournament()?.requires_text);
+
+    // A coupon for the rich editor only needs valid positions here: stake, text and the rest are set there.
     const tournamentCouponReady = () => couponCountMatchesRule() && !tournamentProblems();
 
     const couponIsComplete = () => (
@@ -271,10 +274,10 @@
         if (countNode) countNode.textContent = `${items.size}/20`;
         const tournament = activeTournament();
         if (submitButton) {
-            const ready = tournament ? tournamentCouponReady() : couponIsComplete();
+            const ready = richTournament() ? tournamentCouponReady() : couponIsComplete() && !tournamentProblems();
             submitButton.disabled = !canWrite || !ready || submitButton.classList.contains("is-loading");
         }
-        if (submitLabel) submitLabel.textContent = tournament ? "Перейти к расширенному прогнозу" : "Сделать прогноз";
+        if (submitLabel) submitLabel.textContent = richTournament() ? "Перейти к расширенному прогнозу" : "Сделать прогноз";
         form.classList.toggle("is-tournament-coupon", Boolean(tournament));
         window.CappersCouponTournament?.markItems();
         if (richAction) {
@@ -786,9 +789,11 @@
                 setNote(couponTypeRuleOf() === "single" ? "В этом турнире доступны только одиночные прогнозы." : "Добавьте матчи: в этом турнире нужны экспрессы.", "error");
                 return;
             }
-            setNote("Сохраняем купон и открываем расширенный прогноз...");
-            openRichEditor(richUrl);
-            return;
+            if (richTournament()) {
+                setNote("Сохраняем купон и открываем расширенный прогноз...");
+                openRichEditor(richUrl);
+                return;
+            }
         }
         if (items.size < 1 || items.size > 20) {
             setNote("В прогнозе должно быть от 1 до 20 игр.", "error");

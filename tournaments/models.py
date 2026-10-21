@@ -44,6 +44,10 @@ class Tournament(models.Model):
         SINGLE = "single", "Только одиночные"
         EXPRESS = "express", "Только экспрессы"
 
+    class PredictionFormat(models.TextChoices):
+        RICH = "rich", "Расширенные: название и описание обязательны"
+        QUICK = "quick", "Обычные: как из купона"
+
     class AccessType(models.TextChoices):
         OPEN = "open", "Открытый"
         CLOSED = "closed", "Закрытый"
@@ -202,6 +206,14 @@ class Tournament(models.Model):
         choices=CouponTypeRule.choices,
         default=CouponTypeRule.ANY,
     )
+    prediction_format = models.CharField(
+        "Формат прогнозов",
+        max_length=16,
+        choices=PredictionFormat.choices,
+        default=PredictionFormat.RICH,
+        help_text="Расширенные публикуются из редактора с названием и описанием от 300 символов; "
+        "обычные — сразу из купона, текст не нужен.",
+    )
     allowed_sports = models.ManyToManyField(
         "game.Sport",
         blank=True,
@@ -267,6 +279,10 @@ class Tournament(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("tournaments:detail", kwargs={"slug": self.slug})
+
+    @property
+    def requires_prediction_text(self) -> bool:
+        return self.prediction_format == self.PredictionFormat.RICH
 
     def has_money_prizes(self) -> bool:
         if any(value > 0 for value in (self.prize_first, self.prize_second, self.prize_third)):

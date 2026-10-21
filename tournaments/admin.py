@@ -84,6 +84,7 @@ class TournamentAdmin(admin.ModelAdmin):
         "entry_fee_coins",
         "starts_at",
         "ends_at",
+        "prediction_format",
         "coupon_type_rule",
         "min_coefficient",
         "min_confidence",
@@ -101,6 +102,7 @@ class TournamentAdmin(admin.ModelAdmin):
         "vip_only",
         "new_users_only",
         "eligibility_mode",
+        "prediction_format",
         "coupon_type_rule",
         "is_featured",
         "starts_at",
@@ -137,7 +139,7 @@ class TournamentAdmin(admin.ModelAdmin):
         ("Призы, ₽", {"fields": ("prize_first", "prize_second", "prize_third")}),
         (
             "Условия прогнозов",
-            {"fields": ("min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
+            {"fields": ("prediction_format", "min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
         ),
         (
             "Условия допуска",
