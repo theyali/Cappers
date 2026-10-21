@@ -38,7 +38,7 @@
                     <a class="tournament-back-link is-dark" href="{{ tournament.get_absolute_url }}">← Турнир</a>
                     <span class="tournament-status tournament-status-{{ runtime_status.key }}">{{ runtime_status.label }}</span>
                     <h1>{{ match_list_h1|default:tournament.title }}</h1>
-                    <p>Выберите матч и исход для прогноза в рамках турнира.</p>
+                    <p>Нажмите на коэффициент выбранного исхода. В купоне укажите ставку и уверенность, затем опубликуйте прогноз — он будет учтён в этом турнире.</p>
                     <dl class="tournament-predict-rules">
                         <div><dt>КФ</dt><dd>от {{ tournament.min_coefficient|floatformat:2 }}</dd></div>
                         <div><dt>Уверенность</dt><dd>{% if tournament.min_confidence %}от {{ tournament.min_confidence }}%{% else %}без условия{% endif %}</dd></div>

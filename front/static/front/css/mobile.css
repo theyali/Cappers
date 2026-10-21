@@ -14603,6 +14603,8 @@ body.expert-public-details-open {
 
 @media (max-width: 760px) {
   .feed-prediction-follow [data-follow-label] { display: none; }
+  .tournament-participant-guide { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 12px; padding: 16px; }
+  .tournament-participant-guide > .tournament-primary-action { grid-column: 1 / -1; width: 100%; min-height: 44px; }
 }
 
 /* Capper article editor: one column, then the phone layout with sticky actions. */

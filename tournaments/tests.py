@@ -3,6 +3,7 @@ from datetime import timedelta
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
+from django.core.cache import cache
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from django.urls import resolve, reverse
@@ -859,6 +860,46 @@ class TournamentCouponEndpointTests(TestCase):
 
 @override_settings(STORAGES=TEST_STORAGES)
 class TournamentPageTests(TestCase):
+    def test_new_participant_appears_with_zero_results_despite_warm_empty_cache(self):
+        cache.clear()
+        self.tournament.starts_at = timezone.now() + timedelta(hours=1)
+        self.tournament.save(update_fields=["starts_at"])
+        self.assertEqual(tournament_leaderboard(self.tournament), [])
+        self.client.force_login(self.analyst)
+        response = self.client.post(reverse("tournaments:join", kwargs={"slug": self.tournament.slug}))
+        self.assertEqual(response.status_code, 302)
+        page = self.client.get(self.tournament.get_absolute_url())
+        rows = page.context["results_tab"]["rows"]
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["user"].pk, self.analyst.pk)
+        self.assertEqual(rows[0]["coupons_count"], 0)
+        self.assertEqual(rows[0]["points"], 0)
+        ajax = self.client.get(reverse("tournaments:results", kwargs={"slug": self.tournament.slug})).json()
+        self.assertEqual(ajax["total"], 1)
+        self.assertIn(self.analyst.username, ajax["html"])
+
+        from tournaments.services.join import leave_tournament
+        leave_tournament(self.analyst, self.tournament)
+        self.assertEqual(tournament_leaderboard(self.tournament), [])
+        join_tournament(self.analyst, self.tournament)
+        self.assertEqual(len(tournament_leaderboard(self.tournament)), 1)
+
+    def test_joined_user_sees_start_time_and_later_a_persistent_prediction_action(self):
+        TournamentParticipant.objects.create(tournament=self.tournament, user=self.analyst)
+        self.client.force_login(self.analyst)
+        self.tournament.starts_at = timezone.now() + timedelta(hours=1)
+        self.tournament.save(update_fields=["starts_at"])
+        page = self.client.get(self.tournament.get_absolute_url())
+        self.assertContains(page, "Создание прогнозов откроется")
+        self.assertContains(page, "Прогнозы после старта")
+        self.tournament.starts_at = timezone.now() - timedelta(minutes=1)
+        self.tournament.save(update_fields=["starts_at"])
+        page = self.client.get(self.tournament.get_absolute_url())
+        self.assertContains(page, "tournament-participant-guide")
+        self.assertContains(page, "Выберите матч и исход, укажите ставку")
+        self.assertContains(page, reverse("tournaments:predict", kwargs={"slug": self.tournament.slug}))
+        self.assertNotContains(page, "Прогнозы после старта")
+
     def setUp(self):
         self.analyst = User.objects.create_user(
             username="page-capper",
@@ -1100,6 +1141,27 @@ class TournamentPageTests(TestCase):
 
 
 class TournamentCatalogCardTests(TestCase):
+    def test_reader_action_links_to_become_capper_but_results_and_capper_action_remain(self):
+        reader = User.objects.create_user(username="tournament-reader-cta", role=User.Role.READER)
+        self.client.force_login(reader)
+        response = self.client.get(reverse("tournaments:index"))
+        self.assertContains(response, "Стать каппером")
+        self.assertRegex(response.content.decode(), r'tournament-card-action[^>]*href="/cabinet/become-capper/"[^>]*>\s*Стать каппером')
+        self.assertContains(response, f'class="tournament-card-details-link" href="{self.tournament.get_absolute_url()}"')
+
+        reader.role = User.Role.ANALYST
+        reader.save(update_fields=["role"])
+        response = self.client.get(reverse("tournaments:index"))
+        self.assertContains(response, "Участвовать")
+
+        reader.role = User.Role.READER
+        reader.save(update_fields=["role"])
+        self.tournament.ends_at = timezone.now() - timedelta(minutes=1)
+        self.tournament.save(update_fields=["ends_at"])
+        response = self.client.get(reverse("tournaments:index"))
+        self.assertContains(response, "Итоги")
+        self.assertNotContains(response, 'tournament-card-action" href="/cabinet/become-capper/"')
+
     def setUp(self):
         self.tournament = Tournament.objects.create(
             title="Экспресс-челлендж",

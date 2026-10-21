@@ -131,6 +131,7 @@ def index(request):
         "tournaments/index.html",
         {
             "tournaments": cards,
+            "show_become_capper": request.user.is_authenticated and not request.user.is_analyst,
             "top_tournaments": top_tournaments,
             "sport_tabs": _tournament_index_sport_tabs(active_sport, active_filter, active_sort),
             "status_filter_tabs": _tournament_index_filter_tabs(active_sport, active_filter, active_sort),

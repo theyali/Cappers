@@ -41,7 +41,14 @@ def tournament_leaderboard(
     if use_cache:
         cached = cache.get(cache_key)
         if cached is not None:
-            return cached
+            # Joining, leaving and disqualification must be visible immediately,
+            # even when no coupon has been published yet.
+            participant_ids = set(TournamentParticipant.objects.filter(
+                tournament=tournament,
+                status=TournamentParticipant.Status.ACTIVE,
+            ).values_list("pk", flat=True))
+            if participant_ids == {row["participant"].pk for row in cached}:
+                return cached
 
     rows = _empty_rows(tournament)
     coupons = (

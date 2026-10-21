@@ -97,7 +97,8 @@
             <div class="tournament-grid">
                 {% for item in tournaments %}
                 <article class="tournament-card tournament-card-{{ item.runtime_status.key }}{% if not item.has_cover %} is-no-cover{% endif %}">
-                    <a class="tournament-card-link" href="{{ item.tournament.get_absolute_url }}" aria-label="Открыть турнир {{ item.tournament.title }}">
+                    <div class="tournament-card-link">
+                        <a class="tournament-card-details-link" href="{{ item.tournament.get_absolute_url }}" aria-label="Открыть турнир {{ item.tournament.title }}"></a>
                         {% if item.has_cover %}
                         <span class="tournament-card-image" data-skeleton-image>
                             {% if item.tournament.card_image %}
@@ -139,17 +140,19 @@
                                     </span>
                                 </span>
                             </span>
-                            <span class="tournament-card-action{% if item.is_joined %} is-joined{% elif item.runtime_status.key == 'finished' %} is-finished{% endif %}">
+                            <a class="tournament-card-action{% if item.is_joined %} is-joined{% elif item.runtime_status.key == 'finished' %} is-finished{% endif %}" href="{% if show_become_capper and not item.is_joined and item.runtime_status.key != 'finished' %}{% url 'cabinet:become_capper' %}{% else %}{{ item.tournament.get_absolute_url }}{% endif %}">
                                 {% if item.is_joined %}
                                     <span aria-hidden="true">✓</span> Вы в турнире{% if item.participant_rank %} <b>· {{ item.participant_rank }} место</b>{% endif %}
                                 {% elif item.runtime_status.key == "finished" %}
                                     Итоги
+                                {% elif show_become_capper %}
+                                    Стать каппером <span aria-hidden="true">→</span>
                                 {% else %}
                                     Участвовать <span aria-hidden="true">→</span>
                                 {% endif %}
-                            </span>
+                            </a>
                         </span>
-                    </a>
+                    </div>
                     {% if item.tournament.sponsor_name and item.tournament.sponsor_url %}
                         <a class="tournament-card-sponsor" href="{{ item.tournament.sponsor_url }}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Спонсор {{ item.tournament.sponsor_name }} — перейти на сайт">
                             <span>Спонсор</span>

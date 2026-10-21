@@ -18390,6 +18390,14 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
     color: #fff;
     text-decoration: none;
 }
+.tournaments-page .tournament-card-details-link { position: absolute; inset: 0; z-index: 1; }
+.tournament-participant-guide { display: flex; align-items: center; gap: 16px; padding: 20px; border-radius: 18px; background: var(--panel); }
+.tournament-participant-guide-icon { display: grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 12px; color: var(--yellow); background: var(--ink); }
+.tournament-participant-guide-copy { flex: 1; min-width: 0; }
+.tournament-participant-guide-copy strong { color: var(--text); font-size: 16px; }
+.tournament-participant-guide-copy p { margin: 6px 0 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.tournament-participant-guide > .tournament-primary-action { flex: none; gap: 8px; }
+.tournament-participant-guide > .tournament-primary-action[disabled] { color: var(--muted); background: var(--ink); }
 .tournaments-page .tournament-card-image {
     position: relative;
     height: 130px;
@@ -18534,6 +18542,9 @@ body:has([data-current-user-vip]) .nav-profile-icon::after {
 }
 .tournaments-page .tournament-card-live .tournament-card-meta > span:first-child svg { color: var(--yellow); }
 .tournaments-page .tournament-card-action {
+    position: relative;
+    z-index: 2;
+    text-decoration: none;
     min-height: 43px;
     display: flex;
     align-items: center;
@@ -20025,29 +20036,12 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
 .tournament-detail-stat-icon svg {
     width: 24px;
     height: 24px;
-    fill: none;
-    stroke: currentColor;
-    stroke-width: 1.9;
-    stroke-linecap: round;
-    stroke-linejoin: round;
+    fill: currentColor;
+    stroke: none;
 }
-.tournament-detail-stat-icon i {
-    width: 16px;
-    height: 16px;
-    display: block;
-    border-radius: 50%;
-    background: #b9bec7;
-    box-shadow: none;
-}
-.tournament-detail-stat.is-live .tournament-detail-stat-icon i {
-    background: #53f16d;
-    box-shadow: 0 0 18px rgba(83, 241, 109, 0.6);
-    animation: 1.35s ease-in-out infinite tournamentLivePulse;
-}
-.tournament-detail-stat.is-upcoming .tournament-detail-stat-icon i {
-    background: var(--yellow);
-    box-shadow: 0 0 14px rgba(251, 241, 16, 0.48);
-}
+.tournament-detail-stat.is-live .tournament-detail-stat-icon { color: #53f16d; }
+.tournament-detail-stat.is-upcoming .tournament-detail-stat-icon { color: var(--yellow); }
+.tournament-detail-stat.is-finished .tournament-detail-stat-icon { color: var(--muted); }
 @keyframes tournamentLivePulse {
     0%, 100% {
         transform: scale(0.82);
