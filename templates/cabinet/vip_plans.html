@@ -23,11 +23,7 @@
 
                 <article class="vip-current-card{% if active_vip %} is-active{% endif %}">
                     <span class="vip-icon-card vip-icon-card--gold" aria-hidden="true">
-                        {% if active_vip and active_vip.plan and active_vip.plan.icon %}
-                        <img src="{{ active_vip.plan.icon.url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
-                        {% else %}
-                        <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path><path d="M5 20h14"></path></svg>
-                        {% endif %}
+                        {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                     </span>
                     <div>
                         <span>Ваш текущий статус</span>
@@ -53,11 +49,7 @@
                     {% if plan.is_featured %}<span class="vip-plan-badge">Рекомендуем</span>{% endif %}
                     <div class="vip-plan-card-head">
                         <span class="vip-icon-card" aria-hidden="true">
-                            {% if plan.icon %}
-                            <img src="{{ plan.icon.url }}" alt="" width="64" height="64" loading="lazy" decoding="async">
-                            {% else %}
-                            <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path><path d="M5 20h14"></path></svg>
-                            {% endif %}
+                            {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                         </span>
                         <div>
                             <h2>{{ plan.title }}</h2>
@@ -135,11 +127,7 @@
                         {% for plan in plans %}
                         <div role="columnheader"{% if plan.is_featured %} class="is-pro"{% endif %}>
                             <span class="vip-mini-crown" aria-hidden="true">
-                                {% if plan.icon %}
-                                <img src="{{ plan.icon.url }}" alt="" width="34" height="34" loading="lazy" decoding="async">
-                                {% else %}
-                                <svg viewBox="0 0 24 24"><path d="m4 17 2-10 5 5 1-8 1 8 5-5 2 10H4Z"></path></svg>
-                                {% endif %}
+                                {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                             </span>
                             {{ plan.title }}
                         </div>

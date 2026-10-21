@@ -13084,7 +13084,10 @@ body.expert-public-details-open {
   .coupon-prediction-article-full-head { align-items: flex-start; flex-direction: column; gap: 6px; }
   .coupon-prediction-article-full-head h3 { font-size: 15px; }
 
-  .coupon-detail-page { grid-template-columns: minmax(0, 1fr); }
+  .coupon-detail-page {
+    grid-template-columns: minmax(0, 1fr);
+    padding-bottom: calc(var(--coupon-reactions-height, 72px + env(safe-area-inset-bottom)) + 20px);
+  }
 
   .coupon-detail-back,
   .coupon-detail-heading,
@@ -13115,6 +13118,18 @@ body.expert-public-details-open {
     padding: 13px 16px calc(13px + env(safe-area-inset-bottom));
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     background: var(--ink);
+    transform: translateY(0);
+    opacity: 1;
+    visibility: visible;
+    transition: transform .32s cubic-bezier(.22, 1, .36, 1), opacity .22s ease, visibility 0s;
+  }
+
+  .coupon-detail-page > .prediction-reactions.is-scroll-hidden {
+    transform: translateY(calc(100% + 1px));
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform .32s cubic-bezier(.22, 1, .36, 1), opacity .22s ease, visibility 0s linear .32s;
   }
 
   .coupon-detail-page > .prediction-reactions .prediction-reaction {
@@ -14580,6 +14595,8 @@ body.expert-public-details-open {
 
 @media (prefers-reduced-motion: reduce) {
   .mobile-app-nav, .mobile-app-nav.is-scroll-hidden { transition: none; }
+  .coupon-detail-page > .prediction-reactions,
+  .coupon-detail-page > .prediction-reactions.is-scroll-hidden { transition: none; }
   .feed-prediction-cover-image::after { transition: none; }
 }
 
@@ -14598,4 +14615,8 @@ body.expert-public-details-open {
 @media (prefers-reduced-motion: reduce) {
   .cookie-consent, .cookie-consent-button { transition: none; }
   .cookie-preferences[open] { animation: none; }
+}
+
+@media (max-width: 760px) {
+  .feed-prediction-follow [data-follow-label] { display: none; }
 }

@@ -1452,6 +1452,29 @@ class FollowingFeedPaidDiscoveryTests(TestCase):
         PaidPredictionPurchase.objects.create(buyer=self.reader, analyst=self.author, coupon=self.coupon, status="paid", price=50, platform_fee_percent=0, platform_fee_amount=0, capper_income=50, paid_at=timezone.now())
         self.assertFalse(self.feed().context["page_obj"][0].is_paid_locked)
 
+    def test_locked_grid_card_uses_paid_cover_marker_and_consistent_label(self):
+        response = self.feed()
+        card = response.context["page_obj"][0]
+        card.state_status = "lose"
+        for price in (None, Decimal("50.00")):
+            card.single_purchase_price = price
+            html = render_to_string("front/includes/_feed_prediction_card.html", {"prediction": card}, request=response.wsgi_request)
+            self.assertIn('feed-prediction-cover-status is-paid', html)
+            self.assertNotIn('feed-prediction-cover-status is-lose', html)
+            self.assertEqual(html.count('real_coin.png'), 1)
+            self.assertIn('<strong>Платный</strong>', html)
+            self.assertIn('data-prediction-follow', html)
+            self.assertIn('solar-icons.svg#following', html)
+            self.assertIn(reverse("cabinet:toggle_follow", kwargs={"user_id": self.author.pk}), html)
+
+        card.is_paid_locked = False
+        html = render_to_string("front/includes/_feed_prediction_card.html", {"prediction": card}, request=response.wsgi_request)
+        self.assertIn('feed-prediction-cover-status is-lose', html)
+        self.assertNotIn('real_coin.png', html)
+        card.is_own = True
+        html = render_to_string("front/includes/_feed_prediction_card.html", {"prediction": card}, request=response.wsgi_request)
+        self.assertNotIn('data-prediction-follow', html)
+
     def test_default_feed_combines_all_formats_and_payment_types(self):
         created = []
         for audience, prediction_format in [("free", "quick"), ("free", "rich"), ("paid", "rich")]:
@@ -1495,6 +1518,29 @@ class FollowingFeedPaidDiscoveryTests(TestCase):
 
 
 class VipStoriesPresentationTests(TestCase):
+    @override_settings(STORAGES={
+        "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+        "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+    })
+    def test_vip_recommendations_do_not_turn_empty_personal_feed_into_filtered_feed(self):
+        from cabinet.models import AnalystFollow
+
+        cache.clear()
+        self.client.force_login(self.reader)
+        response = self.client.get(reverse("front:following_feed"))
+        self.assertFalse(response.context["has_personal_feed_sources"])
+        self.assertContains(response, "Вы пока ни на кого не подписаны")
+        self.assertContains(response, "vip-prediction-rail")
+        self.assertContains(response, "Капперы с VIP-доступом")
+        self.assertNotContains(response, "По этим условиям прогнозов нет")
+        self.assertNotContains(response, "data-matches-head-sentinel")
+
+        AnalystFollow.objects.create(follower=self.reader, analyst=self.author)
+        response = self.client.get(reverse("front:following_feed"))
+        self.assertTrue(response.context["has_personal_feed_sources"])
+        self.assertContains(response, "data-matches-head-sentinel")
+        self.assertNotContains(response, "Вы пока ни на кого не подписаны")
+
     @classmethod
     def setUpTestData(cls):
         from datetime import timedelta

@@ -20,13 +20,7 @@
   </symbol>
 
   <symbol id="crown" viewBox="-55 -55 110 110">
-    <g fill="currentColor">
-      <circle cx="-34" cy="-24" r="5"/>
-      <circle cx="0" cy="-36" r="5"/>
-      <circle cx="34" cy="-24" r="5"/>
-      <path d="M-42 26 L-34 -18 L-11 5 L0 -30 L13 5 L34 -18 L42 26 Z"/>
-      <rect x="-39" y="28" width="78" height="10" rx="5"/>
-    </g>
+    <use href="/static/front/svgs/solar-icons.svg#crown-bold" x="-55" y="-55" width="110" height="110"/>
   </symbol>
 
   <symbol id="ticket" viewBox="-60 -55 120 110">

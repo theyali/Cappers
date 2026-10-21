@@ -8,7 +8,7 @@
             ?.slice(prefix.length) || "";
     };
 
-    const syncAnalystState = (analystId, active) => {
+    const syncAnalystState = (analystId, active, followersCount) => {
         document.querySelectorAll(`[data-prediction-follow][data-analyst-id="${analystId}"]`).forEach((button) => {
             button.classList.toggle("is-active", active);
             button.setAttribute("aria-pressed", active ? "true" : "false");
@@ -28,6 +28,11 @@
             if (card.classList.contains("is-own-prediction")) return;
             card.classList.toggle("is-followed-prediction", active);
         });
+        if (Number.isInteger(followersCount) && followersCount >= 0) {
+            document.querySelectorAll(`[data-author-followers-count="${analystId}"]`).forEach((counter) => {
+                counter.textContent = String(followersCount);
+            });
+        }
     };
 
     document.addEventListener("click", async (event) => {
@@ -67,7 +72,7 @@
                 }
                 throw new Error(result.error || "Не удалось изменить подписку.");
             }
-            syncAnalystState(analystId, Boolean(result.active));
+            syncAnalystState(analystId, Boolean(result.active), result.followers_count);
         } catch (error) {
             console.error(error);
         } finally {

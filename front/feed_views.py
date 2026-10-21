@@ -453,6 +453,7 @@ def following_feed(request):
             "vip_prediction_rail": build_vip_prediction_rail_context(),
             "paid_subscriptions": paid_subscriptions,
             "has_feed_sources": bool(following or paid_subscriptions or vip_stories or favorites_only or feed_total_count),
+            "has_personal_feed_sources": bool(following or paid_subscriptions or favorites_only or feed_total_count),
             "following_count": len(following),
             "paid_subscriptions_count": len(paid_subscriptions),
             "feed_total_count": feed_total_count,
