@@ -189,30 +189,12 @@ def pending_tournament_coupons(tournament: Tournament):
 
 def prize_for_rank(tournament: Tournament, rank: int) -> Decimal:
     prize = _active_prize_for_rank(tournament, rank)
-    if prize is not None:
-        return _money(prize.money_amount)
-    if rank == 1:
-        return _money(tournament.prize_first)
-    if rank == 2:
-        return _money(tournament.prize_second)
-    if rank == 3:
-        return _money(tournament.prize_third)
-    return Decimal("0.00")
+    return _money(prize.money_amount) if prize is not None else Decimal("0.00")
 
 
 def achievement_for_rank(tournament: Tournament, rank: int) -> TournamentAchievement | None:
     prize = _active_prize_for_rank(tournament, rank)
-    if prize is not None and prize.achievement_id:
-        return prize.achievement
-    kind_by_rank = {
-        1: TournamentAchievement.Kind.FIRST_PLACE,
-        2: TournamentAchievement.Kind.SECOND_PLACE,
-        3: TournamentAchievement.Kind.THIRD_PLACE,
-    }
-    kind = kind_by_rank.get(rank)
-    if not kind:
-        return None
-    return tournament.achievements.filter(kind=kind).order_by("sort_order", "id").first()
+    return prize.achievement if prize is not None else None
 
 
 def _active_prize_for_rank(tournament: Tournament, rank: int) -> TournamentPrize | None:

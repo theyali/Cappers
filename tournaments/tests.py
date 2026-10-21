@@ -17,6 +17,7 @@ from tournaments.services.join import TournamentJoinError, join_tournament
 from tournaments.services.leaderboard import finalize_tournament_results, tournament_leaderboard
 from tournaments.services.rewards import award_tournament_prizes
 from tournaments.services.rules import TournamentRuleError, validate_tournament_coupon
+from tournaments.testing import create_money_prizes
 
 from .models import (
     Tournament,
@@ -51,10 +52,8 @@ class TournamentPredictionEntryTests(TestCase):
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
             ends_at=timezone.now() + timedelta(days=7),
-            prize_first=Decimal("1000.00"),
-            prize_second=Decimal("500.00"),
-            prize_third=Decimal("250.00"),
         )
+        create_money_prizes(self.tournament, "1000.00", "500.00", "250.00")
         self.participant = TournamentParticipant.objects.create(
             tournament=self.tournament,
             user=self.analyst,
@@ -131,13 +130,11 @@ class TournamentServiceTests(TestCase):
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
             ends_at=timezone.now() + timedelta(days=3),
-            prize_first=Decimal("1000.00"),
-            prize_second=Decimal("500.00"),
-            prize_third=Decimal("250.00"),
             min_coefficient=Decimal("2.00"),
             min_confidence=90,
             coupon_type_rule=Tournament.CouponTypeRule.SINGLE,
         )
+        create_money_prizes(self.tournament, "1000.00", "500.00", "250.00")
         self.tournament.allowed_sports.add(self.football)
         self.participant = TournamentParticipant.objects.create(
             tournament=self.tournament,
@@ -374,15 +371,16 @@ class TournamentServiceTests(TestCase):
         achievement = TournamentAchievement.objects.create(
             tournament=self.tournament,
             title="Победитель турнира",
-            kind=TournamentAchievement.Kind.FIRST_PLACE,
         )
-        prize = TournamentPrize.objects.create(
+        prize, _ = TournamentPrize.objects.update_or_create(
             tournament=self.tournament,
             place=1,
-            money_amount=Decimal("1500.00"),
-            coins_amount=700,
-            vip_days=5,
-            achievement=achievement,
+            defaults={
+                "money_amount": Decimal("1500.00"),
+                "coins_amount": 700,
+                "vip_days": 5,
+                "achievement": achievement,
+            },
         )
         coupon = PredictionCoupon.objects.create(
             author=self.analyst,
@@ -648,7 +646,6 @@ class TournamentAccessRewardTests(TestCase):
     def test_paid_tournament_charges_coins(self):
         tournament = self._tournament(
             "Paid Cup",
-            entry_type=Tournament.EntryType.PAID,
             entry_fee_coins=300,
         )
 
@@ -667,7 +664,6 @@ class TournamentAccessRewardTests(TestCase):
     def test_paid_tournament_rejects_when_coins_are_not_enough(self):
         tournament = self._tournament(
             "Expensive Cup",
-            entry_type=Tournament.EntryType.PAID,
             entry_fee_coins=500,
         )
         wallet = ensure_coin_wallet(self.analyst)
@@ -717,7 +713,6 @@ class TournamentAccessRewardTests(TestCase):
         achievement = TournamentAchievement.objects.create(
             tournament=tournament,
             title="First Place",
-            kind=TournamentAchievement.Kind.FIRST_PLACE,
         )
         prize.achievement = achievement
         prize.save(update_fields=("achievement", "updated_at"))
@@ -774,11 +769,9 @@ class TournamentPageTests(TestCase):
 
     def test_reader_cannot_join_and_a_stray_reader_participant_does_not_break_the_page(self):
         reader = User.objects.create_user(username="page-reader", role=User.Role.READER)
-        self.tournament.analysts_only = False
         self.tournament.starts_at = timezone.now() + timedelta(hours=1)
-        self.tournament.save(update_fields=["analysts_only", "starts_at"])
-        Tournament.objects.filter(pk=self.tournament.pk).update(prize_first=0, prize_second=0, prize_third=0)
-        self.tournament.refresh_from_db()
+        self.tournament.save(update_fields=["starts_at"])
+        self.tournament.prizes.all().delete()
         with self.assertRaises(TournamentJoinError):
             join_tournament(reader, self.tournament)
 
@@ -812,10 +805,8 @@ class TournamentPageTests(TestCase):
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
             ends_at=timezone.now() + timedelta(days=3),
-            prize_first=Decimal("1000.00"),
-            prize_second=Decimal("500.00"),
-            prize_third=Decimal("250.00"),
         )
+        create_money_prizes(self.tournament, "1000.00", "500.00", "250.00")
         self.match = Match.objects.create(
             external_id=991001,
             sync_scope=Match.SyncScope.PREMATCH,

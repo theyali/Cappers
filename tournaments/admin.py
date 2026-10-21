@@ -21,7 +21,7 @@ from .services.leaderboard import finalize_tournament_results
 class TournamentAchievementInline(admin.TabularInline):
     model = TournamentAchievement
     extra = 0
-    fields = ("title", "kind", "icon", "sort_order")
+    fields = ("title", "icon", "sort_order")
 
 
 class TournamentStageInline(admin.TabularInline):
@@ -80,7 +80,6 @@ class TournamentAdmin(admin.ModelAdmin):
         "title",
         "status",
         "access_type",
-        "entry_type",
         "entry_fee_coins",
         "starts_at",
         "ends_at",
@@ -88,17 +87,12 @@ class TournamentAdmin(admin.ModelAdmin):
         "coupon_type_rule",
         "min_coefficient",
         "min_confidence",
-        "prize_first_display",
-        "prize_second_display",
-        "prize_third_display",
         "is_featured",
         "finalized_at",
     )
     list_filter = (
         "status",
         "access_type",
-        "entry_type",
-        "analysts_only",
         "vip_only",
         "new_users_only",
         "eligibility_mode",
@@ -108,42 +102,38 @@ class TournamentAdmin(admin.ModelAdmin):
         "starts_at",
         "ends_at",
         "allowed_sports",
-        "eligibility_sport",
     )
-    search_fields = ("title", "slug", "description", "rules_text")
+    search_fields = ("title", "slug", "description")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("allowed_sports",)
     readonly_fields = ("finalized_at", "created_at", "updated_at")
     actions = ("finalize_results",)
     fieldsets = (
-        (None, {"fields": ("title", "slug", "description", "rules_text", "status", "is_featured")}),
-        (
-            "Тексты наград",
-            {"fields": ("reward_payout_text", "reward_wallet_text", "reward_coins_wallet_text", "reward_rules_text")},
-        ),
+        (None, {"fields": ("title", "slug", "description", "status", "is_featured")}),
         (
             "Тип доступа",
             {
                 "fields": (
                     "access_type",
-                    "analysts_only",
                     "vip_only",
                     "new_users_only",
                 )
             },
         ),
-        ("Стоимость участия", {"fields": ("entry_type", "entry_fee_coins")}),
+        ("Стоимость участия", {"fields": ("entry_fee_coins",)}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),
         ("Изображения карточки", {"fields": ("card_image", "hero_image", "hero_icon", "card_icon_bg_color")}),
         ("Спонсор карточки", {"fields": ("sponsor_name", "sponsor_logo", "sponsor_url")}),
-        ("Призы, ₽", {"fields": ("prize_first", "prize_second", "prize_third")}),
         (
             "Условия прогнозов",
             {"fields": ("prediction_format", "min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
         ),
         (
             "Условия допуска",
-            {"fields": ("eligibility_mode", "min_user_predictions", "min_user_wins", "eligibility_sport")},
+            {
+                "fields": ("eligibility_mode",),
+                "description": "Сами условия — в таблице «Условия допуска» ниже.",
+            },
         ),
         ("Системные поля", {"fields": ("finalized_at", "created_at", "updated_at")}),
     )
@@ -170,23 +160,11 @@ class TournamentAdmin(admin.ModelAdmin):
             message += " Пропущены: " + "; ".join(skipped)
         self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
-    @admin.display(description="1 место, ₽", ordering="prize_first")
-    def prize_first_display(self, obj):
-        return f"{obj.prize_first} ₽"
-
-    @admin.display(description="2 место, ₽", ordering="prize_second")
-    def prize_second_display(self, obj):
-        return f"{obj.prize_second} ₽"
-
-    @admin.display(description="3 место, ₽", ordering="prize_third")
-    def prize_third_display(self, obj):
-        return f"{obj.prize_third} ₽"
-
 
 @admin.register(TournamentAchievement)
 class TournamentAchievementAdmin(admin.ModelAdmin):
-    list_display = ("title", "tournament", "kind", "sort_order")
-    list_filter = ("kind", "tournament")
+    list_display = ("title", "tournament", "sort_order")
+    list_filter = ("tournament",)
     search_fields = ("title", "description", "tournament__title")
     autocomplete_fields = ("tournament",)
 

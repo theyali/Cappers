@@ -407,10 +407,8 @@ def _tournament_home_tab(
     prize_total = sum((prize.amount for prize in home_prizes if prize.money), Decimal("0"))
     first_sport = allowed_sports[0] if allowed_sports else None
     achievements = _tournament_achievement_list(tournament)
-    first_place_achievement = next(
-        (achievement for achievement in achievements if achievement.kind == TournamentAchievement.Kind.FIRST_PLACE),
-        achievements[0] if achievements else None,
-    )
+    first_prize = next((prize for prize in _active_prizes_by_place(tournament) if prize.place == 1), None)
+    first_place_achievement = (first_prize.achievement if first_prize else None) or (achievements[0] if achievements else None)
 
     if runtime_status["key"] == "finished":
         date_hint = "Турнир завершён"
@@ -479,11 +477,7 @@ def _tournament_home_tab(
 
 
 def _tournament_home_prize_rows(tournament: Tournament) -> list[SimpleNamespace]:
-    prizes = _active_prizes_by_place(tournament)
-    if prizes:
-        rows = [_tournament_home_prize_row(prize) for prize in prizes]
-    else:
-        rows = _legacy_home_prize_rows(tournament)
+    rows = [_tournament_home_prize_row(prize) for prize in _active_prizes_by_place(tournament)]
 
     max_value = max((row.metric_value for row in rows), default=Decimal("1"))
     if max_value <= 0:
@@ -531,28 +525,6 @@ def _tournament_home_prize_row(prize: TournamentPrize) -> SimpleNamespace:
     )
 
 
-def _legacy_home_prize_rows(tournament: Tournament) -> list[SimpleNamespace]:
-    rows = []
-    for place, amount in (
-        (1, tournament.prize_first or Decimal("0")),
-        (2, tournament.prize_second or Decimal("0")),
-        (3, tournament.prize_third or Decimal("0")),
-    ):
-        rows.append(
-            SimpleNamespace(
-                place=place,
-                label=f"{place} место",
-                amount=amount,
-                money=True,
-                value_label=f"{format_money(amount)} ₽",
-                reward_kind="money",
-                metric_value=amount,
-                width=0,
-            )
-        )
-    return rows
-
-
 def _tournament_eligibility_summary(tournament: Tournament, eligibility: dict) -> dict:
     authenticated = any(rule.get("code") != "auth" for rule in eligibility.get("rules", [])) or not any(
         rule.get("code") == "auth" for rule in eligibility.get("rules", [])
@@ -590,7 +562,7 @@ def _tournament_access_badges(tournament: Tournament, eligibility: dict) -> list
             "tone": "warning" if tournament.access_type == Tournament.AccessType.CLOSED else "ok",
         }
     ]
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    if tournament.is_paid_entry:
         badges.append(
             {
                 "label": f"Вход: {format_coins(eligibility.get('entry_fee_coins', 0))}",
@@ -600,8 +572,7 @@ def _tournament_access_badges(tournament: Tournament, eligibility: dict) -> list
         )
     else:
         badges.append({"label": "Бесплатный вход", "tone": "ok"})
-    if tournament.analysts_only:
-        badges.append({"label": "Только капперы", "tone": "neutral"})
+    badges.append({"label": "Только капперы", "tone": "neutral"})
     if tournament.vip_only:
         badges.append({"label": "Только VIP", "tone": "warning"})
     if tournament.new_users_only:
@@ -648,35 +619,17 @@ def _tournament_personal_eligibility_rows(eligibility: dict) -> list[dict]:
 
 
 def _tournament_public_eligibility_rows(tournament: Tournament) -> list[dict]:
-    rows = []
-    if tournament.analysts_only:
-        rows.append({"title": "Статус каппера", "meta": "обязательно", "state": "neutral"})
+    rows = [{"title": "Статус каппера", "meta": "обязательно", "state": "neutral"}]
     if tournament.vip_only:
         rows.append({"title": "VIP-статус", "meta": "обязательно", "state": "neutral"})
     if tournament.new_users_only:
         rows.append({"title": "Новый пользователь", "meta": "обязательно", "state": "neutral"})
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    if tournament.is_paid_entry:
         rows.append(
             {
                 "title": "Коины для участия",
                 "meta": f"нужно {format_coins(tournament.entry_fee_coins)}",
                 "meta_coin": True,
-                "state": "neutral",
-            }
-        )
-    if tournament.min_user_predictions:
-        rows.append(
-            {
-                "title": "Опубликованные прогнозы",
-                "meta": f"нужно {tournament.min_user_predictions}",
-                "state": "neutral",
-            }
-        )
-    if tournament.min_user_wins:
-        rows.append(
-            {
-                "title": "Выигранные прогнозы",
-                "meta": f"нужно {tournament.min_user_wins}",
                 "state": "neutral",
             }
         )
@@ -729,25 +682,13 @@ def _eligibility_rule_meta(rule: dict) -> str:
 def _default_participation_rules(tournament: Tournament) -> list[str]:
     rules = [
         "Открытый турнир" if tournament.access_type == Tournament.AccessType.OPEN else "Закрытый турнир",
-        (
-            "Платное участие"
-            if tournament.entry_type == Tournament.EntryType.PAID
-            else "Бесплатное участие"
-        ),
+        "Платное участие" if tournament.is_paid_entry else "Бесплатное участие",
+        "Участвовать могут только капперы",
     ]
-    if tournament.analysts_only:
-        rules.append("Участвовать могут только капперы")
     if tournament.vip_only:
         rules.append("Нужен активный VIP-статус")
     if tournament.new_users_only:
         rules.append("Турнир доступен только новым пользователям")
-    if tournament.min_user_predictions:
-        rules.append(f"Минимум опубликованных прогнозов — {tournament.min_user_predictions}")
-    if tournament.min_user_wins:
-        rules.append(f"Минимум выигранных прогнозов — {tournament.min_user_wins}")
-    if tournament.eligibility_sport_id:
-        sport_name = tournament.eligibility_sport.name_ru or tournament.eligibility_sport.name
-        rules.append(f"Активность для допуска считается по спорту: {sport_name}")
     for rule in _configured_public_eligibility_rows(tournament):
         meta = f": {rule['meta']}" if rule.get("meta") else ""
         rules.append(f"{rule['title']}{meta}")
@@ -820,14 +761,7 @@ def _tournament_about_stages(tournament: Tournament) -> list[SimpleNamespace]:
 
 def _tournament_prizes_tab(tournament: Tournament) -> dict:
     achievements = _tournament_achievement_list(tournament)
-    achievement_by_place = _achievement_by_prize_place(achievements)
-    rows = [
-        _tournament_prize_row(
-            prize,
-            achievement=prize.achievement or achievement_by_place.get(prize.place),
-        )
-        for prize in _active_prizes_by_place(tournament)
-    ]
+    rows = [_tournament_prize_row(prize, achievement=prize.achievement) for prize in _active_prizes_by_place(tournament)]
     first_prize = next((row for row in rows if row.place == 1), None)
     feature_achievement = (
         first_prize.achievement
@@ -858,22 +792,6 @@ def _active_prizes_by_place(tournament: Tournament) -> list[TournamentPrize]:
         list(getattr(tournament, "active_prizes", []) or []),
         key=lambda prize: (prize.place, prize.sort_order, prize.id),
     )
-
-
-def _achievement_by_prize_place(achievements: list[TournamentAchievement]) -> dict[int, TournamentAchievement]:
-    kind_by_place = {
-        1: TournamentAchievement.Kind.FIRST_PLACE,
-        2: TournamentAchievement.Kind.SECOND_PLACE,
-        3: TournamentAchievement.Kind.THIRD_PLACE,
-    }
-    achievement_by_kind = {}
-    for achievement in achievements:
-        achievement_by_kind.setdefault(achievement.kind, achievement)
-    return {
-        place: achievement_by_kind[kind]
-        for place, kind in kind_by_place.items()
-        if kind in achievement_by_kind
-    }
 
 
 def _tournament_prize_row(prize: TournamentPrize, *, achievement: TournamentAchievement | None = None) -> SimpleNamespace:
@@ -966,26 +884,25 @@ def _tournament_prize_notes(tournament: Tournament) -> list[dict]:
         {
             "icon": "clock",
             "title": "Срок выплаты",
-            "text": tournament.reward_payout_text
-            or "Призы начисляются в течение 24 часов после окончания турнира.",
+            "text": "Призы начисляются после окончания турнира, когда рассчитаны все его прогнозы.",
         },
         {
             "icon": "wallet",
             "title": "Куда начисляются деньги",
-            "text": tournament.reward_wallet_text
-            or "Денежный приз поступает на основной игровой счет КапперХаб.",
+            "text": "Денежный приз поступает на основной игровой счет КапперХаб.",
         },
         {
             "icon": "coins",
             "title": "Куда начисляются коины",
-            "text": tournament.reward_coins_wallet_text
-            or "Призовые коины поступают на виртуальный счет пользователя.",
+            "text": "Призовые коины поступают на виртуальный счет пользователя.",
         },
         {
             "icon": "rules",
             "title": "Призовая зона",
-            "text": tournament.reward_rules_text
-            or f"Для попадания в призовую зону прогнозы должны учитывать минимальный коэффициент {tournament.min_coefficient:.2f}.",
+            "text": (
+                "В призовую зону попадают участники хотя бы с одним рассчитанным прогнозом; "
+                f"минимальный коэффициент — {tournament.min_coefficient:.2f}."
+            ),
         },
     ]
 
@@ -1012,7 +929,7 @@ def _tournament_about_tab(
             "date_title": f"{date_format(timezone.localtime(tournament.starts_at), 'j E')} — {date_format(timezone.localtime(tournament.ends_at), 'j E')}",
             "date_caption": f"{timezone.localtime(tournament.ends_at):%Y} года",
             "participants_title": str(participants_count),
-            "participants_caption": "капперов" if tournament.analysts_only else "участников",
+            "participants_caption": "капперов",
             "prize_title": f"{format_money(money_total)} ₽" if money_total > 0 else "Призы",
             "prize_caption": _about_prize_caption(money_total, coins_total, vip_prizes),
             "entry_title": entry_text["title"],
@@ -1067,11 +984,7 @@ def _allowed_sports_label(allowed_sports: list[Sport]) -> str:
 
 
 def _about_access_text(tournament: Tournament, eligibility: dict) -> str:
-    parts = [tournament.get_access_type_display().lower()]
-    if tournament.analysts_only:
-        parts.append("только для капперов")
-    else:
-        parts.append("для всех пользователей")
+    parts = [tournament.get_access_type_display().lower(), "только для капперов"]
     if tournament.vip_only:
         parts.append("нужен VIP")
     if tournament.new_users_only:
@@ -1084,7 +997,7 @@ def _about_access_text(tournament: Tournament, eligibility: dict) -> str:
 
 
 def _about_entry_text(tournament: Tournament) -> dict:
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    if tournament.is_paid_entry:
         price = format_coins(tournament.entry_fee_coins)
         return {
             "title": price,

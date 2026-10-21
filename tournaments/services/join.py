@@ -73,7 +73,7 @@ def _validate_join_requirements(user: User, tournament: Tournament) -> None:
 
 
 def _charge_entry_fee_if_needed(user: User, tournament: Tournament) -> None:
-    if tournament.entry_type != Tournament.EntryType.PAID:
+    if not tournament.is_paid_entry:
         return
     amount = int(tournament.entry_fee_coins or 0)
     if amount <= 0:

@@ -81,7 +81,7 @@ def check_tournament_eligibility(user, tournament: Tournament) -> dict:
             )
         )
 
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    if tournament.is_paid_entry:
         balance = _coin_balance(user)
         required_coins = int(tournament.entry_fee_coins or 0)
         hard_rules.append(
@@ -95,7 +95,6 @@ def check_tournament_eligibility(user, tournament: Tournament) -> dict:
             )
         )
 
-    condition_rules.extend(_legacy_activity_rules(user, tournament))
     condition_rules.extend(_configured_rules(user, tournament))
 
     return _eligibility_response(user, tournament, hard_rules, condition_rules)
@@ -123,7 +122,7 @@ def _eligibility_response(
         "entry_fee_coins": int(tournament.entry_fee_coins or 0),
         "coin_balance": _coin_balance(user) if getattr(user, "is_authenticated", False) else 0,
         "has_enough_coins": (
-            tournament.entry_type != Tournament.EntryType.PAID
+            not tournament.is_paid_entry
             or (
                 getattr(user, "is_authenticated", False)
                 and _coin_balance(user) >= int(tournament.entry_fee_coins or 0)
@@ -134,42 +133,6 @@ def _eligibility_response(
         "rules": [asdict(rule) for rule in active_rules],
         "reasons": [_rule_reason(rule) for rule in failed_rules],
     }
-
-
-def _legacy_activity_rules(user, tournament: Tournament) -> list[EligibilityRuleResult]:
-    rules = []
-    sport = tournament.eligibility_sport
-    sport_label = _sport_label(sport)
-
-    required_predictions = int(tournament.min_user_predictions or 0)
-    if required_predictions > 0:
-        current = _published_prediction_coupons_count(user, sport=sport)
-        rules.append(
-            EligibilityRuleResult(
-                code="min_user_predictions",
-                title=f"Опубликованные прогнозы{sport_label}",
-                required=required_predictions,
-                current=current,
-                passed=current >= required_predictions,
-                reason=f"Нужно минимум {required_predictions} опубликованных прогнозов{sport_label}.",
-            )
-        )
-
-    required_wins = int(tournament.min_user_wins or 0)
-    if required_wins > 0:
-        current = _winning_predictions_count(user, sport=sport)
-        rules.append(
-            EligibilityRuleResult(
-                code="min_user_wins",
-                title=f"Выигранные прогнозы{sport_label}",
-                required=required_wins,
-                current=current,
-                passed=current >= required_wins,
-                reason=f"Нужно минимум {required_wins} выигранных прогнозов{sport_label}.",
-            )
-        )
-
-    return rules
 
 
 def _configured_rules(user, tournament: Tournament) -> list[EligibilityRuleResult]:
@@ -274,12 +237,6 @@ def _coin_balance(user) -> int:
     if not getattr(user, "is_authenticated", False):
         return 0
     return int(CoinWallet.objects.filter(user=user).values_list("balance", flat=True).first() or 0)
-
-
-def _sport_label(sport) -> str:
-    if not sport:
-        return ""
-    return f" по спорту «{sport.name_ru or sport.name}»"
 
 
 def _rule_default_title(rule: TournamentEligibilityRule) -> str:

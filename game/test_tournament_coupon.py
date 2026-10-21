@@ -12,6 +12,7 @@ from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
 from game.services.prediction_editor import update_rich_prediction
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
 from tournaments.services.coupons import TOURNAMENT_QUICK_PUBLISH_MESSAGE
+from tournaments.testing import create_money_prizes
 
 
 TEST_STORAGES = {
@@ -33,11 +34,9 @@ class TournamentCouponFlowTests(TestCase):
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
             ends_at=timezone.now() + timedelta(days=3),
-            prize_first=Decimal("1000.00"),
-            prize_second=Decimal("500.00"),
-            prize_third=Decimal("250.00"),
             min_coefficient=Decimal("1.80"),
         )
+        create_money_prizes(self.tournament, "1000.00", "500.00", "250.00")
         self.tournament.allowed_sports.add(self.football)
         TournamentParticipant.objects.create(tournament=self.tournament, user=self.analyst)
         self.match = Match.objects.create(

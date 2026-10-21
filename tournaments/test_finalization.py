@@ -14,6 +14,7 @@ from tournaments.services.leaderboard import (
     finalize_tournament_results,
     tournament_leaderboard,
 )
+from tournaments.testing import create_money_prizes
 from wallets.models import RealBalanceTransaction
 
 
@@ -34,9 +35,8 @@ class FinalizationTestCase(TestCase):
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(days=3),
             ends_at=timezone.now() - timedelta(minutes=1),
-            prize_first=Decimal("1000.00"),
-            prize_second=Decimal("500.00"),
         )
+        create_money_prizes(self.tournament, "1000.00", "500.00")
         self.leader = self._participant("final-leader")
         self.runner = self._participant("final-runner")
         self.cheater = self._participant("final-cheater", TournamentParticipant.Status.DISQUALIFIED)

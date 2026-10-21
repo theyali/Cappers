@@ -52,10 +52,6 @@ class Tournament(models.Model):
         OPEN = "open", "Открытый"
         CLOSED = "closed", "Закрытый"
 
-    class EntryType(models.TextChoices):
-        FREE = "free", "Бесплатный"
-        PAID = "paid", "Платный"
-
     class EligibilityMode(models.TextChoices):
         ALL = "all", "Все условия"
         ANY = "any", "Любое условие"
@@ -63,47 +59,6 @@ class Tournament(models.Model):
     title = models.CharField("Название турнира", max_length=180)
     slug = models.SlugField("URL", max_length=255, unique=True, blank=True)
     description = models.TextField("Описание", blank=True)
-    rules_text = models.TextField("Условия турнира", blank=True)
-    participation_rules_text = models.TextField(
-        "Условия участия на странице",
-        blank=True,
-        default="",
-        help_text="Каждая строка показывается отдельным пунктом в блоке «Условия участия».",
-    )
-    format_rules_text = models.TextField(
-        "Формат турнира на странице",
-        blank=True,
-        default="",
-        help_text="Каждая строка показывается отдельным пунктом в блоке «Формат турнира».",
-    )
-    reward_payout_text = models.CharField(
-        "Срок выплаты призов",
-        max_length=255,
-        blank=True,
-        default="",
-        help_text="Текст для нижнего блока вкладки «Призы».",
-    )
-    reward_wallet_text = models.CharField(
-        "Куда начисляются деньги",
-        max_length=255,
-        blank=True,
-        default="",
-        help_text="Текст для денежного приза во вкладке «Призы».",
-    )
-    reward_coins_wallet_text = models.CharField(
-        "Куда начисляются коины",
-        max_length=255,
-        blank=True,
-        default="",
-        help_text="Текст для призовых коинов во вкладке «Призы».",
-    )
-    reward_rules_text = models.CharField(
-        "Условия призовой зоны",
-        max_length=255,
-        blank=True,
-        default="",
-        help_text="Текст условий попадания в призовую зону.",
-    )
     status = models.CharField(
         "Статус",
         max_length=16,
@@ -118,22 +73,10 @@ class Tournament(models.Model):
         default=AccessType.OPEN,
         db_index=True,
     )
-    entry_type = models.CharField(
-        "Тип участия",
-        max_length=16,
-        choices=EntryType.choices,
-        default=EntryType.FREE,
-        db_index=True,
-    )
     entry_fee_coins = models.PositiveIntegerField(
         "Стоимость участия, коины",
         default=0,
-        help_text="Используется для платных турниров.",
-    )
-    analysts_only = models.BooleanField(
-        "Только капперы",
-        default=True,
-        help_text="Если включено, участвовать могут только пользователи со статусом каппера.",
+        help_text="0 — бесплатный турнир; больше нуля — участие платное.",
     )
     vip_only = models.BooleanField("Только VIP", default=False)
     new_users_only = models.BooleanField("Только новые пользователи", default=False)
@@ -184,9 +127,6 @@ class Tournament(models.Model):
         null=True,
     )
     sponsor_url = models.URLField("Ссылка спонсора", max_length=500, blank=True)
-    prize_first = models.DecimalField("Приз за 1 место", max_digits=12, decimal_places=2, default=0)
-    prize_second = models.DecimalField("Приз за 2 место", max_digits=12, decimal_places=2, default=0)
-    prize_third = models.DecimalField("Приз за 3 место", max_digits=12, decimal_places=2, default=0)
     min_coefficient = models.DecimalField(
         "Минимальный коэффициент",
         max_digits=8,
@@ -221,25 +161,6 @@ class Tournament(models.Model):
         verbose_name="Разрешённые виды спорта",
         help_text="Если пусто, доступны все виды спорта.",
     )
-    min_user_predictions = models.PositiveIntegerField(
-        "Мин. опубликованных прогнозов для участия",
-        default=0,
-        help_text="0 — не проверять.",
-    )
-    min_user_wins = models.PositiveIntegerField(
-        "Мин. выигранных прогнозов для участия",
-        default=0,
-        help_text="0 — не проверять.",
-    )
-    eligibility_sport = models.ForeignKey(
-        "game.Sport",
-        on_delete=models.SET_NULL,
-        blank=True,
-        null=True,
-        related_name="eligibility_tournaments",
-        verbose_name="Спорт для проверки активности",
-        help_text="Если выбран, прогнозы и победы для допуска считаются только по этому спорту.",
-    )
     is_featured = models.BooleanField("Показывать выше остальных", default=False, db_index=True)
     finalized_at = models.DateTimeField(
         "Итоги зафиксированы",
@@ -265,12 +186,8 @@ class Tournament(models.Model):
             raise ValidationError({"ends_at": "Дата окончания должна быть позже даты начала."})
         if self.min_confidence is not None and not 0 <= self.min_confidence <= 100:
             raise ValidationError({"min_confidence": "Уверенность должна быть от 0 до 100%."})
-        for field in ("prize_first", "prize_second", "prize_third", "min_coefficient"):
-            value = getattr(self, field)
-            if value is not None and value < 0:
-                raise ValidationError({field: "Значение не может быть отрицательным."})
-        if self.entry_type == self.EntryType.PAID and self.entry_fee_coins <= 0:
-            raise ValidationError({"entry_fee_coins": "Для платного турнира укажите стоимость участия."})
+        if self.min_coefficient is not None and self.min_coefficient < 0:
+            raise ValidationError({"min_coefficient": "Значение не может быть отрицательным."})
 
     def save(self, *args, **kwargs) -> None:
         if not self.slug:
@@ -284,9 +201,11 @@ class Tournament(models.Model):
     def requires_prediction_text(self) -> bool:
         return self.prediction_format == self.PredictionFormat.RICH
 
+    @property
+    def is_paid_entry(self) -> bool:
+        return self.entry_fee_coins > 0
+
     def has_money_prizes(self) -> bool:
-        if any(value > 0 for value in (self.prize_first, self.prize_second, self.prize_third)):
-            return True
         return self.prizes.filter(is_active=True, money_amount__gt=0).exists()
 
     @property
@@ -303,13 +222,6 @@ class Tournament(models.Model):
 
 
 class TournamentAchievement(models.Model):
-    class Kind(models.TextChoices):
-        FIRST_PLACE = "first_place", "1 место"
-        SECOND_PLACE = "second_place", "2 место"
-        THIRD_PLACE = "third_place", "3 место"
-        PARTICIPATION = "participation", "Участие"
-        CUSTOM = "custom", "Другое"
-
     tournament = models.ForeignKey(
         Tournament,
         on_delete=models.CASCADE,
@@ -324,7 +236,6 @@ class TournamentAchievement(models.Model):
         blank=True,
         null=True,
     )
-    kind = models.CharField("Тип", max_length=24, choices=Kind.choices, default=Kind.CUSTOM)
     sort_order = models.PositiveIntegerField("Порядок", default=0)
 
     class Meta:
