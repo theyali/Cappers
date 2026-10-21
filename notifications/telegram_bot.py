@@ -1,6 +1,7 @@
 import hashlib
 import json
 import secrets
+import urllib.error
 import urllib.parse
 import urllib.request
 from datetime import timedelta
@@ -17,6 +18,15 @@ BOT_USERNAME_CACHE_KEY = "notifications:telegram_bot_username"
 LINK_TTL_MINUTES = 15
 
 
+class TelegramApiError(RuntimeError):
+    """A refusal from the Bot API: code 403 when the bot was removed, retry_after on flood limits."""
+
+    def __init__(self, description: str, *, code: int = 0, retry_after: int = 0):
+        super().__init__(description)
+        self.code = code
+        self.retry_after = retry_after
+
+
 class TelegramAlreadyLinkedError(Exception):
     def __init__(self, user):
         self.user = user
@@ -31,23 +41,56 @@ def get_bot_token() -> str:
     ).strip()
 
 
-def api_call(method: str, payload: dict | None = None, *, timeout: int = 15):
+def _api_request(method: str, body: bytes, content_type: str, timeout: int):
     token = get_bot_token()
     if not token:
         raise RuntimeError("TG_BOT_TOKEN не настроен")
 
     request = urllib.request.Request(
         f"https://api.telegram.org/bot{token}/{method}",
-        data=json.dumps(payload or {}).encode("utf-8"),
-        headers={"Content-Type": "application/json"},
+        data=body,
+        headers={"Content-Type": content_type},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=timeout) as response:
-        data = json.loads(response.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(request, timeout=timeout) as response:
+            data = json.loads(response.read().decode("utf-8"))
+    except urllib.error.HTTPError as error:
+        # Telegram explains a refusal in the JSON body of the 4xx answer.
+        try:
+            data = json.loads(error.read().decode("utf-8"))
+        except ValueError:
+            raise TelegramApiError(f"Telegram API error: {method}", code=error.code) from error
 
     if not data.get("ok"):
-        raise RuntimeError(data.get("description") or f"Telegram API error: {method}")
+        raise TelegramApiError(
+            data.get("description") or f"Telegram API error: {method}",
+            code=int(data.get("error_code") or 0),
+            retry_after=int((data.get("parameters") or {}).get("retry_after") or 0),
+        )
     return data.get("result")
+
+
+def api_call(method: str, payload: dict | None = None, *, timeout: int = 15):
+    return _api_request(method, json.dumps(payload or {}).encode("utf-8"), "application/json", timeout)
+
+
+def api_upload(method: str, payload: dict, files: dict[str, tuple[str, bytes, str]], *, timeout: int = 60):
+    """A call with files as multipart/form-data; dict and list values go as JSON, as the Bot API expects."""
+    boundary = secrets.token_hex(16)
+    parts = []
+    for name, value in payload.items():
+        if isinstance(value, (dict, list)):
+            value = json.dumps(value, ensure_ascii=False)
+        parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n'.encode())
+    for name, (file_name, content, content_type) in files.items():
+        head = (
+            f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"; filename="{file_name}"\r\n'
+            f"Content-Type: {content_type}\r\n\r\n"
+        )
+        parts.append(head.encode() + content + b"\r\n")
+    parts.append(f"--{boundary}--\r\n".encode())
+    return _api_request(method, b"".join(parts), f"multipart/form-data; boundary={boundary}", timeout)
 
 
 def get_bot_username(*, refresh: bool = False) -> str:

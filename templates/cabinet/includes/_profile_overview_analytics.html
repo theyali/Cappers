@@ -44,17 +44,17 @@
 
         <div class="profile-wallet-grid profile-copy-audience-summary">
             <article class="profile-wallet-card">
-                <span>Активно копируют</span>
+                <span class="profile-wallet-card-label">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" icon_size=20 only %}Активно копируют</span>
                 <strong>{{ copybetting_audience_active_count }}</strong>
                 <small>Пользователей прямо сейчас</small>
             </article>
             <article class="profile-wallet-card">
-                <span>Скопировано ставок</span>
+                <span class="profile-wallet-card-label">{% include "front/includes/_solar_icon.html" with name="copybetting" icon_size=20 only %}Скопировано ставок</span>
                 <strong>{{ copybetting_audience_copied_bets_count }}</strong>
                 <small>За всё время</small>
             </article>
             <article class="profile-wallet-card">
-                <span>Результат аудитории</span>
+                <span class="profile-wallet-card-label">{% include "front/includes/_solar_icon.html" with name="chart-2-bold" icon_size=20 only %}Результат аудитории</span>
                 <strong class="coin-amount">{% include "front/includes/_coin_icon.html" %}<span>{{ copybetting_audience_profit_display }}</span></strong>
                 <small>Суммарная прибыль пользователей</small>
             </article>

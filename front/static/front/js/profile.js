@@ -21,6 +21,9 @@
 
     initPaidPlansVisibility();
 
+    // The channel's paid-teaser switch saves on change.
+    page.querySelector("[data-channel-post-paid]")?.addEventListener("change", (event) => event.target.form.requestSubmit());
+
     const initProfileEditTabs = () => {
         const tabs = Array.from(page.querySelectorAll("[data-profile-edit-tab]"));
         const panels = Array.from(page.querySelectorAll("[data-profile-edit-panel]"));

@@ -41,6 +41,7 @@ from game.views import _delete_expired_draft_coupons
 from notifications.models import Notification, NotificationSectionState, TelegramAccount
 from notifications.services import get_preferences, refresh_section_state
 from notifications.telegram_bot import get_bot_token
+from notifications.telegram_channels import build_channel_settings_context
 from wallets.models import (
     CoinTransaction,
     CopiedBet,
@@ -1629,6 +1630,7 @@ def profile(request):
     if request.user.role == User.Role.ANALYST:
         from .services.profile_coupon_feed import build_coupon_feed_context
         context.update(build_coupon_feed_context(request.user, request.GET, offset=0))
+        context.update(build_channel_settings_context(request.user))
     if focus_form is not None:
         context.update(
             {

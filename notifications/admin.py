@@ -10,6 +10,7 @@ from .models import (
     Notification,
     NotificationPreference,
     TelegramAccount,
+    TelegramChannel,
 )
 
 
@@ -40,6 +41,13 @@ class TelegramAccountAdmin(admin.ModelAdmin):
     list_display = ("user", "username", "chat_id", "connected_at", "last_seen_at")
     search_fields = ("user__username", "user__email", "username", "chat_id")
     readonly_fields = ("connected_at", "last_seen_at")
+
+
+@admin.register(TelegramChannel)
+class TelegramChannelAdmin(admin.ModelAdmin):
+    list_display = ("user", "title", "username", "is_active", "post_paid", "last_error", "connected_at")
+    list_filter = ("is_active",)
+    search_fields = ("user__username", "title", "username", "chat_id")
 
 
 @admin.register(MatchWatch)

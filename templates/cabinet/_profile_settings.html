@@ -507,6 +507,49 @@
             {% endif %}
         </section>
 
+        {% if request.user.is_analyst and telegram_bot_configured %}
+        <section class="profile-side-card profile-telegram-card profile-settings-panel is-telegram">
+            <div class="profile-telegram-head">
+                <span class="profile-telegram-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M18 3.5a1 1 0 0 1 1.5.86v13.28a1 1 0 0 1-1.5.86L13.2 15.8H11l.9 3.6a1 1 0 0 1-.97 1.25H9.3a1 1 0 0 1-.96-.73L7.3 15.8H6a3 3 0 0 1-3-3v-1.6a3 3 0 0 1 3-3h7.2L18 3.5Zm3 6.1a1 1 0 0 1 1 1v2.8a1 1 0 1 1-2 0v-2.8a1 1 0 0 1 1-1Z"></path></svg>
+                </span>
+                <div>
+                    <p class="eyebrow">Telegram-канал</p>
+                    <div class="profile-side-title heading-style-h3">Автопостинг прогнозов</div>
+                </div>
+            </div>
+
+            {% if telegram_channel %}
+                <div class="profile-telegram-state{% if telegram_channel.is_active %} is-connected{% endif %}">
+                    <strong>{{ telegram_channel.title|default:"Канал подключён" }}</strong>
+                    <span>{% if not telegram_channel.is_active %}{{ telegram_channel.last_error|default:"Публикации остановлены" }}{% elif telegram_channel.username %}@{{ telegram_channel.username }} · прогнозы и итоги публикуются{% else %}Прогнозы и итоги публикуются{% endif %}</span>
+                </div>
+                {% if not telegram_channel.is_active %}
+                    <p class="profile-telegram-copy">Верните боту право публиковать сообщения или добавьте его в канал заново.</p>
+                    <a class="profile-telegram-connect" href="{% url 'notifications:telegram_channel_add' %}" target="_blank" rel="noopener noreferrer">Добавить бота в канал</a>
+                {% else %}
+                    <p class="profile-telegram-copy">{{ telegram_channel_results|default:"Итог каждого прогноза бот опубликует ответом на его пост." }}</p>
+                {% endif %}
+                <form method="post" action="{% url 'notifications:telegram_channel_update' %}">
+                    {% csrf_token %}
+                    <label class="profile-telegram-toggle">
+                        <input type="checkbox" name="post_paid" data-channel-post-paid{% if telegram_channel.post_paid %} checked{% endif %}>
+                        <span>Анонсировать платные прогнозы без исхода</span>
+                    </label>
+                </form>
+                <form method="post" action="{% url 'notifications:telegram_channel_disconnect' %}">
+                    {% csrf_token %}
+                    <button class="profile-telegram-disconnect" type="submit">Отключить канал</button>
+                </form>
+            {% elif telegram_account or notification_preferences.telegram_chat_id %}
+                <p class="profile-telegram-copy">Новые прогнозы и итоги «зашёл / не зашёл» будут сами появляться в вашем канале со ссылкой на КапперХаб. Добавьте бота админом с правом публиковать сообщения — канал подключится автоматически.</p>
+                <a class="profile-telegram-connect" href="{% url 'notifications:telegram_channel_add' %}" target="_blank" rel="noopener noreferrer">Добавить бота в канал</a>
+            {% else %}
+                <p class="profile-telegram-copy">Сначала подключите Telegram в блоке выше: по нему бот узнает вас, когда вы добавите его в свой канал.</p>
+            {% endif %}
+        </section>
+        {% endif %}
+
         <section class="profile-side-card profile-settings-panel is-notifications">
             <p class="eyebrow">Уведомления</p>
             <div class="profile-side-title heading-style-h3">Настройки событий</div>

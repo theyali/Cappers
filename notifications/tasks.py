@@ -17,8 +17,18 @@ from cabinet.models import AnalystFollow, AnalystPaidSubscription, AnalystProfil
 from front.models import PredictionFavorite
 from game.models import Match, PredictionCoupon
 
-from .models import CouponEventState, MatchWatch, Notification, NotificationPreference, TelegramAccount
+from .models import (
+    CouponEventState,
+    MatchWatch,
+    Notification,
+    NotificationPreference,
+    TelegramAccount,
+    TelegramChannel,
+    TelegramChannelPost,
+)
 from .services import create_notification, get_preferences
+from .telegram_bot import TelegramApiError
+from .telegram_channels import publish_channel_post
 from .telegram_delivery import send_notification_to_telegram
 
 
@@ -330,11 +340,14 @@ def dispatch_recent_coupon_events() -> dict:
         .prefetch_related("predictions__match__home_team", "predictions__match__away_team")
         .order_by("published_at", "id")
     )
+    channel_author_ids = set(TelegramChannel.objects.filter(is_active=True).values_list("user_id", flat=True))
     for coupon in published:
         state, _ = CouponEventState.objects.get_or_create(coupon=coupon)
         if state.published_dispatched_at:
             continue
         new_count += _new_prediction_events(coupon)
+        if coupon.author_id in channel_author_ids:
+            post_to_telegram_channel.delay(coupon.id, TelegramChannelPost.Kind.PREDICTION)
         state.published_dispatched_at = now
         state.save(update_fields=["published_dispatched_at", "updated_at"])
 
@@ -351,6 +364,8 @@ def dispatch_recent_coupon_events() -> dict:
         if state.settled_dispatched_at and state.settled_state == coupon.state_status:
             continue
         settled_count += _favorite_settlement_events(coupon)
+        if coupon.author_id in channel_author_ids:
+            post_to_telegram_channel.delay(coupon.id, TelegramChannelPost.Kind.RESULT)
         state.settled_state = coupon.state_status
         state.settled_dispatched_at = now
         state.save(update_fields=["settled_state", "settled_dispatched_at", "updated_at"])
@@ -362,6 +377,20 @@ def dispatch_recent_coupon_events() -> dict:
         "match_update_events": watched["created"],
         "finished_watches_removed": watched["removed"],
     }
+
+
+@shared_task(bind=True, max_retries=5)
+def post_to_telegram_channel(self, coupon_id: int, kind: str) -> bool:
+    """A new coupon or its result in the author's Telegram channel; refusals switch the channel off."""
+    try:
+        return publish_channel_post(coupon_id, kind) is not None
+    except TelegramApiError as error:
+        # Flood limits and Telegram's own failures pass; other refusals are handled or are bugs.
+        if not error.retry_after and error.code < 500:
+            raise
+        raise self.retry(exc=error, countdown=error.retry_after or 60)
+    except OSError as error:
+        raise self.retry(exc=error, countdown=60)
 
 
 @shared_task

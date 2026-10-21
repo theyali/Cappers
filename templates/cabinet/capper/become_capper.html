@@ -13,8 +13,8 @@
                 <h1>Ваш профиль каппера<br>уже <span>активен.</span></h1>
                 <p class="capper-landing-lead">Публикуйте прогнозы, накапливайте подтверждённую статистику и развивайте аудиторию.</p>
                 <div class="capper-landing-actions">
-                    <a class="capper-landing-primary" href="{% url 'front:expert_profile' request.user.username %}">Открыть публичный профиль <span>→</span></a>
-                    <a class="capper-landing-secondary" href="{% url 'game:match_list' %}?scope=prematch">Создать прогноз <span>→</span></a>
+                    <a class="capper-landing-primary" href="{% url 'front:expert_profile' request.user.username %}">Открыть публичный профиль <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
+                    <a class="capper-landing-secondary" href="{% url 'game:match_list' %}?scope=prematch">Создать прогноз <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
                 </div>
             {% else %}
                 <p class="capper-kicker">Как стать каппером</p>
@@ -23,15 +23,12 @@
 
                 <div class="capper-landing-actions">
                     {% if request.user.is_authenticated %}
-                        <a class="capper-landing-primary" href="{% url 'cabinet:become_capper_start' %}">Стать каппером бесплатно <span>→</span></a>
+                        <a class="capper-landing-primary" href="{% url 'cabinet:become_capper_start' %}">Стать каппером бесплатно <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
                     {% else %}
-                        <a class="capper-landing-primary" href="{% url 'cabinet:register' %}?type=capper">Стать каппером бесплатно <span>→</span></a>
+                        <a class="capper-landing-primary" href="{% url 'cabinet:register' %}?type=capper">Стать каппером бесплатно <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
                         <a class="capper-landing-secondary" href="{% url 'cabinet:login' %}?next={% url 'cabinet:become_capper_start' %}">
                             <span class="capper-landing-telegram-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none">
-                                    <path d="M21 4 3.8 10.6c-.8.3-.8 1.4.1 1.7l4.4 1.5 1.7 5c.3.8 1.3 1 1.8.3l2.5-3 4.5 3.3c.7.5 1.6.1 1.8-.7L22.3 5c.1-.8-.6-1.3-1.3-1Z" fill="currentColor"/>
-                                    <path d="m8.3 13.8 7.8-5.3-6.1 6.9v3.4" stroke="#111318" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
+                                {% include "front/includes/_solar_icon.html" with name="telegram" only %}
                             </span>
                             Узнать больше в Telegram
                         </a>
@@ -42,31 +39,19 @@
             <div class="capper-landing-proof" aria-label="Преимущества для капперов">
                 <div class="capper-landing-proof-item">
                     <span class="capper-landing-proof-icon" aria-hidden="true">
-                        <svg viewBox="0 0 32 32" fill="none">
-                            <circle cx="12" cy="11" r="5" fill="currentColor"/>
-                            <circle cx="22.5" cy="12.5" r="4" fill="currentColor" opacity=".8"/>
-                            <path d="M3 26c0-5 4-8 9-8s9 3 9 8H3Z" fill="currentColor"/>
-                            <path d="M18 25c.3-3.6 2.9-6 6.5-6 3.7 0 6.5 2.6 6.5 6h-13Z" fill="currentColor" opacity=".8"/>
-                        </svg>
+                        {% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}
                     </span>
                     <p><strong>Тысячи</strong><small>активных подписчиков</small></p>
                 </div>
                 <div class="capper-landing-proof-item">
                     <span class="capper-landing-proof-icon" aria-hidden="true">
-                        <svg viewBox="0 0 32 32" fill="none">
-                            <rect x="3" y="18" width="5" height="11" rx="1.5" fill="currentColor"/>
-                            <rect x="13.5" y="11" width="5" height="18" rx="1.5" fill="currentColor"/>
-                            <rect x="24" y="4" width="5" height="25" rx="1.5" fill="currentColor"/>
-                        </svg>
+                        {% include "front/includes/_solar_icon.html" with name="chart-2-bold" only %}
                     </span>
                     <p><strong>Прозрачная статистика</strong><small>и честные рейтинги</small></p>
                 </div>
                 <div class="capper-landing-proof-item">
                     <span class="capper-landing-proof-icon" aria-hidden="true">
-                        <svg viewBox="0 0 32 32" fill="none">
-                            <path d="M16 2.5 28 7v8.8c0 7.1-4.8 11.8-12 14.2C8.8 27.6 4 22.9 4 15.8V7l12-4.5Z" fill="currentColor"/>
-                            <path d="m10.5 16 3.5 3.5 7.5-8" stroke="#101216" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
-                        </svg>
+                        {% include "front/includes/_solar_icon.html" with name="match_finished" only %}
                     </span>
                     <p><strong>Реальные выплаты</strong><small>экспертам</small></p>
                 </div>
@@ -86,10 +71,7 @@
                         <article class="capper-journey-step">
                             <span class="capper-journey-number">01</span>
                             <span class="capper-journey-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <circle cx="16" cy="10" r="6" fill="currentColor"/>
-                                    <path d="M6 28c0-7 4-11 10-11s10 4 10 11H6Z" fill="currentColor"/>
-                                </svg>
+                                {% include "front/includes/_solar_icon.html" with name="profile" only %}
                             </span>
                             <div>
                                 <h3>Зарегистрируйтесь</h3>
@@ -100,10 +82,7 @@
                         <article class="capper-journey-step">
                             <span class="capper-journey-number">02</span>
                             <span class="capper-journey-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path d="M8 3h12l5 5v21H8V3Z" stroke="currentColor" stroke-width="2.4" stroke-linejoin="round"/>
-                                    <path d="M20 3v7h5M12 15h9M12 20h9M12 25h6" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-                                </svg>
+                                {% include "front/includes/_solar_icon.html" with name="articles" only %}
                             </span>
                             <div>
                                 <h3>Публикуйте прогнозы</h3>
@@ -114,11 +93,7 @@
                         <article class="capper-journey-step">
                             <span class="capper-journey-number">03</span>
                             <span class="capper-journey-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <rect x="4" y="19" width="5" height="10" rx="1" fill="currentColor"/>
-                                    <rect x="13.5" y="12" width="5" height="17" rx="1" fill="currentColor"/>
-                                    <rect x="23" y="5" width="5" height="24" rx="1" fill="currentColor"/>
-                                </svg>
+                                {% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}
                             </span>
                             <div>
                                 <h3>Собирайте аудиторию</h3>
@@ -129,11 +104,7 @@
                         <article class="capper-journey-step">
                             <span class="capper-journey-number">04</span>
                             <span class="capper-journey-icon" aria-hidden="true">
-                                <svg viewBox="0 0 32 32" fill="none">
-                                    <path d="M9 5h14v4c0 6-3 10-7 10S9 15 9 9V5Z" fill="currentColor"/>
-                                    <path d="M12 19h8v4h-8zM9 27h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
-                                    <path d="M9 8H5c0 5 2 8 6 8M23 8h4c0 5-2 8-6 8" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/>
-                                </svg>
+                                {% include "front/includes/_solar_icon.html" with name="earnings" only %}
                             </span>
                             <div>
                                 <h3>Монетизируйте знания</h3>
@@ -146,7 +117,7 @@
                 <section class="capper-profile-demo" aria-label="Пример профиля каппера">
                     <div class="capper-profile-demo-head">
                         <div class="capper-profile-demo-user">
-                            <div class="capper-profile-demo-avatar">AP<span>✓</span></div>
+                            <div class="capper-profile-demo-avatar">AP<span>{% include "front/includes/_solar_icon.html" with name="match_finished" icon_size=14 only %}</span></div>
                             <div>
                                 <div class="capper-profile-demo-name">
                                     <strong>AnalitikPro</strong>
@@ -163,41 +134,41 @@
 
                     <div class="capper-profile-demo-stats">
                         <article>
-                            <span class="capper-profile-demo-stat-icon" aria-hidden="true">▤</span>
+                            <span class="capper-profile-demo-stat-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="ticket-bold" icon_size=24 only %}</span>
                             <div><strong>1 284</strong><small>Прогнозов</small><em>+12 за месяц</em></div>
                         </article>
                         <article>
-                            <span class="capper-profile-demo-stat-icon is-green" aria-hidden="true">◎</span>
+                            <span class="capper-profile-demo-stat-icon is-green" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="match_finished" icon_size=24 only %}</span>
                             <div><strong>64%</strong><small>Проходимость</small><em>+6%</em></div>
                         </article>
                         <article>
-                            <span class="capper-profile-demo-stat-icon is-green" aria-hidden="true">▥</span>
+                            <span class="capper-profile-demo-stat-icon is-green" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="chart-2-bold" icon_size=20 only %}</span>
                             <div><strong>+18.7%</strong><small>ROI</small><em>+4.2%</em></div>
                         </article>
                         <article>
-                            <span class="capper-profile-demo-stat-icon" aria-hidden="true">♟</span>
+                            <span class="capper-profile-demo-stat-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" icon_size=20 only %}</span>
                             <div><strong>12 458</strong><small>Подписчиков</small><em>+2 341</em></div>
                         </article>
                     </div>
 
                     <div class="capper-profile-demo-bottom">
                         <div class="capper-profile-demo-achievements">
-                            <h3><span aria-hidden="true">🏆</span> Достижения</h3>
+                            <h3><span aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="tournaments" icon_size=20 only %}</span> Достижения</h3>
                             <div class="capper-profile-demo-achievement-list">
-                                <span>🏆 <b>Топ-10</b><small>в общем рейтинге</small></span>
-                                <span>⚽ <b>Эксперт по футболу</b></span>
-                                <span>▥ <b>Стабильный ROI</b><small>6 месяцев</small></span>
-                                <span>♟ <b>Более 10К</b><small>подписчиков</small></span>
+                                <span>{% include "front/includes/_solar_icon.html" with name="tournaments" icon_size=20 only %} <b>Топ-10</b><small>в общем рейтинге</small></span>
+                                <span>{% include "front/includes/_solar_icon.html" with name="balls-bold" icon_size=20 only %} <b>Эксперт по футболу</b></span>
+                                <span>{% include "front/includes/_solar_icon.html" with name="chart-2-bold" icon_size=20 only %} <b>Стабильный ROI</b><small>6 месяцев</small></span>
+                                <span>{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" icon_size=20 only %} <b>Более 10К</b><small>подписчиков</small></span>
                             </div>
                         </div>
 
                         <div class="capper-profile-demo-copy">
                             <div>
-                                <strong><span aria-hidden="true">⚡</span> Копирование прогнозов</strong>
+                                <strong><span aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="bonus_tasks" icon_size=20 only %}</span> Копирование прогнозов</strong>
                                 <p>Пользователи могут автоматически копировать ваши прогнозы.</p>
                                 <span class="capper-profile-demo-switch" aria-hidden="true"><i></i></span>
                             </div>
-                            <small><span aria-hidden="true">🪙</span> Вы зарабатываете с каждой подписки</small>
+                            <small><span aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="earnings" icon_size=20 only %}</span> Вы зарабатываете с каждой подписки</small>
                         </div>
                     </div>
                 </section>
@@ -208,25 +179,25 @@
                 <div class="capper-benefit-grid">
                     <article class="capper-benefit">
                         <span class="capper-benefit-icon" aria-hidden="true">
-                            <svg viewBox="0 0 32 32"><rect x="4" y="18" width="5" height="10" rx="1"/><rect x="13.5" y="11" width="5" height="17" rx="1"/><rect x="23" y="4" width="5" height="24" rx="1"/></svg>
+                            {% include "front/includes/_solar_icon.html" with name="chart-2-bold" only %}
                         </span>
                         <div><h3>Публичная статистика</h3><p>Ваша история прогнозов формирует доверие и привлекает новых подписчиков.</p></div>
                     </article>
                     <article class="capper-benefit">
                         <span class="capper-benefit-icon" aria-hidden="true">
-                            <svg viewBox="0 0 32 32" fill="none"><circle cx="9" cy="16" r="4" fill="currentColor"/><circle cx="24" cy="8" r="4" fill="currentColor"/><circle cx="24" cy="24" r="4" fill="currentColor"/><path d="m12.5 14 8-4M12.5 18l8 4" stroke="currentColor" stroke-width="2.4"/></svg>
+                            {% include "front/includes/_solar_icon.html" with name="share-bold-duotone" only %}
                         </span>
                         <div><h3>Удобная ссылка для соцсетей</h3><p>Продвигайте свой профиль в Telegram, Instagram и других площадках.</p></div>
                     </article>
                     <article class="capper-benefit">
                         <span class="capper-benefit-icon" aria-hidden="true">
-                            <svg viewBox="0 0 32 32" fill="none"><path d="M9 5h14v4c0 6-3 10-7 10S9 15 9 9V5Z" fill="currentColor"/><path d="M12 19h8v4h-8zM9 27h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg>
+                            {% include "front/includes/_solar_icon.html" with name="tournaments" only %}
                         </span>
                         <div><h3>Высокие позиции в рейтинге</h3><p>Попадайте в топ, получайте больше аудитории и повышайте доход.</p></div>
                     </article>
                     <article class="capper-benefit">
                         <span class="capper-benefit-icon" aria-hidden="true">
-                            <svg viewBox="0 0 32 32"><path d="m18 2-9 15h7l-2 13 10-17h-7l1-11Z"/></svg>
+                            {% include "front/includes/_solar_icon.html" with name="bonus_tasks" only %}
                         </span>
                         <div><h3>Быстрый старт</h3><p>Пройдите регистрацию и опубликуйте первый прогноз уже сегодня.</p></div>
                     </article>
@@ -236,7 +207,7 @@
             <div class="capper-benefits-cta">
                 <div class="capper-benefits-cta-copy">
                     <span class="capper-benefits-cta-icon" aria-hidden="true">
-                        <svg viewBox="0 0 32 32"><path d="m5 10 6 5 5-10 5 10 6-5-2 15H7L5 10Z"/><path d="M8 28h16" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+                        {% include "front/includes/_solar_icon.html" with name="crown-bold" only %}
                     </span>
                     <div>
                         <h2>Ваши знания могут приносить доход уже сегодня!</h2>
@@ -245,11 +216,11 @@
                 </div>
 
                 {% if already_capper %}
-                    <a class="capper-benefits-cta-button" href="{% url 'game:match_list' %}?scope=prematch">Создать прогноз <span>→</span></a>
+                    <a class="capper-benefits-cta-button" href="{% url 'game:match_list' %}?scope=prematch">Создать прогноз <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
                 {% elif request.user.is_authenticated %}
-                    <a class="capper-benefits-cta-button" href="{% url 'cabinet:become_capper_start' %}">Стать каппером бесплатно <span>→</span></a>
+                    <a class="capper-benefits-cta-button" href="{% url 'cabinet:become_capper_start' %}">Стать каппером бесплатно <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
                 {% else %}
-                    <a class="capper-benefits-cta-button" href="{% url 'cabinet:register' %}?type=capper">Стать каппером бесплатно <span>→</span></a>
+                    <a class="capper-benefits-cta-button" href="{% url 'cabinet:register' %}?type=capper">Стать каппером бесплатно <span>{% include "front/includes/_solar_icon.html" with name="match_next" icon_size=20 only %}</span></a>
                 {% endif %}
 
                 <p class="capper-benefits-cta-note">Эксперты<br>создают движение</p>

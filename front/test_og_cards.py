@@ -113,7 +113,7 @@ class OgCardTests(TestCase):
     def test_card_is_drawn_once_per_version(self):
         coupon = self._coupon()
         url = reverse("front:og_coupon", args=[coupon.pk])
-        with patch("front.og_cards.views.coupon_card", return_value=b"png") as draw:
+        with patch("front.og_cards.data.coupon_card", return_value=b"png") as draw:
             self.client.get(url)
             self.client.get(f"{url}?v=other")
             self.assertEqual(draw.call_count, 1)

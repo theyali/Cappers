@@ -3,12 +3,13 @@ from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.utils import timezone
 from django.views.decorators.http import require_GET, require_POST, require_http_methods
 
 from game.models import Match
 
-from .models import MatchWatch, Notification, NotificationSectionState, TelegramAccount
+from .models import MatchWatch, Notification, NotificationSectionState, TelegramAccount, TelegramChannel
 from .services import (
     clear_section_states,
     decrement_section_state,
@@ -17,7 +18,8 @@ from .services import (
     refresh_section_state,
     section_badge_payload,
 )
-from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token
+from .telegram_bot import build_connect_url, disconnect_telegram, get_bot_token, get_bot_username
+from .telegram_channels import ADD_BOT_RIGHTS, disconnect_channel
 
 
 PAGE_SIZE = 30
@@ -215,6 +217,38 @@ def telegram_disconnect(request):
     disconnect_telegram(request.user)
     messages.success(request, "Telegram отключён от аккаунта.")
     return redirect("notifications:center")
+
+
+def _profile_settings_url() -> str:
+    return f"{reverse('cabinet:profile')}?tab=settings"
+
+
+@login_required
+@require_GET
+def telegram_channel_add(request):
+    """Telegram's own dialog for adding the bot to a channel as an admin that may post."""
+    try:
+        username = get_bot_username()
+    except Exception:
+        messages.error(request, "Не удалось связаться с Telegram. Попробуйте ещё раз.")
+        return redirect(_profile_settings_url())
+    return redirect(f"https://t.me/{username}?startchannel&admin={ADD_BOT_RIGHTS}")
+
+
+@login_required
+@require_POST
+def telegram_channel_update(request):
+    TelegramChannel.objects.filter(user=request.user).update(post_paid="post_paid" in request.POST)
+    messages.success(request, "Настройки канала сохранены.")
+    return redirect(_profile_settings_url())
+
+
+@login_required
+@require_POST
+def telegram_channel_disconnect(request):
+    disconnect_channel(request.user)
+    messages.success(request, "Канал отключён, бот из него вышел.")
+    return redirect(_profile_settings_url())
 
 
 @login_required

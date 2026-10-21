@@ -13,6 +13,7 @@ from notifications.telegram_bot import (
     telegram_webapp_url,
     web_app_menu_button,
 )
+from notifications.telegram_channels import sync_channel_membership
 from payments.services.telegram_stars import answer_pre_checkout_query, record_successful_payment
 
 
@@ -53,7 +54,7 @@ class Command(BaseCommand):
             try:
                 payload = {
                     "timeout": 30,
-                    "allowed_updates": ["message", "pre_checkout_query"],
+                    "allowed_updates": ["message", "pre_checkout_query", "my_chat_member"],
                 }
                 if offset is not None:
                     payload["offset"] = offset
@@ -83,6 +84,10 @@ class Command(BaseCommand):
         # Telegram Stars: the question before the payment and the paid message.
         if update.get("pre_checkout_query"):
             answer_pre_checkout_query(update["pre_checkout_query"])
+            return
+        # The bot was added to or removed from a capper's channel.
+        if update.get("my_chat_member"):
+            sync_channel_membership(update["my_chat_member"])
             return
         message = update.get("message") or {}
         if message.get("successful_payment"):
