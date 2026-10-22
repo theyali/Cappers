@@ -48,10 +48,6 @@ class Tournament(models.Model):
         RICH = "rich", "Расширенные: название и описание обязательны"
         QUICK = "quick", "Обычные: как из купона"
 
-    class AccessType(models.TextChoices):
-        OPEN = "open", "Открытый"
-        CLOSED = "closed", "Закрытый"
-
     class EligibilityMode(models.TextChoices):
         ALL = "all", "Все условия"
         ANY = "any", "Любое условие"
@@ -64,13 +60,6 @@ class Tournament(models.Model):
         max_length=16,
         choices=Status.choices,
         default=Status.DRAFT,
-        db_index=True,
-    )
-    access_type = models.CharField(
-        "Тип доступа",
-        max_length=16,
-        choices=AccessType.choices,
-        default=AccessType.OPEN,
         db_index=True,
     )
     entry_fee_coins = models.PositiveIntegerField(
@@ -401,8 +390,6 @@ class TournamentPrizeAward(models.Model):
 
 class TournamentEligibilityRule(models.Model):
     class RuleType(models.TextChoices):
-        VIP_STATUS = "vip_status", "VIP-статус"
-        NEW_USER = "new_user", "Новый пользователь"
         TOURNAMENT_WINS = "tournament_wins", "Победы в турнирах"
         PREDICTIONS_COUNT = "predictions_count", "Опубликованные прогнозы"
         WINNING_PREDICTIONS_COUNT = "winning_predictions_count", "Выигранные прогнозы"

@@ -79,7 +79,6 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "status",
-        "access_type",
         "entry_fee_coins",
         "starts_at",
         "ends_at",
@@ -92,7 +91,6 @@ class TournamentAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "status",
-        "access_type",
         "vip_only",
         "new_users_only",
         "eligibility_mode",
@@ -111,14 +109,8 @@ class TournamentAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {"fields": ("title", "slug", "description", "status", "is_featured")}),
         (
-            "Тип доступа",
-            {
-                "fields": (
-                    "access_type",
-                    "vip_only",
-                    "new_users_only",
-                )
-            },
+            "Кто может участвовать",
+            {"fields": ("vip_only", "new_users_only")},
         ),
         ("Стоимость участия", {"fields": ("entry_fee_coins",)}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),

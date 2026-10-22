@@ -540,10 +540,9 @@ class TournamentAccessRewardTests(TestCase):
         self.assertEqual(participant.user, self.analyst)
         self.assertEqual(participant.status, TournamentParticipant.Status.ACTIVE)
 
-    def test_closed_vip_only_tournament_requires_active_vip(self):
+    def test_vip_only_tournament_requires_active_vip(self):
         tournament = self._tournament(
-            "Closed VIP Cup",
-            access_type=Tournament.AccessType.CLOSED,
+            "VIP Cup",
             vip_only=True,
         )
 

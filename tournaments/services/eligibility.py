@@ -157,11 +157,6 @@ def _evaluate_configured_rule(user, rule: TournamentEligibilityRule) -> Eligibil
 
 
 def _metric_value(user, rule: TournamentEligibilityRule) -> int:
-    if rule.rule_type == TournamentEligibilityRule.RuleType.VIP_STATUS:
-        return int(bool(getattr(user, "is_vip", False)))
-    if rule.rule_type == TournamentEligibilityRule.RuleType.NEW_USER:
-        days = int(rule.value or NEW_USER_DAYS)
-        return int(_is_new_user(user, days=days))
     if rule.rule_type == TournamentEligibilityRule.RuleType.TOURNAMENT_WINS:
         return TournamentResult.objects.filter(participant__user=user, rank=1).count()
     if rule.rule_type == TournamentEligibilityRule.RuleType.PREDICTIONS_COUNT:
@@ -178,11 +173,6 @@ def _metric_value(user, rule: TournamentEligibilityRule) -> int:
 
 
 def _required_value(rule: TournamentEligibilityRule) -> int:
-    if rule.rule_type in (
-        TournamentEligibilityRule.RuleType.VIP_STATUS,
-        TournamentEligibilityRule.RuleType.NEW_USER,
-    ):
-        return 1
     return int(rule.value or 0)
 
 

@@ -557,12 +557,7 @@ def _tournament_eligibility_summary(tournament: Tournament, eligibility: dict) -
 
 
 def _tournament_access_badges(tournament: Tournament, eligibility: dict) -> list[dict]:
-    badges = [
-        {
-            "label": tournament.get_access_type_display(),
-            "tone": "warning" if tournament.access_type == Tournament.AccessType.CLOSED else "ok",
-        }
-    ]
+    badges = []
     if tournament.is_paid_entry:
         badges.append(
             {
@@ -644,15 +639,10 @@ def _configured_public_eligibility_rows(tournament: Tournament) -> list[dict]:
         title = rule.title or rule.get_rule_type_display()
         if rule.sport_id:
             title = f"{title} ({rule.sport.name_ru or rule.sport.name})"
-        meta = (
-            "обязательно"
-            if rule.rule_type in ("vip_status", "new_user")
-            else _operator_requirement_label(rule.operator, rule.value)
-        )
         rows.append(
             {
                 "title": title,
-                "meta": meta,
+                "meta": _operator_requirement_label(rule.operator, rule.value),
                 "state": "neutral",
                 "description": rule.description,
             }
@@ -682,7 +672,6 @@ def _eligibility_rule_meta(rule: dict) -> str:
 
 def _default_participation_rules(tournament: Tournament) -> list[str]:
     rules = [
-        "Открытый турнир" if tournament.access_type == Tournament.AccessType.OPEN else "Закрытый турнир",
         "Платное участие" if tournament.is_paid_entry else "Бесплатное участие",
         "Участвовать могут только капперы",
     ]
@@ -985,7 +974,7 @@ def _allowed_sports_label(allowed_sports: list[Sport]) -> str:
 
 
 def _about_access_text(tournament: Tournament, eligibility: dict) -> str:
-    parts = [tournament.get_access_type_display().lower(), "только для капперов"]
+    parts = ["только для капперов"]
     if tournament.vip_only:
         parts.append("нужен VIP")
     if tournament.new_users_only:
