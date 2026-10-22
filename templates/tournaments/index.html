@@ -11,10 +11,10 @@
                 {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
             {% endfor %}
 
-            <a class="tournament-side-card tournament-score-card" href="{% url 'front:wiki' %}">
+            <a class="tournament-side-card tournament-score-card" href="{% url 'front:rules' %}" data-tournament-rules-open aria-haspopup="dialog" aria-controls="tournament-rules-modal">
                 <span class="tournament-side-icon" aria-hidden="true">↗</span>
                 <strong>Как считаются очки?</strong>
-                <span>Очки начисляются за успешные прогнозы с учетом коэффициента. Чем выше коэффициент и проходимость, тем больше очков.</span>
+                <span>Победа — коэффициент × 10, проигрыш — −5, возврат — 0. Бонусы и лимиты смотрите в условиях турнира; прежние турниры используют ROI.</span>
                 <b>Подробнее →</b>
             </a>
 
@@ -32,151 +32,18 @@
             {% endif %}
         </aside>
 
-        <div class="predictions-content tournaments-content">
-            <header class="tournaments-hero" data-site-help-anchor style="background-color:#0b56fa;background-image:url('{% static 'front/img/tournaments/tournaments.png' %}');background-size:cover;background-position:center;background-repeat:no-repeat;">
-                <div data-site-help-position-target>
-                    {% include "pages/includes/_help_button.html" with help_key="tournaments-hero" help_position="top-right" only %}
-                </div>
-                <div class="tournaments-hero-copy">
-                    <h1 id="tournaments-title">Турниры</h1>
-                    <p>Соревнуйся с лучшими, выигрывай призы и доказывай свой экспертный уровень!</p>
-                </div>
-                <nav class="tournament-sport-tabs" aria-label="Виды спорта">
-                    {% for tab in sport_tabs %}
-                    <a class="{% if tab.is_active %}is-active{% endif %}" href="{{ tab.url }}">
-                        <span aria-hidden="true">{{ tab.icon }}</span>
-                        <span>{{ tab.label }}</span>
-                    </a>
-                    {% endfor %}
-                </nav>
-            </header>
-
-            <div class="tournament-toolbar">
-                <nav class="tournament-filter-tabs" aria-label="Фильтр турниров">
-                    {% for tab in status_filter_tabs %}
-                    <a class="{% if tab.is_active %}is-active{% endif %}" href="{{ tab.url }}">
-                        {% if tab.icon %}<span aria-hidden="true">{{ tab.icon }}</span>{% endif %}
-                        <span>{{ tab.label }}</span>
-                    </a>
-                    {% endfor %}
-                </nav>
-                <form class="tournament-sort" method="get">
-                    {% if active_sport != "all" %}<input type="hidden" name="sport" value="{{ active_sport }}">{% endif %}
-                    {% if active_filter != "all" %}<input type="hidden" name="filter" value="{{ active_filter }}">{% endif %}
-                    <label>
-                        <span aria-hidden="true">☰</span>
-                        <select name="sort" onchange="this.form.submit()" aria-label="Сортировка турниров">
-                            <option value="start"{% if active_sort == "start" %} selected{% endif %}>По дате начала</option>
-                            <option value="prize"{% if active_sort == "prize" %} selected{% endif %}>По призовому фонду</option>
-                            <option value="popular"{% if active_sort == "popular" %} selected{% endif %}>По участникам</option>
-                        </select>
-                    </label>
-                </form>
-            </div>
-
-            {% if top_tournaments %}
-            <section class="tournament-top-strip" aria-label="Топ-3 турниров по призовому фонду">
-                <div><span aria-hidden="true">🏆</span><strong>Топ-3 турниров по призовому фонду</strong></div>
-                {% for item in top_tournaments %}
-                <a href="{{ item.tournament.get_absolute_url }}">
-                    <b>{{ forloop.counter }}</b>
-                    {% if item.tournament.card_image %}
-                        <img src="{{ item.tournament.card_image.url }}" width="88" height="44" alt="" loading="lazy">
-                    {% elif item.tournament.hero_image %}
-                        <img src="{{ item.tournament.hero_image.url }}" width="88" height="44" alt="" loading="lazy">
-                    {% else %}
-                        <img src="{% static 'front/img/tournaments/1.png' %}" width="88" height="44" alt="" loading="lazy">
-                    {% endif %}
-                    <span>{{ item.tournament.title }} <strong>{{ item.prize_total|money }} ₽</strong></span>
-                </a>
-                {% endfor %}
-            </section>
-            {% endif %}
-
-            {% if tournaments %}
-            <div class="tournament-grid">
-                {% for item in tournaments %}
-                <article class="tournament-card tournament-card-{{ item.runtime_status.key }}{% if not item.has_cover %} is-no-cover{% endif %}">
-                    <a class="tournament-card-link" href="{{ item.tournament.get_absolute_url }}" aria-label="Открыть турнир {{ item.tournament.title }}">
-                        {% if item.has_cover %}
-                        <span class="tournament-card-image" data-skeleton-image>
-                            {% if item.tournament.card_image %}
-                                <img src="{{ item.tournament.card_image.url }}" width="640" height="208" alt="" loading="lazy">
-                            {% else %}
-                                <img src="{{ item.tournament.hero_image.url }}" width="640" height="208" alt="" loading="lazy">
-                            {% endif %}
-                            <span class="tournament-card-status">{{ item.status_label }}</span>
-                        </span>
-                        {% endif %}
-                        <span class="tournament-card-body">
-                            <span class="tournament-card-heading">
-                                <span class="tournament-card-icon" data-tournament-icon-color="{{ item.tournament.card_icon_bg_color }}">
-                                    {% if item.tournament.hero_icon %}
-                                        <img src="{{ item.tournament.hero_icon.url }}" width="56" height="56" alt="" loading="lazy">
-                                    {% else %}
-                                        <span aria-hidden="true">{{ item.sport_icon }}</span>
-                                    {% endif %}
-                                </span>
-                                <span class="tournament-card-head">
-                                    <strong>{{ item.tournament.title }}</strong>
-                                    <small>{{ item.sport_label }}</small>
-                                    {% if not item.has_cover %}<span class="tournament-card-status">{{ item.status_label }}</span>{% endif %}
-                                </span>
-                            </span>
-                            <span class="tournament-card-summary">
-                                <span class="tournament-card-prize">
-                                    <small>Призовой фонд</small>
-                                    <strong>{{ item.prize_total|money }} ₽</strong>
-                                </span>
-                                <span class="tournament-card-meta">
-                                    <span>
-                                        {% include "front/includes/_solar_icon.html" with name="match_calendar" only %}
-                                        {{ item.time_label }}
-                                    </span>
-                                    <span>
-                                        {% include "front/includes/_solar_icon.html" with name="followers" only %}
-                                        {{ item.participants_count }} участников
-                                    </span>
-                                </span>
-                            </span>
-                            <span class="tournament-card-action{% if item.is_joined %} is-joined{% elif item.runtime_status.key == 'finished' %} is-finished{% endif %}">
-                                {% if item.is_joined %}
-                                    <span aria-hidden="true">✓</span> Вы в турнире{% if item.participant_rank %} <b>· {{ item.participant_rank }} место</b>{% endif %}
-                                {% elif item.runtime_status.key == "finished" %}
-                                    Итоги
-                                {% else %}
-                                    Участвовать <span aria-hidden="true">→</span>
-                                {% endif %}
-                            </span>
-                        </span>
-                    </a>
-                    {% if item.tournament.sponsor_name and item.tournament.sponsor_url %}
-                        <a class="tournament-card-sponsor" href="{{ item.tournament.sponsor_url }}" target="_blank" rel="sponsored noopener noreferrer" aria-label="Спонсор {{ item.tournament.sponsor_name }} — перейти на сайт">
-                            <span>Спонсор</span>
-                            <span class="tournament-card-sponsor-logo">
-                                {% if item.tournament.sponsor_logo %}
-                                    <img src="{{ item.tournament.sponsor_logo.url }}" width="88" height="28" alt="{{ item.tournament.sponsor_name }}" loading="lazy">
-                                {% else %}
-                                    <strong>{{ item.tournament.sponsor_name }}</strong>
-                                {% endif %}
-                            </span>
-                        </a>
-                    {% endif %}
-                </article>
-                {% endfor %}
-            </div>
-            {% else %}
-            <div class="tournaments-empty">
-                <strong>Турниров пока нет</strong>
-                <p>Когда администратор опубликует турнир, он появится на этой странице.</p>
-            </div>
-            {% endif %}
+        <div class="predictions-content tournaments-content" data-tournament-catalog aria-busy="false">
+            {% include "tournaments/includes/_catalog_content.html" %}
         </div>
+
+        {% include "front/includes/_prediction_ad_sidebar.html" %}
     </div>
 </section>
+{% include "tournaments/includes/_rules_modal.html" %}
 {% endblock %}
 
 {% block extra_js %}
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}" defer></script>
 <script src="{% static 'front/js/expert-follow.js' %}" defer></script>
 <script src="{% static 'front/js/tournaments.js' %}" defer></script>
 {% endblock %}

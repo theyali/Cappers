@@ -8,6 +8,7 @@ from cabinet.models import User
 from game.models import Match
 
 from .models import MatchWatch, Notification
+from .services import get_preferences
 from .tasks import _watched_match_update_events, notify_match_reminders
 
 
@@ -15,6 +16,10 @@ class MatchWatchLifecycleTests(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(username="watch-reader")
         self.client.force_login(self.user)
+        # Match reminders are opt-in.
+        preferences = get_preferences(self.user)
+        preferences.match_reminder = True
+        preferences.save(update_fields=["match_reminder", "updated_at"])
 
     def test_live_watch_and_finished_rejection(self):
         live = Match.objects.create(external_id=880001, sync_scope=Match.SyncScope.LIVE, score="1:0")

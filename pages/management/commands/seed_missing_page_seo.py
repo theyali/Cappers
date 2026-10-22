@@ -186,7 +186,6 @@ PUBLIC_PAGE_SEEDS = {
         PageSEO.Robots.INDEX_FOLLOW,
     ),
     "tournaments:detail": PageSeed("Страница турнира", "", "", PageSEO.Robots.INDEX_FOLLOW),
-    "tournaments:predict": PageSeed("Прогноз на турнир", "", "", PageSEO.Robots.NOINDEX_FOLLOW),
 }
 
 PRIVATE_PAGE_SEEDS = {
@@ -251,9 +250,7 @@ ACTION_ROUTES = {
     "game:match_timing",
     "game:prediction_request_state",
     "game:toggle_prediction_request",
-    "tournaments:match_odds",
     "tournaments:join",
-    "tournaments:create_coupon",
     "cabinet:profile_promo_banner",
     "cabinet:vip_purchase",
     "cabinet:daily_task_claim",

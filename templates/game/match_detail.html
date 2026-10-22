@@ -22,6 +22,7 @@
 
     <div class="matches-shell match-page-shell-v2">
         <aside class="matches-table-filter-sidebar match-v2-left-sidebar" aria-label="Левый сайдбар матча">
+            {% include "front/includes/_vip_prediction_rail.html" with vip_rail=vip_prediction_rail only %}
             {% for promo_banner in left_promo_banners %}
                 {% include "front/includes/_page_promo_banner.html" with promo_banner=promo_banner promo_banner_mod="is-home-sidebar" only %}
             {% endfor %}

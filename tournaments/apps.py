@@ -5,3 +5,6 @@ class TournamentsConfig(AppConfig):
     default_auto_field = "django.db.models.BigAutoField"
     name = "tournaments"
     verbose_name = "Турниры"
+
+    def ready(self):
+        from . import signals  # noqa: F401

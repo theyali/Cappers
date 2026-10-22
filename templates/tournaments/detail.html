@@ -20,6 +20,11 @@
                         <span>Результаты</span>
                         <span class="profile-sidebar-chevron" aria-hidden="true"></span>
                     </button>
+                    <button class="profile-sidebar-link" id="tournament-tab-participants" type="button" role="tab" aria-selected="false" aria-controls="tournament-panel-participants" data-tournament-tab="participants">
+                        <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}</span>
+                        <span>Участники</span>
+                        <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+                    </button>
                     <button class="profile-sidebar-link" id="tournament-tab-prizes" type="button" role="tab" aria-selected="false" aria-controls="tournament-panel-prizes" data-tournament-tab="prizes">
                         <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16v10H4zM3 7h18v4H3zM12 7v13"></path><path d="M12 7c-1.8 0-4.5-.7-4.5-2.6C7.5 3.1 8.5 2 9.8 2 11.7 2 12 4.7 12 7Zm0 0c1.8 0 4.5-.7 4.5-2.6C16.5 3.1 15.5 2 14.2 2 12.3 2 12 4.7 12 7Z"></path></svg></span>
                         <span>Призы</span>
@@ -36,6 +41,24 @@
 
         <div class="predictions-content tournaments-content">
             <main class="tournament-main" data-tournament-tab-panels>
+                {% if participant and runtime_status.key != 'finished' %}
+                <section class="tournament-participant-guide" aria-label="Как сделать прогноз в турнире">
+                    <span class="tournament-participant-guide-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="ticket-bold" only %}</span>
+                    <div class="tournament-participant-guide-copy">
+                        <strong>Вы участвуете в турнире</strong>
+                        {% if runtime_status.key == 'live' %}
+                        <p>Выберите матчи и в купоне укажите этот турнир. {% if tournament.requires_prediction_text %}Опубликуйте расширенный прогноз с названием и описанием.{% else %}Опубликуйте прогноз прямо из купона.{% endif %} Он появится в прогнозах турнира и в вашей статистике.</p>
+                        {% else %}
+                        <p>Вы уже в списке участников. Создание прогнозов откроется <time datetime="{{ tournament.starts_at|date:'c' }}">{{ tournament.starts_at|date:"d.m.Y в H:i" }}</time>, когда начнётся турнир.</p>
+                        {% endif %}
+                    </div>
+                    {% if runtime_status.key == 'live' %}
+                    <a class="tournament-primary-action" href="{% url 'game:match_list' %}?match_filter=predictable&amp;tournament={{ tournament.pk }}">Сделать прогноз {% include "front/includes/_solar_icon.html" with name="match_next" icon_size=18 only %}</a>
+                    {% else %}
+                    <button class="tournament-primary-action" type="button" disabled>Прогнозы после старта</button>
+                    {% endif %}
+                </section>
+                {% endif %}
                 <section class="tournament-tab-panel is-active" id="tournament-panel-home" role="tabpanel" aria-labelledby="tournament-tab-home" data-tournament-panel="home">
                     <article
                         class="tournament-detail-hero"
@@ -58,12 +81,12 @@
                             <h1 id="tournament-title">{{ tournament.title }}</h1>
                             <p>{% if tournament.description %}{{ tournament.description }}{% else %}Соревнование лучших аналитиков. Покажи свой уровень и поборись за призы.{% endif %}</p>
                             <div class="tournament-detail-actions">
-                                {% if tournament.entry_type == "paid" %}
+                                {% if tournament.is_paid_entry %}
                                     <span class="tournament-entry-fee">Вход: <span class="tournament-coin-amount">{{ eligibility.entry_fee_label }}{% include "front/includes/_coin_icon.html" %}</span></span>
                                 {% endif %}
                                 {% if participant %}
                                     {% if runtime_status.key == 'live' %}
-                                        <a class="tournament-primary-action" href="{% url 'tournaments:predict' slug=tournament.slug %}">Сделать прогноз <span aria-hidden="true">→</span></a>
+                                        <a class="tournament-primary-action" href="{% url 'game:match_list' %}?match_filter=predictable&amp;tournament={{ tournament.pk }}">Сделать прогноз <span aria-hidden="true">→</span></a>
                                     {% else %}
                                         <span class="tournament-action-note">
                                             {% if runtime_status.key == "finished" %}
@@ -80,7 +103,7 @@
                                         <form method="post" action="{% url 'tournaments:join' slug=tournament.slug %}">
                                             {% csrf_token %}
                                             <button class="tournament-primary-action" type="submit">
-                                                {% if tournament.entry_type == "paid" %}
+                                                {% if tournament.is_paid_entry %}
                                                     Участвовать за <span class="tournament-coin-amount">{{ eligibility.entry_fee_label }}{% include "front/includes/_coin_icon.html" %}</span>
                                                 {% else %}
                                                     Принять участие
@@ -90,7 +113,7 @@
                                         </form>
                                     {% else %}
                                         <button class="tournament-primary-action" type="button" disabled>
-                                            {% if tournament.entry_type == "paid" and not eligibility.has_enough_coins %}
+                                            {% if tournament.is_paid_entry and not eligibility.has_enough_coins %}
                                                 Недостаточно средств
                                             {% else %}
                                                 Недоступно
@@ -112,15 +135,21 @@
                         <div class="tournament-detail-stat tournament-detail-stat-{{ stat.icon }}{% if stat.tone %} is-{{ stat.tone }}{% endif %}">
                             <span class="tournament-detail-stat-icon" aria-hidden="true">
                                 {% if stat.icon == "status" %}
-                                    <i></i>
+                                    {% if runtime_status.key == 'live' %}
+                                    {% include "front/includes/_solar_icon.html" with name="match_live" only %}
+                                    {% elif runtime_status.key == 'finished' %}
+                                    {% include "front/includes/_solar_icon.html" with name="match_finished" only %}
+                                    {% else %}
+                                    {% include "front/includes/_solar_icon.html" with name="match_prematch" only %}
+                                    {% endif %}
                                 {% elif stat.icon == "users" %}
-                                    <svg viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4v2"></path><path d="M9.5 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8Z"></path><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                                    {% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}
                                 {% elif stat.icon == "coins" %}
-                                    <svg viewBox="0 0 24 24"><path d="M12 5c4.42 0 8 1.34 8 3s-3.58 3-8 3-8-1.34-8-3 3.58-3 8-3Z"></path><path d="M4 8v4c0 1.66 3.58 3 8 3s8-1.34 8-3V8"></path><path d="M4 12v4c0 1.66 3.58 3 8 3s8-1.34 8-3v-4"></path></svg>
+                                    {% include "front/includes/_solar_icon.html" with name="earnings" only %}
                                 {% elif stat.icon == "chart" %}
-                                    <svg viewBox="0 0 24 24"><path d="M5 20V10"></path><path d="M12 20V4"></path><path d="M19 20v-7"></path></svg>
+                                    {% include "front/includes/_solar_icon.html" with name="chart-2-bold" only %}
                                 {% else %}
-                                    <svg viewBox="0 0 24 24"><path d="M8 3v4"></path><path d="M16 3v4"></path><path d="M4 9h16"></path><path d="M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1Z"></path></svg>
+                                    {% include "front/includes/_solar_icon.html" with name="match_calendar" only %}
                                 {% endif %}
                             </span>
                             <span>{{ stat.label }}</span>
@@ -247,7 +276,7 @@
                             <div>
                                 <span aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 4h8v4a4 4 0 0 1-8 0V4Z"></path><path d="M8 6H4v2a4 4 0 0 0 4 4M16 6h4v2a4 4 0 0 1-4 4M12 12v4M8 21h8M9 16h6v5H9Z"></path></svg></span>
                                 <strong>Денежный приз</strong>
-                                <small>{{ tournament.prize_first|money }} ₽ на баланс победителя</small>
+                                <small>{{ prizes_tab.first_prize.money_amount|default:0|money }} ₽ на баланс победителя</small>
                             </div>
                             <div>
                                 <span aria-hidden="true"><svg viewBox="0 0 48 48"><path d="m5 13 10.2 8.7L24 7l8.8 14.7L43 13l-4 23H9L5 13Zm5.7 26h26.6v4H10.7v-4Z"></path></svg></span>
@@ -409,6 +438,10 @@
 
                 <section class="tournament-tab-panel" id="tournament-panel-results" role="tabpanel" aria-labelledby="tournament-tab-results" data-tournament-panel="results" hidden>
                     {% include "tournaments/includes/_results_tab.html" %}
+                </section>
+
+                <section class="tournament-tab-panel" id="tournament-panel-participants" role="tabpanel" aria-labelledby="tournament-tab-participants" data-tournament-panel="participants" hidden>
+                    {% include "tournaments/includes/_participants_tab.html" %}
                 </section>
 
                 <section class="tournament-tab-panel" id="tournament-panel-about" role="tabpanel" aria-labelledby="tournament-tab-about" data-tournament-panel="about" hidden>

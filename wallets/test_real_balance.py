@@ -13,6 +13,7 @@ from game.models import PredictionCoupon
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
 from tournaments.services.eligibility import check_tournament_eligibility
 from tournaments.services.leaderboard import finalize_tournament_results
+from tournaments.testing import create_money_prizes
 from wallets.models import RealBalanceTransaction
 from wallets.services import (
     InsufficientBalance,
@@ -231,23 +232,18 @@ class MoneyTournamentReaderTests(TestCase):
         self.tournament = Tournament.objects.create(
             title="Open Cup",
             status=Tournament.Status.PUBLISHED,
-            analysts_only=False,
             starts_at=timezone.now() - timedelta(days=3),
             ends_at=timezone.now() - timedelta(minutes=1),
-            prize_first=Decimal("1000.00"),
         )
+        create_money_prizes(self.tournament, "1000.00")
 
-    def test_reader_cannot_join_tournament_with_money_prizes(self):
+    def test_reader_cannot_join_tournament_with_or_without_money_prizes(self):
         eligibility = check_tournament_eligibility(self.reader, self.tournament)
-
         self.assertFalse(eligibility["allowed"])
-        self.assertIn("В турнирах с денежными призами участвуют только капперы.", eligibility["reasons"])
+        self.assertIn("Участвовать могут только капперы.", eligibility["reasons"])
 
-    def test_reader_can_join_tournament_without_money_prizes(self):
-        Tournament.objects.filter(pk=self.tournament.pk).update(prize_first=0)
-        self.tournament.refresh_from_db()
-
-        self.assertTrue(check_tournament_eligibility(self.reader, self.tournament)["hard_allowed"])
+        self.tournament.prizes.all().delete()
+        self.assertFalse(check_tournament_eligibility(self.reader, self.tournament)["hard_allowed"])
 
     def test_reader_in_money_place_stops_finalization_with_a_clear_error(self):
         participant = TournamentParticipant.objects.create(tournament=self.tournament, user=self.reader)

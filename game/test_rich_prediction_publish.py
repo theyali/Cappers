@@ -130,10 +130,13 @@ class RichPredictionPublishTests(TestCase):
         self.assertEqual(self._remove_position().status_code, 200)
         self.assertTrue(Prediction.objects.filter(pk=remaining.pk).exists())
 
-    def test_remove_position_keeps_last_position(self):
+    def test_removing_last_position_clears_the_draft(self):
         response = self._remove_position()
-        self.assertEqual(response.status_code, 400)
-        self.assertTrue(Prediction.objects.filter(pk=self.prediction.pk).exists())
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["cleared"])
+        self.assertFalse(PredictionCoupon.objects.filter(pk=self.coupon.pk).exists())
+        self.assertIsNone(self.client.get(reverse("game:coupon_draft_state")).json()["draft"])
+        self.assertEqual(self.client.get(reverse("game:rich_prediction_create")).status_code, 200)
 
     def test_remove_position_rejects_published_and_other_authors_coupons(self):
         self._add_coupon_position()

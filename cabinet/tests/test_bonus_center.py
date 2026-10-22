@@ -12,7 +12,6 @@ from django.utils import timezone
 
 from cabinet.models import (
     AnalystPaidPlan,
-    AnalystPaidSubscriptionPayment,
     AnalystProfile,
     BonusEvent,
     DailyTask,
@@ -423,18 +422,12 @@ class BonusCenterServiceTests(TestCase):
             analyst,
             plan,
         )
-        payment = AnalystPaidSubscriptionPayment.objects.get(
-            subscription=subscription,
-            subscriber=self.user,
-            analyst=analyst,
-        )
-
         event = BonusEvent.objects.get(
             user=referrer,
             event_type=BonusEvent.EventType.REFERRAL,
             title=FIRST_SUBSCRIPTION_BONUS_TITLE,
-            related_model=payment._meta.label_lower,
-            related_id=payment.pk,
+            related_model=subscription._meta.label_lower,
+            related_id=subscription.pk,
         )
         notification = Notification.objects.get(
             event_key=f"bonus:{event.pk}",
@@ -553,7 +546,7 @@ class BonusCenterServiceTests(TestCase):
             0,
         )
         self.assertFalse(UserXpState.objects.filter(user=self.user).exists())
-        self.assertFalse(CoinWallet.objects.filter(user=self.user).exists())
+        self.assertEqual(CoinWallet.objects.get(user=self.user).balance, 0)
         self.assertFalse(UserRouletteState.objects.filter(user=self.user).exists())
 
     def test_daily_task_claim_endpoint_returns_updated_bonus_state_once(self):
@@ -614,6 +607,18 @@ class BonusCenterServiceTests(TestCase):
             event_key=f"bonus:{reward_event.pk}",
         )
         self.assertEqual(reward_notification.title, "Награда получена")
+        self.assertEqual(
+            Notification.objects.filter(
+                event_key=f"bonus:{reward_event.pk}",
+            ).count(),
+            1,
+        )
+        self.assertEqual(UserXpState.objects.get(user=self.user).xp, 15)
+        self.assertEqual(CoinWallet.objects.get(user=self.user).balance, 20)
+        self.assertEqual(
+            UserRouletteState.objects.get(user=self.user).available_spins,
+            1,
+        )
 
     def test_daily_tasks_claim_all_endpoint_claims_all_available_rewards(self):
         tasks = [
@@ -662,18 +667,7 @@ class BonusCenterServiceTests(TestCase):
             ).count(),
             2,
         )
-        self.assertEqual(
-            Notification.objects.filter(
-                event_key=f"bonus:{reward_event.pk}",
-            ).count(),
-            1,
-        )
-        self.assertEqual(UserXpState.objects.get(user=self.user).xp, 15)
-        self.assertEqual(CoinWallet.objects.get(user=self.user).balance, 20)
-        self.assertEqual(
-            UserRouletteState.objects.get(user=self.user).available_spins,
-            1,
-        )
+        self.assertEqual(CoinWallet.objects.get(user=self.user).balance, 25)
 
     def test_daily_task_claim_endpoint_requires_post(self):
         task = DailyTask.objects.create(
@@ -1284,9 +1278,9 @@ class BonusCenterServiceTests(TestCase):
             ["clicks", "registrations", "subscriptions", "bonuses"],
         )
         self.assertEqual(len(response.context["bonus_steps"]), 3)
-        self.assertContains(response, "Как начисляются бонусы")
-        self.assertContains(response, "Последние рефералы")
-        self.assertContains(response, "Последние бонусы")
+        self.assertContains(response, "Как это работает?")
+        self.assertContains(response, "Последние регистрации")
+        self.assertContains(response, "Ваши награды")
         self.assertNotContains(response, "Уникальные посетители")
         self.assertNotContains(response, "Конверсия")
 

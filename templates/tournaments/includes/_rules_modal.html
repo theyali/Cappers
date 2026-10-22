@@ -1,0 +1,391 @@
+<dialog class="tournament-rules-modal" id="tournament-rules-modal" aria-labelledby="tournament-rules-title">
+<div class="tournament-rules-panel" data-tournament-rules-panel=""><span aria-hidden="true" class="tournament-rules-handle"></span>
+<div class="tournament-rules-head">
+<span class="tournament-rules-head-icon">
+<svg aria-hidden="true" fill="none" height="22" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="22">
+<rect height="17" rx="3" width="14" x="5" y="3.5">
+</rect>
+<path d="M8.5 8h7M8.5 12h2M13.5 12h2M8.5 16h2M13.5 16h2">
+</path>
+</svg>
+</span>
+<div class="tournament-rules-heading">
+<h2 class="tournament-rules-title" id="tournament-rules-title">
+    Как считаются очки
+   </h2>
+<span class="tournament-rules-subtitle tournament-rules-subtitle-desktop">
+    Турнирные очки v1: базовые правила. Бонусы, лимиты и минимальный коэффициент указаны в каждом турнире; прежние турниры используют ROI
+   </span>
+<span class="tournament-rules-subtitle tournament-rules-subtitle-mobile">Очки v1 · настройки в условиях турнира</span>
+</div>
+<button aria-label="Закрыть" class="tournament-rules-close" data-tournament-rules-close="" type="button">
+<svg aria-hidden="true" fill="none" height="16" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24" width="16">
+<path d="M6 6l12 12M18 6L6 18">
+</path>
+</svg>
+</button>
+</div>
+<div class="tournament-rules-body">
+<div class="tournament-rules-formula">
+<div class="tournament-rules-formula-line">
+<span class="tournament-rules-operand">
+     Коэффициент
+    </span>
+<span class="tournament-rules-operator">
+     ×
+    </span>
+<span class="tournament-rules-multiplier">
+     10
+    </span>
+<span class="tournament-rules-equals">
+     =
+    </span>
+<span class="tournament-rules-formula-result">
+     очки за прогноз
+    </span>
+</div>
+<span class="tournament-rules-description">
+    За выигрыш начисляем кф × 10 и отбрасываем дробную часть. Ожидающий расчёта прогноз пока без базовых очков. Коэффициент берём тот, что был в момент публикации — если линия изменилась, это не влияет на расчёт.
+   </span>
+</div>
+<div class="tournament-rules-outcomes">
+<div class="tournament-rules-outcome">
+<div class="tournament-rules-outcome-head">
+<span class="tournament-rules-win-icon">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewBox="0 0 24 24" width="15">
+<path d="M12 5v14M5 12h14">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-outcome-label">
+      Зашёл
+     </span>
+</div>
+<span class="tournament-rules-win-value">
+     кф × 10
+    </span>
+<span class="tournament-rules-caption">
+     Прогноз 2.40 — это 24 очка
+    </span>
+</div>
+<div class="tournament-rules-outcome">
+<div class="tournament-rules-outcome-head">
+<span class="tournament-rules-lose-icon">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewBox="0 0 24 24" width="15">
+<path d="M5 12h14">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-outcome-label">
+      Не зашёл
+     </span>
+</div>
+<span class="tournament-rules-lose-value">
+     −5
+    </span>
+<span class="tournament-rules-caption">
+     Фиксированный штраф, не зависит от кф
+    </span>
+</div>
+<div class="tournament-rules-outcome">
+<div class="tournament-rules-outcome-head">
+<span class="tournament-rules-refund-icon">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" viewBox="0 0 24 24" width="15">
+<path d="M5 9.5h14M5 14.5h14">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-outcome-label">
+      Возврат
+     </span>
+</div>
+<span class="tournament-rules-refund-value">
+     0
+    </span>
+<span class="tournament-rules-caption">
+     Матч отменён или ставка рассчитана возвратом
+    </span>
+</div>
+</div>
+<div class="tournament-rules-section">
+<div class="tournament-rules-section-head">
+<span class="tournament-rules-accent">
+<svg aria-hidden="true" fill="none" height="17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="17">
+<path d="M6 4.5h7l5 5V19a.5.5 0 0 1-.5.5h-11A.5.5 0 0 1 6 19z">
+</path>
+<path d="M13 4.5V10h5">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-section-title">
+     Пример расчёта за день
+    </span>
+</div>
+<div class="tournament-rules-box">
+<div class="tournament-rules-table-head">
+<span class="tournament-rules-event-label">
+      ПРОГНОЗ
+     </span>
+<span class="tournament-rules-odds-label">
+      КФ
+     </span>
+<span class="tournament-rules-status-label">
+      РЕЗУЛЬТАТ
+     </span>
+<span class="tournament-rules-points-label">
+      ОЧКИ
+     </span>
+</div>
+<div class="tournament-rules-table-row">
+<div class="tournament-rules-event">
+<span class="tournament-rules-event-name">
+       Манчестер Сити — Арсенал
+      </span>
+<span class="tournament-rules-event-bet">
+       ТБ 2.5
+      </span>
+</div>
+<span class="tournament-rules-odds">
+      1.92
+     </span>
+<span class="tournament-rules-status">
+<span class="tournament-rules-win-badge">
+       Зашёл
+      </span>
+</span>
+<span class="tournament-rules-win-points">
+      +19
+     </span>
+</div>
+<div class="tournament-rules-table-row">
+<div class="tournament-rules-event">
+<span class="tournament-rules-event-name">
+       Синнер — Медведев
+      </span>
+<span class="tournament-rules-event-bet">
+       Ф2 (+4.5)
+      </span>
+</div>
+<span class="tournament-rules-odds">
+      2.40
+     </span>
+<span class="tournament-rules-status">
+<span class="tournament-rules-win-badge">
+       Зашёл
+      </span>
+</span>
+<span class="tournament-rules-win-points">
+      +24
+     </span>
+</div>
+<div class="tournament-rules-table-row">
+<div class="tournament-rules-event">
+<span class="tournament-rules-event-name">
+       Ак Барс — Авангард
+      </span>
+<span class="tournament-rules-event-bet">
+       П1
+      </span>
+</div>
+<span class="tournament-rules-odds">
+      1.75
+     </span>
+<span class="tournament-rules-status">
+<span class="tournament-rules-lose-badge">
+       Не зашёл
+      </span>
+</span>
+<span class="tournament-rules-lose-points">
+      −5
+     </span>
+</div>
+<div class="tournament-rules-table-last">
+<div class="tournament-rules-event">
+<span class="tournament-rules-event-name">
+       Экспресс · 3 события
+      </span>
+<span class="tournament-rules-event-bet">
+       общий кф
+      </span>
+</div>
+<span class="tournament-rules-odds">
+      7.84
+     </span>
+<span class="tournament-rules-status">
+<span class="tournament-rules-win-badge">
+       Зашёл
+      </span>
+</span>
+<span class="tournament-rules-win-points">
+      +78
+     </span>
+</div>
+<div class="tournament-rules-total">
+<span class="tournament-rules-total-label">
+      Базовые очки + бонус за кф > 3.00
+     </span>
+<span class="tournament-rules-total-value">
+      131 очко (116 + 15)
+     </span>
+</div>
+</div>
+</div>
+<div class="tournament-rules-columns">
+<div class="tournament-rules-column">
+<div class="tournament-rules-section-head">
+<span class="tournament-rules-accent">
+<svg aria-hidden="true" fill="none" height="17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="17">
+<path d="M13 3l-7 9h5l-1 9 7-9h-5z">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-section-title">
+      Бонусы
+     </span>
+</div>
+<div class="tournament-rules-box">
+<div class="tournament-rules-bonus-row">
+<span class="tournament-rules-bonus-icon">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24" width="15">
+<path d="M13 3l-7 9h5l-1 9 7-9h-5z">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-bonus-copy">
+       Серия из 3 зашедших подряд
+      </span>
+<span class="tournament-rules-bonus-value">
+       +10 очков
+      </span>
+</div>
+<div class="tournament-rules-bonus-row">
+<span class="tournament-rules-bonus-icon">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24" width="15">
+<path d="M7 4.5h10v5a5 5 0 0 1-10 0z">
+</path>
+<path d="M7 6H4.5a3 3 0 0 0 3 3M17 6h2.5a3 3 0 0 1-3 3">
+</path>
+<path d="M12 14.5V18M8.5 20h7">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-bonus-copy">
+       Кф выше 3.00 и прогноз зашёл
+      </span>
+<span class="tournament-rules-bonus-value">
+       +15 очков
+      </span>
+</div>
+<div class="tournament-rules-bonus-last">
+<span class="tournament-rules-bonus-icon">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.2" viewBox="0 0 24 24" width="15">
+<path d="M12 5v14M5 12h14">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-bonus-copy">
+       5 публикаций за день, один бонус за дату
+      </span>
+<span class="tournament-rules-bonus-value">
+       +5 очков
+      </span>
+</div>
+</div>
+</div>
+<div class="tournament-rules-column">
+<div class="tournament-rules-section-head">
+<span class="tournament-rules-accent">
+<svg aria-hidden="true" fill="none" height="17" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="17">
+<path d="M12 3.5l7 3v5.4c0 4-2.9 7.4-7 8.6-4.1-1.2-7-4.6-7-8.6V6.5z">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-section-title">
+      Условия участия
+     </span>
+</div>
+<div class="tournament-rules-box">
+<div class="tournament-rules-conditions">
+<div class="tournament-rules-condition">
+<span class="tournament-rules-check">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" viewBox="0 0 24 24" width="15">
+<path d="M5 12.5l4.5 4.5L19 7">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-condition-copy">
+        Минимальный коэффициент задаётся в условиях конкретного турнира
+       </span>
+</div>
+<div class="tournament-rules-condition">
+<span class="tournament-rules-check">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" viewBox="0 0 24 24" width="15">
+<path d="M5 12.5l4.5 4.5L19 7">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-condition-copy">
+        По умолчанию до 5 публикаций в день; лимит и часовой пояс — в условиях турнира. Публикация строго до начала матча
+       </span>
+</div>
+<div class="tournament-rules-condition">
+<span class="tournament-rules-check">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" viewBox="0 0 24 24" width="15">
+<path d="M5 12.5l4.5 4.5L19 7">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-condition-copy">
+        Прогноз нельзя удалить после старта события
+       </span>
+</div>
+<div class="tournament-rules-condition">
+<span class="tournament-rules-check">
+<svg aria-hidden="true" fill="none" height="15" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.6" viewBox="0 0 24 24" width="15">
+<path d="M5 12.5l4.5 4.5L19 7">
+</path>
+</svg>
+</span>
+<span class="tournament-rules-condition-copy">
+        При равных очках выше участник с большим числом побед, затем вступивший раньше. Без рассчитанных прогнозов участник находится в конце таблицы
+       </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="tournament-rules-settlement">
+<div class="tournament-rules-settlement-row">
+<span class="tournament-rules-settlement-icon">
+<svg aria-hidden="true" fill="none" height="18" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.1" viewBox="0 0 24 24" width="18">
+<path d="M7 4.5h10v5a5 5 0 0 1-10 0z">
+</path>
+<path d="M7 6H4.5a3 3 0 0 0 3 3M17 6h2.5a3 3 0 0 1-3 3">
+</path>
+<path d="M12 14.5V18M8.5 20h7">
+</path>
+</svg>
+</span>
+<div class="tournament-rules-settlement-copy">
+<span class="tournament-rules-outcome-label">
+      Итоги фиксируем после окончания турнира и расчёта всех прогнозов
+     </span>
+<span class="tournament-rules-caption">
+      Призовые места и награды заданы в разделе «Призы». Награды начисляются при фиксации итогов. Пример выше использует стандартные бонусы; проигрыш и возврат прерывают серию.
+     </span>
+</div>
+</div>
+</div>
+</div>
+<div class="tournament-rules-footer">
+<a class="tournament-rules-full-rules" href="{% url 'front:rules' %}">
+   Полные правила турниров
+  </a>
+<div class="tournament-rules-spacer">
+</div>
+<button class="tournament-rules-confirm" data-tournament-rules-close="" type="button">
+   Понятно
+  </button>
+</div>
+</div>
+</dialog>

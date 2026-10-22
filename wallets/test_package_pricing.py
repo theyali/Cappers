@@ -65,7 +65,7 @@ class CoinPackageUxTests(TestCase):
         response = self.client.get(reverse("wallets:top_up"))
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Коины — внутренняя валюта сайта")
-        self.assertContains(response, "coins за <strong>500 ₽</strong>", html=False)
-        self.assertContains(response, "примерно 1 coin = 0.5 ₽")
-        self.assertContains(response, "front/img/coin.svg")
+        # The package card shows coins, the ruble price and the price of one coin apart.
+        self.assertContains(response, '<p class="wallet-method-coins"><strong>1 000</strong><span>коинов</span></p>', html=False)
+        self.assertContains(response, '<p class="wallet-method-price">500 ₽</p>', html=False)
+        self.assertContains(response, "коинов · 0.5 ₽/шт")

@@ -267,12 +267,13 @@ class BotRuntimeTests(TestCase):
         self.assertGreaterEqual(coupon.predictions.count(), 2)
 
     @patch("bots.services.random.random", return_value=0)
-    def test_tournament_activity_can_join_live_tournament(self, _random):
+    def test_tournament_activity_joins_upcoming_ordinary_tournament(self, _random):
         self._analyst_bot("bot_tournament_join")
         tournament = Tournament.objects.create(
             title="Bot Cup Join",
             status=Tournament.Status.PUBLISHED,
-            starts_at=timezone.now() - timedelta(hours=1),
+            prediction_format=Tournament.PredictionFormat.QUICK,
+            starts_at=timezone.now() + timedelta(hours=1),
             ends_at=timezone.now() + timedelta(days=2),
         )
 
@@ -286,6 +287,22 @@ class BotRuntimeTests(TestCase):
                 status=TournamentParticipant.Status.ACTIVE,
             ).exists()
         )
+
+    @patch("bots.services.random.random", return_value=0)
+    def test_tournament_activity_skips_tournaments_with_written_predictions(self, _random):
+        self._analyst_bot("bot_tournament_rich")
+        Tournament.objects.create(
+            title="Bot Cup Rich",
+            status=Tournament.Status.PUBLISHED,
+            prediction_format=Tournament.PredictionFormat.RICH,
+            starts_at=timezone.now() + timedelta(hours=1),
+            ends_at=timezone.now() + timedelta(days=2),
+        )
+
+        result = run_bot_tournament_activity()
+
+        self.assertEqual(result["reason"], "no_bot_tournaments")
+        self.assertFalse(TournamentParticipant.objects.exists())
 
     def test_tournament_activity_creates_rare_tournament_coupon(self):
         sport = Sport.objects.create(
@@ -301,6 +318,7 @@ class BotRuntimeTests(TestCase):
         tournament = Tournament.objects.create(
             title="Bot Cup Coupon",
             status=Tournament.Status.PUBLISHED,
+            prediction_format=Tournament.PredictionFormat.QUICK,
             starts_at=now - timedelta(hours=1),
             ends_at=now + timedelta(days=2),
             min_coefficient=Decimal("1.50"),
@@ -340,13 +358,15 @@ class BotRuntimeTests(TestCase):
         self.assertEqual(tournament_coupon.coupon.author, bot.user)
         self.assertEqual(tournament_coupon.coupon.coupon_type, PredictionCoupon.CouponType.SINGLE)
         self.assertEqual(tournament_coupon.prediction_entries.count(), 1)
+        self.assertEqual(tournament_coupon.coupon.tournament, tournament)
 
     def test_preview_bot_tournament_activity_shows_join_without_side_effects(self):
         self._analyst_bot("bot_tournament_preview_join")
         tournament = Tournament.objects.create(
             title="Bot Cup Preview Join",
             status=Tournament.Status.PUBLISHED,
-            starts_at=timezone.now() - timedelta(hours=1),
+            prediction_format=Tournament.PredictionFormat.QUICK,
+            starts_at=timezone.now() + timedelta(hours=1),
             ends_at=timezone.now() + timedelta(days=2),
         )
 
@@ -369,6 +389,7 @@ class BotRuntimeTests(TestCase):
         tournament = Tournament.objects.create(
             title="Bot Cup Preview Coupon",
             status=Tournament.Status.PUBLISHED,
+            prediction_format=Tournament.PredictionFormat.QUICK,
             starts_at=now - timedelta(hours=1),
             ends_at=now + timedelta(days=2),
             min_coefficient=Decimal("1.50"),

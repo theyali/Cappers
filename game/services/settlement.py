@@ -516,6 +516,10 @@ def cancel_published_coupon(coupon_id: int, *, reason: str = "") -> PredictionCo
 
     coupon.published_status = PredictionCoupon.PublishedStatus.CANCELED
     coupon.save(update_fields=["published_status", "updated_at"])
+    # A withdrawn tournament coupon frees its matches, so the author can predict them in the tournament again.
+    from tournaments.models import TournamentPredictionEntry
+
+    TournamentPredictionEntry.objects.filter(prediction__coupon=coupon).delete()
     _refund_author_stake(coupon, reason=reason)
     settle_copied_bets_for_coupon(coupon, outcome=PredictionCoupon.StateStatus.REFUND)
     return coupon

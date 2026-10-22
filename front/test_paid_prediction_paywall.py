@@ -269,14 +269,14 @@ class PaidPredictionPaywallTests(TestCase):
                 self.assertTrue(card.is_paid_locked)
 
     def test_table_rows_support_all_formats_and_hide_locked_picks_on_all_devices(self):
-        self.coupon.single_purchase_enabled = True
-        self.coupon.single_purchase_price = Decimal("129")
-        self.coupon.save(update_fields=["single_purchase_enabled", "single_purchase_price"])
         for audience, prediction_format in [("paid", "rich"), ("paid", "quick"), ("free", "rich"), ("free", "quick")]:
             with self.subTest(audience=audience, prediction_format=prediction_format):
+                # Single purchase is a paid-coupon option; the database refuses it on free coupons.
                 self.coupon.audience = audience
                 self.coupon.prediction_format = prediction_format
-                self.coupon.save(update_fields=["audience", "prediction_format"])
+                self.coupon.single_purchase_enabled = audience == "paid"
+                self.coupon.single_purchase_price = Decimal("129") if audience == "paid" else None
+                self.coupon.save(update_fields=["audience", "prediction_format", "single_purchase_enabled", "single_purchase_price"])
                 response = self.client.get(reverse("front:predictions"), {"view_mode": "table"})
                 self.assertEqual(response.status_code, 200)
                 card = next(card for card in response.context["page_obj"] if card.id == self.coupon.pk)

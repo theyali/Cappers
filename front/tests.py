@@ -38,6 +38,7 @@ from .models import (
 from .expert_ranking import (
     expert_ranking_score,
     rank_experts,
+    rebuild_expert_ranking_snapshot,
     recommended_experts_for_user,
 )
 from .context_processors import HOME_WIKI_CACHE_KEY, _home_wiki_videos
@@ -683,6 +684,9 @@ class CapperTrustRankingIntegrationTests(TestCase):
             roi="-10.0",
             hit_rate="37.5",
         )
+        # Rankings are read from snapshots; the app rebuilds them on commit, which TestCase never reaches.
+        for period in ("all-time", "2026-08", "2026-09"):
+            rebuild_expert_ranking_snapshot(period=period)
 
     def test_month_table_uses_month_results_and_excludes_inactive_cappers(self):
         response = self.client.get(
@@ -713,7 +717,8 @@ class CapperTrustRankingIntegrationTests(TestCase):
             usernames.index(self.tie_low_trust_user.username),
         )
 
-    def test_month_table_and_home_month_block_share_same_top_three(self):
+    @patch("front.expert_ranking.current_month_start", return_value=date(2026, 9, 1))
+    def test_month_table_and_home_month_block_share_same_top_three(self, _current_month):
         table_response = self.client.get(
             reverse(
                 "front:cappers_table_period",
@@ -989,7 +994,7 @@ class FooterRenderingTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Тестовое описание футера из админки")
-        self.assertContains(response, 'class="site-footer site-footer-v2"')
+        self.assertContains(response, 'class="site-footer site-footer-v2 container"')
 
     def test_footer_is_hidden_by_default(self):
         user = User.objects.create_user(
@@ -1002,7 +1007,7 @@ class FooterRenderingTests(TestCase):
         response = self.client.get(f"{reverse('front:following_feed')}?favorites=1")
 
         self.assertEqual(response.status_code, 200)
-        self.assertNotContains(response, 'class="site-footer site-footer-v2"')
+        self.assertNotContains(response, 'class="site-footer site-footer-v2 container"')
 
     def test_public_content_pages_render_footer(self):
         Article.objects.create(
@@ -1049,7 +1054,7 @@ class FooterRenderingTests(TestCase):
                 response = self.client.get(url)
 
                 self.assertEqual(response.status_code, 200)
-                self.assertContains(response, 'class="site-footer site-footer-v2"')
+                self.assertContains(response, 'class="site-footer site-footer-v2 container"')
 
 
 @override_settings(

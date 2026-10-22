@@ -22,6 +22,7 @@ from game.services.coupon_validation import (
     validate_match_timing,
     verify_matches_for_coupon,
 )
+from tournaments.services.coupons import attach_coupon_to_tournament, predictable_tournaments, resolve_tournament_choice, tournament_rules
 from wallets.services import charge_prediction_stake
 
 
@@ -43,12 +44,25 @@ def validate_paid_prediction_settings(user, coupon=None):
         raise ValidationError({"is_paid": "Включите платные прогнозы и настройте подписку или разовую покупку в профиле."})
 
 
-def validate_paid_prediction_content(headline, description):
+def can_open_rich_editor(user, coupon=None) -> bool:
+    """VIP cappers write rich predictions; tournament participants write them for their tournaments
+    and keep editing their published tournament predictions after the tournament is over."""
+    if (
+        coupon is not None
+        and coupon.tournament_id
+        and coupon.author_id == getattr(user, "pk", None)
+        and coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED
+    ):
+        return True
+    return can_use_rich_prediction_fields(user) or bool(predictable_tournaments(user))
+
+
+def validate_paid_prediction_content(headline, description, *, kind="платного прогноза"):
     errors = {}
     if not (headline or "").strip():
-        errors["headline"] = "Для платного прогноза обязательно укажите заголовок."
+        errors["headline"] = f"Для {kind} обязательно укажите заголовок."
     if len((description or "").strip()) < MIN_PAID_DESCRIPTION_LENGTH:
-        errors["description"] = f"Для платного прогноза добавьте описание от {MIN_PAID_DESCRIPTION_LENGTH} символов."
+        errors["description"] = f"Для {kind} добавьте описание от {MIN_PAID_DESCRIPTION_LENGTH} символов."
     if errors:
         raise ValidationError(errors)
 
@@ -71,11 +85,12 @@ def build_editor_positions(coupon):
 
 
 def build_prediction_editor_context(request, coupon=None) -> dict:
-    _ensure_editor_access(request.user)
+    _ensure_editor_access(request.user, coupon)
     if coupon is not None:
         _ensure_coupon_access(request.user, coupon)
 
     can_use_rich_fields = can_use_rich_prediction_fields(request.user)
+    tournaments = predictable_tournaments(request.user)
     predictions, prediction_timing, coupon_timing_blocked = build_editor_positions(coupon)
     has_coupon_positions = 1 <= len(predictions) <= MAX_RICH_PREDICTION_ITEMS
     available_covers = []
@@ -98,6 +113,12 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
             "cover_image": coupon.cover_image_id,
             "tags": ", ".join(coupon.tags or []),
             "published_status": coupon.published_status,
+            # A draft keeps its tournament only while the user can still predict in it.
+            "tournament": (
+                coupon.tournament_id
+                if coupon.tournament_id and (_is_published(coupon) or coupon.tournament_id in {item.pk for item in tournaments})
+                else ""
+            ),
         }
 
     return {
@@ -115,6 +136,10 @@ def build_prediction_editor_context(request, coupon=None) -> dict:
         "coupon_timing_blocked": coupon_timing_blocked,
         "paid_description_min_length": MIN_PAID_DESCRIPTION_LENGTH,
         "can_use_rich_fields": can_use_rich_fields,
+        "can_write_description": can_use_rich_fields or bool(tournaments),
+        "tournament_rules": tournament_rules(request.user, tournaments),
+        "tournament_choice_open": bool(tournaments) and not _is_published(coupon),
+        "published_tournament": coupon.tournament if _is_published(coupon) else None,
         "vip_upgrade_url": reverse("cabinet:profile"),
         "vip_locked_label": "Доступно VIP-капперам",
         "available_covers": available_covers,
@@ -243,7 +268,7 @@ def create_rich_prediction(user, data, files, *, source_coupon=None) -> Predicti
 
 
 def update_rich_prediction(user, coupon, data, files) -> PredictionCoupon:
-    _ensure_editor_access(user)
+    _ensure_editor_access(user, coupon)
     _ensure_coupon_edit_access(user, coupon)
     if (
         not _is_published(coupon)
@@ -270,7 +295,9 @@ def remove_draft_prediction(user, coupon_id, prediction_id) -> dict:
     target = next((item for item in predictions if item.pk == prediction_id), None)
     if target is not None:
         if len(predictions) <= 1:
-            raise ValidationError("В купоне должна остаться минимум одна позиция.")
+            # The last position goes together with the draft, like an emptied coupon panel.
+            coupon.delete()
+            return {"positions_count": 0, "total_coefficient": "0", "cleared": True}
         target.delete()
         predictions = [item for item in predictions if item is not target]
     coefficient = _coupon_total_coefficient(predictions)
@@ -403,7 +430,11 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     if len(headline) > 160:
         raise ValidationError({"headline": "Заголовок должен быть не длиннее 160 символов."})
 
-    if can_use_rich_fields:
+    tournament = coupon.tournament
+    if not was_published and "tournament" in data:
+        tournament = resolve_tournament_choice(user, data.get("tournament"))
+
+    if can_use_rich_fields or tournament is not None:
         description = _text_value(
             data.get("description", "") if is_new else data.get("description", coupon.description)
         )
@@ -418,25 +449,38 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     if audience == PredictionCoupon.Audience.PAID:
         validate_paid_prediction_settings(user, coupon)
         validate_paid_prediction_content(headline, description)
+    if audience == PredictionCoupon.Audience.PAID and tournament is not None:
+        raise ValidationError({"is_paid": "Платный прогноз нельзя отправить в турнир."})
 
     tags = _normalize_tags(data.get("tags", [] if is_new else coupon.tags))
     status = _resolve_published_status(data, coupon, is_new=is_new)
+    publishing = status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published
+    # A prediction in a tournament with written predictions keeps its title and description while published.
+    if status == PredictionCoupon.PublishedStatus.PUBLISHED and tournament is not None and tournament.requires_prediction_text:
+        validate_paid_prediction_content(headline, description, kind="турнирного прогноза")
+    if publishing and tournament is None and not can_use_rich_fields:
+        raise ValidationError({"tournament": "Без турнира расширенные прогнозы доступны VIP-капперам. Выберите турнир."})
     if was_published and status != PredictionCoupon.PublishedStatus.PUBLISHED:
         raise ValidationError("Опубликованный прогноз нельзя вернуть в черновик.")
     total_stake = _resolve_total_stake(data, coupon)
     if was_published and total_stake != coupon.total_stake:
         raise ValidationError({"total_stake": "Сумму опубликованного прогноза изменить нельзя."})
     confidence = _resolve_confidence(data, coupon)
+    if was_published and confidence != coupon.confidence:
+        raise ValidationError({"confidence": "Уверенность опубликованного прогноза изменить нельзя."})
     total_coefficient = _coupon_total_coefficient(predictions)
 
     coupon.prediction_format = PredictionCoupon.PredictionFormat.RICH
+    coupon.tournament = tournament
     coupon.headline = headline
     coupon.description = description
     coupon.tags = tags
     coupon.audience = audience
     coupon.total_stake = total_stake
     coupon.confidence = confidence
-    coupon.possible_payout = total_stake * total_coefficient
+    if not was_published:
+        # Settlement stores the effective payout (refunded legs excluded); edits must not undo it.
+        coupon.possible_payout = total_stake * total_coefficient
     coupon.published_status = status
     coupon.published_at = (
         coupon.published_at or timezone.now()
@@ -461,8 +505,10 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
         coupon.single_purchase_enabled = False
         coupon.single_purchase_price = None
     coupon.save()
-    if status == PredictionCoupon.PublishedStatus.PUBLISHED and not was_published:
+    if publishing:
         charge_prediction_stake(user, coupon, total_stake)
+    if publishing and tournament is not None:
+        attach_coupon_to_tournament(coupon, tournament)
 
     coupon.sync_coupon_type()
     if not coupon.custom_cover_image and not coupon.cover_image_id:
@@ -470,13 +516,13 @@ def _save_rich_prediction(user, coupon, data, files, *, is_new: bool) -> Predict
     return coupon
 
 
-def _ensure_editor_access(user) -> None:
+def _ensure_editor_access(user, coupon=None) -> None:
     if not getattr(user, "is_authenticated", False):
         raise PermissionDenied("Войдите, чтобы создавать прогнозы.")
     if not getattr(user, "is_analyst", False):
         raise PermissionDenied("Расширенные прогнозы доступны только капперам.")
-    if not getattr(user, "is_vip", False):
-        raise PermissionDenied("Расширенные прогнозы доступны только VIP-капперам.")
+    if not can_open_rich_editor(user, coupon):
+        raise PermissionDenied("Расширенные прогнозы доступны VIP-капперам и участникам турниров.")
 
 
 def _ensure_coupon_edit_access(user, coupon: PredictionCoupon) -> None:

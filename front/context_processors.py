@@ -23,9 +23,11 @@ ROULETTE_SETTINGS_CACHE_SECONDS = 60
 FOOTER_VISIBLE_ROUTES = {
     "front:index",
     "front:wiki",
+    "front:sports_news",
     "front:news_detail",
     "front:how_it_works",
     "front:bookmakers",
+    "front:bonuses",
     "front:article_detail",
     "front:static_page",
     "front:about",
@@ -342,10 +344,6 @@ def _breadcrumbs_for_request(request):
             {"title": "Турниры", "url": _route_url("tournaments:index")},
             {"title": "Турнир"},
         ],
-        "tournaments:predict": [
-            {"title": "Турниры", "url": _route_url("tournaments:index")},
-            {"title": "Прогноз"},
-        ],
     }
 
     trail = dynamic.get(view_name) or items.get(view_name)
@@ -408,7 +406,7 @@ def website_settings(request):
         "bookmakers": bookmakers_context["bookmakers"],
         "home_bookmakers": bookmakers_context["home_bookmakers"],
         "breadcrumbs": _breadcrumbs_for_request(request),
-        "breadcrumbs_inside_content": request.resolver_match is not None and request.resolver_match.view_name in {"front:predictions", "front:following_feed", "game:match_list"},
+        "breadcrumbs_inside_content": request.resolver_match is not None and request.resolver_match.view_name in {"front:predictions", "front:following_feed", "game:match_list", "tournaments:index"},
         "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),

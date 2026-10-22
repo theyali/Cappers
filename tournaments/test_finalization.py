@@ -14,6 +14,7 @@ from tournaments.services.leaderboard import (
     finalize_tournament_results,
     tournament_leaderboard,
 )
+from tournaments.testing import create_money_prizes
 from wallets.models import RealBalanceTransaction
 
 
@@ -30,13 +31,13 @@ PENDING = PredictionCoupon.StateStatus.PENDING
 class FinalizationTestCase(TestCase):
     def setUp(self):
         self.tournament = Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Final Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(days=3),
             ends_at=timezone.now() - timedelta(minutes=1),
-            prize_first=Decimal("1000.00"),
-            prize_second=Decimal("500.00"),
         )
+        create_money_prizes(self.tournament, "1000.00", "500.00")
         self.leader = self._participant("final-leader")
         self.runner = self._participant("final-runner")
         self.cheater = self._participant("final-cheater", TournamentParticipant.Status.DISQUALIFIED)
@@ -127,12 +128,14 @@ class TournamentFinalizationTests(FinalizationTestCase):
 
     def test_periodic_finalization_skips_running_and_draft_tournaments(self):
         Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Running Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(days=1),
             ends_at=timezone.now() + timedelta(days=1),
         )
         Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Draft Cup",
             status=Tournament.Status.DRAFT,
             starts_at=timezone.now() - timedelta(days=3),

@@ -939,6 +939,15 @@ class PredictionCoupon(models.Model):
     )
     headline = models.CharField("Заголовок", max_length=160, blank=True)
     description = models.TextField("Описание прогноза", blank=True)
+    # Picked in the coupon; the coupon is entered into the tournament when it is published.
+    tournament = models.ForeignKey(
+        "tournaments.Tournament",
+        on_delete=models.SET_NULL,
+        related_name="selected_in_coupons",
+        verbose_name="Турнир",
+        blank=True,
+        null=True,
+    )
     cover_image = models.ForeignKey(
         PredictionCoverImage,
         on_delete=models.SET_NULL,

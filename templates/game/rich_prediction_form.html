@@ -41,6 +41,19 @@
             {% if form.non_field_errors %}<div class="rich-prediction-form-errors" role="alert">{{ form.non_field_errors }}</div>{% endif %}
             <div class="rich-prediction-form-errors" role="alert" id="rich-prediction-client-error" data-form-client-error hidden tabindex="-1"></div>
 
+            {% if tournament_choice_open %}
+            <section class="rich-prediction-section rich-prediction-tournament-card{% if form.tournament.errors %} is-invalid{% endif %}">
+                <div class="rich-prediction-section-head"><h2>Турнир</h2><span>прогноз попадёт в таблицу турнира</span></div>
+                {% include "game/includes/_coupon_tournament_select.html" with select_name="tournament" selected_tournament=form.tournament.value %}
+                <p class="rich-prediction-timing-warning" data-tournament-editor-warning role="status" hidden>Матчи, отмеченные красным, не подходят турниру. Уберите их перед публикацией.</p>
+                {% if form.tournament.errors %}<span class="capper-field-errors">{{ form.tournament.errors }}</span>{% endif %}
+            </section>
+            {% elif published_tournament %}
+            <section class="rich-prediction-section rich-prediction-tournament-card">
+                <div class="rich-prediction-section-head"><h2>Турнир</h2><span>{{ published_tournament.title }}</span></div>
+            </section>
+            {% endif %}
+
             <section class="rich-prediction-section rich-prediction-matches-card">
                 <div class="rich-prediction-section-head"><h2>Матчи в прогнозе</h2><strong><span data-rich-positions-count>{{ predictions|length }}</span> из 20</strong></div>
                 <div class="rich-prediction-card-progress" aria-hidden="true"><span></span></div>
@@ -69,11 +82,11 @@
                 <label class="capper-field rich-prediction-field-wide"><span class="capper-field-label">Теги</span><span class="rich-prediction-field-note">До 7 тегов</span>{{ form.tags }}<span class="capper-field-help">Например: АПЛ, экспресс, тотал</span>{% if form.tags.errors %}<span class="capper-field-errors">{{ form.tags.errors }}</span>{% endif %}</label>
             </section>
 
-            <section class="rich-prediction-section rich-prediction-description-card{% if not can_use_rich_fields %} is-locked{% endif %}">
+            <section class="rich-prediction-section rich-prediction-description-card{% if not can_write_description %} is-locked{% endif %}">
                 <div class="rich-prediction-section-head"><h2>Описание прогноза</h2><span>минимум {{ paid_description_min_length }} символов</span></div>
                 <div class="rich-prediction-editor-toolbar" aria-hidden="true"><b>B</b><i>I</i><span>H1</span><span>H2</span><span>≡</span><span>☷</span><span>↗</span></div>
                 <label class="capper-field rich-prediction-field-wide">{{ form.description }}<span class="rich-prediction-counter">до 2 000 символов</span>{% if form.description.errors %}<span class="capper-field-errors">{{ form.description.errors }}</span>{% endif %}</label>
-                {% if not can_use_rich_fields %}<a class="rich-prediction-vip-cta" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>{% endif %}
+                {% if not can_write_description %}<a class="rich-prediction-vip-cta" href="{{ vip_upgrade_url }}">{{ vip_locked_label }}</a>{% endif %}
             </section>
 
             <section class="rich-prediction-section rich-prediction-cover-picker{% if not can_use_rich_fields %} is-locked{% endif %}">
@@ -87,7 +100,7 @@
                 <span hidden data-rich-cover-options>{% for cover in available_covers %}{% if cover.image %}<i data-rich-cover-option data-cover-id="{{ cover.id }}" data-cover-url="{{ cover.image.url }}"></i>{% endif %}{% endfor %}</span>
             </section>
 
-            <section class="rich-prediction-section rich-prediction-access-card">
+            <section class="rich-prediction-section rich-prediction-access-card" data-rich-access-card{% if form.tournament.value or published_tournament %} data-tournament-hidden hidden{% endif %}>
                 <div class="rich-prediction-section-head"><h2>Доступ к прогнозу</h2></div><p class="rich-prediction-section-note">Кто сможет видеть этот прогноз</p>
                 <div class="rich-prediction-access-options">
                     <label class="rich-prediction-access-option"><input type="radio" name="is_paid" value="" {% if not form.is_paid.value %}checked{% endif %} {% if is_published %}disabled{% endif %}><span class="rich-prediction-radio"></span><span class="rich-prediction-access-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3.2 9.5h17.6M3.2 14.5h17.6M12 3a15 15 0 0 1 0 18A15 15 0 0 1 12 3z"/></svg></span><span><strong>Бесплатный</strong><small>Увидят все пользователи</small></span></label>
@@ -136,4 +149,4 @@
 </section>
 {% endblock %}
 
-{% block extra_js %}{% if has_coupon_positions or shared_coupon_draft %}<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>{% endif %}{% endblock %}
+{% block extra_js %}{% if has_coupon_positions or shared_coupon_draft %}<script src="{% static 'front/js/prediction-reactions.js' %}" defer></script>{% endif %}{% if tournament_choice_open %}<script src="{% static 'front/js/coupon-tournament.js' %}" defer></script>{% endif %}{% endblock %}

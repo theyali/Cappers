@@ -17,12 +17,12 @@
         <strong>{{ row.coupons_count }}</strong>
     </div>
     <div class="profile-coupon-metric">
-        <span>Прибыль</span>
-        <strong class="coin-amount{% if row.profit > 0 %} is-positive{% elif row.profit < 0 %} is-negative{% endif %}">{% include "front/includes/_coin_icon.html" %}<span>{{ row.profit|floatformat:"0" }}</span></strong>
+        <span>{% if row.uses_points %}Очки{% else %}Прибыль{% endif %}</span>
+        <strong class="coin-amount{% if row.profit > 0 %} is-positive{% elif row.profit < 0 %} is-negative{% endif %}">{% if row.uses_points %}<span>{{ row.points }}</span>{% else %}{% include "front/includes/_coin_icon.html" %}<span>{{ row.profit|floatformat:"0" }}</span>{% endif %}</strong>
     </div>
     <div class="profile-coupon-metric">
-        <span>ROI</span>
-        <strong class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{{ row.roi_percent|floatformat:2 }}%</strong>
+        <span>{% if row.uses_points %}Бонусы{% else %}ROI{% endif %}</span>
+        <strong class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{% if row.uses_points %}{{ row.bonus_points }}{% else %}{{ row.roi_percent|floatformat:2 }}%{% endif %}</strong>
     </div>
     <span class="profile-coupon-open" aria-hidden="true">→</span>
 </a>

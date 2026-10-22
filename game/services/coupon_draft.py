@@ -57,7 +57,7 @@ def active_draft_coupon(user: User) -> PredictionCoupon | None:
             prediction_format=PredictionCoupon.PredictionFormat.QUICK,
             updated_at__gte=draft_session_cutoff(),
         )
-        .prefetch_related("predictions__match__league__country", "predictions__match__home_team", "predictions__match__away_team")
+        .prefetch_related("predictions__match__sport", "predictions__match__league__country", "predictions__match__home_team", "predictions__match__away_team")
         .order_by("-updated_at", "-id")
         .first()
     )
@@ -89,6 +89,7 @@ def serialize_draft_coupon(coupon: PredictionCoupon) -> dict:
         "stake": _decimal_string(stake) if stake is not None else "",
         "confidence": coupon.confidence,
         "audience": coupon.audience,
+        "tournament_id": coupon.tournament_id,
         "items": [_serialize_prediction(prediction) for prediction in predictions],
     }
 
@@ -103,8 +104,10 @@ def _serialize_prediction(prediction: Prediction) -> dict:
     return {
         "matchId": str(match.id),
         "matchTitle": f"{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}",
+        "sport": match.sport_code,
         "league": match.league_name or "Лига не указана",
         "time": starts_at,
+        "startsAt": match.starts_at.isoformat() if match.starts_at else "",
         "betKey": "restored",
         "market": prediction.market,
         "selection": prediction.selection,

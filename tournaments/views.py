@@ -1,14 +1,12 @@
-import json
 from datetime import timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from types import SimpleNamespace
 from urllib.parse import urlencode
 
 from django.contrib import messages
 from django.core.paginator import EmptyPage, PageNotAnInteger, Paginator
-from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import BooleanField, Case, Count, Exists, F, IntegerField, OuterRef, Prefetch, Q, Sum, Value, When
-from django.db.models.functions import Coalesce
+from django.core.exceptions import ValidationError
+from django.db.models import Count, Prefetch, Q, Sum
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
@@ -18,36 +16,23 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 
-from cabinet.models import AnalystFollow
-from cabinet.vip import active_vip_subscriptions, annotate_vip_status, attach_vip_status_to_user, plural_ru
-from front.models import PredictionFavorite, PredictionLike
-from front.views import _initials
-from game import date_views
-from game.models import Match, Prediction, PredictionCoupon, Sport
-from game.services.coupon_validation import (
-    COUPON_PUBLISH_LIMIT_MESSAGE,
-    CouponMatchVerificationError,
-    CouponOddsChangedError,
-    coupon_publish_limited,
-)
-from game.services.bet_options import build_match_odds_tabs, build_match_winner_odds
-from game.views import _latest_predictions
-from notifications.models import MatchWatch
+from cabinet.vip import active_vip_subscriptions, plural_ru
+from game.models import PredictionCoupon, Sport
 from tournaments.models import (
     Tournament,
+    TournamentCoupon,
     TournamentAchievement,
     TournamentFAQ,
     TournamentParticipant,
-    TournamentPredictionEntry,
     TournamentPrize,
     TournamentResult,
     TournamentStage,
 )
-from tournaments.services.coupons import create_tournament_coupon
 from tournaments.services.eligibility import check_tournament_eligibility
 from tournaments.services.join import TournamentJoinError, get_active_participant, join_tournament
-from tournaments.services.leaderboard import tournament_leaderboard
-from wallets.services import InsufficientCoins, ensure_coin_wallet, format_coins, format_money
+from tournaments.services.leaderboard import tournament_leaderboard, user_tournament_positions
+from tournaments.services.participants import build_tournament_participants_context
+from wallets.services import format_coins, format_money
 
 
 def index(request):
@@ -74,7 +59,14 @@ def index(request):
                 filter=Q(participants__status=TournamentParticipant.Status.ACTIVE),
                 distinct=True,
             ),
-            coupons_count=Count("tournament_coupons", distinct=True),
+            coupons_count=Count(
+                "tournament_coupons",
+                filter=Q(
+                    tournament_coupons__participant__status=TournamentParticipant.Status.ACTIVE,
+                    tournament_coupons__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                ),
+                distinct=True,
+            ),
         )
         .order_by("-is_featured", "-starts_at", "-id")
     )
@@ -108,13 +100,33 @@ def index(request):
         )
         for tournament in tournament_list
     ]
-    if active_filter == "finished":
-        cards = [card for card in cards if card.runtime_status["key"] == "finished"]
+    filter_counts = {
+        key: sum(card.runtime_status["key"] == key for card in cards)
+        for key in ("live", "upcoming", "finished")
+    }
+    filter_counts["all"] = len(cards)
+    filter_counts["mine"] = sum(card.is_joined for card in cards)
+    my_tournaments = sorted(
+        (card for card in cards if card.is_joined and card.runtime_status["key"] != "finished"),
+        key=lambda card: (card.runtime_status["key"] != "live", card.tournament.starts_at),
+    )
+    my_tournaments_count = len(my_tournaments)
+    my_tournaments = my_tournaments[:2]
+    my_positions = user_tournament_positions(request.user, [card.tournament.pk for card in my_tournaments])
+    for card in my_tournaments:
+        position = my_positions.get(card.tournament.pk)
+        card.my_rank = position["rank"] if position else None
+        card.my_profit_label = position["score_label"] if position else "0"
+        card.my_score_unit = position["score_unit"] if position else ("очков" if card.tournament.uses_points else "ROI")
+    if active_filter in {"live", "upcoming", "finished"}:
+        cards = [card for card in cards if card.runtime_status["key"] == active_filter]
+    elif active_filter == "mine":
+        cards = [card for card in cards if card.is_joined]
     elif active_filter == "popular":
         cards = sorted(cards, key=lambda card: card.participants_count, reverse=True)
     elif active_filter == "high_prize":
         cards = sorted(cards, key=lambda card: card.prize_total, reverse=True)
-    else:
+    elif active_filter != "all":
         active_filter = "all"
 
     if active_sort == "prize":
@@ -124,23 +136,30 @@ def index(request):
     else:
         active_sort = "start"
 
-    top_tournaments = sorted(cards, key=lambda card: card.prize_total, reverse=True)[:3]
     my_prizes = _tournament_user_prizes(request.user)
-    return render(
-        request,
-        "tournaments/index.html",
-        {
-            "tournaments": cards,
-            "top_tournaments": top_tournaments,
-            "sport_tabs": _tournament_index_sport_tabs(active_sport, active_filter, active_sort),
-            "status_filter_tabs": _tournament_index_filter_tabs(active_sport, active_filter, active_sort),
-            "active_sport": active_sport,
-            "active_filter": active_filter,
-            "active_sort": active_sort,
-            "my_prizes": my_prizes,
-            "now": now,
-        },
-    )
+    context = {
+        "tournaments": cards,
+        "show_become_capper": request.user.is_authenticated and not request.user.is_analyst,
+        "my_tournaments": my_tournaments,
+        "my_tournaments_count_label": f"{my_tournaments_count} {plural_ru(my_tournaments_count, 'активный', 'активных', 'активных')}",
+        "my_tournaments_url": _tournament_index_query(filter="mine"),
+        "sport_tabs": _tournament_index_sport_tabs(active_sport, active_filter, active_sort),
+        "status_filter_tabs": _tournament_index_filter_tabs(active_sport, active_filter, active_sort, filter_counts),
+        "active_sport": active_sport,
+        "active_filter": active_filter,
+        "active_sort": active_sort,
+        "sort_label": {"start": "По дате начала", "prize": "По призовому фонду", "popular": "По участникам"}[active_sort],
+        "sort_url": _tournament_index_query(sport=active_sport, filter=active_filter,
+            sort={"start": "prize", "prize": "popular", "popular": "start"}[active_sort]),
+        "catalog_empty_title": "По этим условиям турниров нет" if tournament_list else "Турниров пока нет",
+        "catalog_empty_text": "Выберите другой статус или вид спорта." if tournament_list else "Когда появятся турниры, они будут показаны здесь.",
+        "my_prizes": my_prizes,
+        "now": now,
+    }
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        html = render_to_string("tournaments/includes/_catalog_content.html", context, request=request)
+        return JsonResponse({"ok": True, "html": html})
+    return render(request, "tournaments/index.html", context)
 
 
 def detail(request, slug: str):
@@ -166,7 +185,6 @@ def detail(request, slug: str):
     )
     participant = get_active_participant(request.user, tournament)
     leaderboard = tournament_leaderboard(tournament)
-    prediction_cards = _tournament_prediction_cards(request, tournament)
     now = timezone.now()
     runtime_status = _runtime_status(tournament, now)
     allowed_sports = list(tournament.allowed_sports.all())
@@ -200,6 +218,7 @@ def detail(request, slug: str):
                 tournament,
                 leaderboard,
             ),
+            "participants_tab": build_tournament_participants_context(request, tournament, leaderboard=leaderboard),
             "prizes_tab": prizes_tab,
             "about_tab": _tournament_about_tab(
                 tournament,
@@ -214,7 +233,6 @@ def detail(request, slug: str):
             "participants_count": participants_count,
             "about_stages": about_stages,
             "leaderboard": leaderboard[:20],
-            "prediction_cards": prediction_cards,
             "allowed_sports": allowed_sports,
             "achievements": list(tournament.achievements.all()),
             "breadcrumbs": [
@@ -227,6 +245,16 @@ def detail(request, slug: str):
 
 
 @require_GET
+@require_GET
+def participants(request, slug: str):
+    tournament = get_object_or_404(Tournament, slug=slug, status=Tournament.Status.PUBLISHED)
+    context = build_tournament_participants_context(request, tournament)
+    html = render_to_string("tournaments/includes/_participants_tab.html",
+        {"tournament": tournament, "participants_tab": context,
+         "runtime_status": _runtime_status(tournament, timezone.now())}, request=request)
+    return JsonResponse({"ok": True, "html": html})
+
+
 def results(request, slug: str):
     tournament = get_object_or_404(
         Tournament.objects.prefetch_related("allowed_sports", "achievements"),
@@ -254,204 +282,6 @@ def results(request, slug: str):
     )
 
 
-def predict(request, slug: str):
-    tournament = get_object_or_404(
-        Tournament.objects.prefetch_related("allowed_sports"),
-        slug=slug,
-        status=Tournament.Status.PUBLISHED,
-    )
-    participant = get_active_participant(request.user, tournament)
-    if participant is None:
-        messages.error(request, "Подключитесь к турниру, чтобы сделать прогноз.")
-        return redirect(tournament.get_absolute_url())
-    if tournament.runtime_status != "live":
-        messages.error(request, "Прогнозы доступны только во время турнира.")
-        return redirect(tournament.get_absolute_url())
-
-    active_scope = request.GET.get("scope") or PredictionMatchScope.PREMATCH
-    valid_scopes = {scope for scope, _ in _tournament_scope_filters()}
-    if active_scope not in valid_scopes:
-        active_scope = PredictionMatchScope.PREMATCH
-
-    allowed_sport_codes = set(tournament.allowed_sports.values_list("code", flat=True))
-    active_sport = request.GET.get("sport") or "all"
-    valid_sports = {sport for sport, _ in _tournament_sport_filters(allowed_sport_codes)}
-    if active_sport not in valid_sports:
-        active_sport = "all"
-
-    period_start = tournament.starts_at
-    period_end = tournament.ends_at
-    base_matches = MatchQuery.base(period_start, period_end, active_scope)
-    base_matches = _filter_tournament_allowed_sports(base_matches, allowed_sport_codes)
-    base_matches = _filter_tournament_sport(base_matches, active_sport)
-    if active_scope == PredictionMatchScope.WATCHED:
-        base_matches = base_matches.filter(notification_watchers__user=request.user).distinct()
-    matches_queryset = MatchQuery.decorate(base_matches, request.user)
-
-    if date_views._is_lazy_request(request) and request.GET.get("view") == "table":
-        return _tournament_table_lazy_response(
-            request,
-            tournament=tournament,
-            participant=participant,
-            matches_queryset=matches_queryset,
-            can_write_coupon=True,
-            active_sport=active_sport,
-        )
-
-    page_obj = _tournament_page(matches_queryset, request.GET.get("page"))
-    matches = list(page_obj.object_list)
-    total_count = matches_queryset.count()
-    used_match_ids = _tournament_used_match_ids(tournament, participant)
-    _decorate_tournament_matches(
-        matches,
-        tournament,
-        participant,
-        used_match_ids=used_match_ids,
-    )
-    table_groups = date_views._table_match_groups(
-        matches_queryset,
-        active_sport=active_sport,
-        limit=date_views.TABLE_MATCHES_PER_SPORT,
-    )
-    _decorate_tournament_table_groups(
-        table_groups,
-        tournament,
-        participant,
-        used_match_ids=used_match_ids,
-    )
-
-    if date_views._is_lazy_request(request):
-        html = render_to_string(
-            "game/includes/_match_grid_items.html",
-            {
-                "matches": matches,
-                "can_write_coupon": True,
-                "tournament_prediction_mode": True,
-            },
-            request=request,
-        )
-        return JsonResponse(
-            {
-                "ok": True,
-                "html": html,
-                "page": page_obj.number,
-                "has_next": page_obj.has_next(),
-                "next_page": page_obj.next_page_number() if page_obj.has_next() else None,
-            }
-        )
-
-    scope_tabs = _tournament_scope_tabs(
-        request,
-        tournament,
-        participant=participant,
-        active_scope=active_scope,
-        active_sport=active_sport,
-        period_start=period_start,
-        period_end=period_end,
-        allowed_sport_codes=allowed_sport_codes,
-    )
-    sport_tabs = _tournament_sport_tabs(
-        request,
-        tournament,
-        participant=participant,
-        active_scope=active_scope,
-        active_sport=active_sport,
-        period_start=period_start,
-        period_end=period_end,
-        allowed_sport_codes=allowed_sport_codes,
-    )
-
-    return render(
-        request,
-        "tournaments/predict.html",
-        {
-            "tournament": tournament,
-            "runtime_status": _runtime_status(tournament, timezone.now()),
-            "participant": participant,
-            "active_scope": active_scope,
-            "active_sport": active_sport,
-            "content_view_mode": _tournament_content_view_mode(request),
-            "scope_tabs": scope_tabs,
-            "sport_tabs": sport_tabs,
-            "matches": matches,
-            "table_grouped_matches": table_groups,
-            "page_obj": page_obj,
-            "can_write_coupon": True,
-            "tournament_prediction_mode": True,
-            "latest_predictions": _latest_predictions(),
-            "draft_coupon": None,
-            "coupon_match_stale_seconds": 60,
-            "selected_date": timezone.localtime(period_start).date(),
-            "selected_date_iso": timezone.localtime(period_start).date().isoformat(),
-            "show_date_filter": False,
-            "hide_date_filter": True,
-            "match_list_h1": f"{tournament.title}: прогноз",
-            "match_list_hero_meta": "матчей доступно",
-            "total_count": total_count,
-            "hero_count": total_count,
-        },
-    )
-
-
-@require_GET
-def match_odds(request, slug: str, match_id: int):
-    tournament = get_object_or_404(
-        Tournament.objects.prefetch_related("allowed_sports"),
-        slug=slug,
-        status=Tournament.Status.PUBLISHED,
-    )
-    participant = get_active_participant(request.user, tournament)
-    if participant is None or tournament.runtime_status != "live":
-        return JsonResponse({"ok": False, "error": "Турнирный прогноз недоступен."}, status=403)
-
-    match = get_object_or_404(
-        Match.objects.select_related(
-            "sport",
-            "league__country",
-            "home_team__country",
-            "away_team__country",
-            "odds",
-        ),
-        pk=match_id,
-        sync_scope=Match.SyncScope.PREMATCH,
-        starts_at__gte=tournament.starts_at,
-        starts_at__lte=tournament.ends_at,
-    )
-    if not _match_allowed_for_tournament(tournament, participant, match):
-        return JsonResponse({"ok": False, "error": "Матч недоступен для этого турнира."}, status=400)
-
-    odds_tabs = build_match_odds_tabs(match)
-    html = render_to_string(
-        "tournaments/includes/_match_odds_panel.html",
-        {
-            "match": match,
-            "odds_items": _flat_match_odds(odds_tabs),
-            "can_write_coupon": True,
-        },
-        request=request,
-    )
-    return JsonResponse({"ok": True, "html": html})
-
-
-def _flat_match_odds(odds_tabs):
-    odds = []
-    seen = set()
-    for tab in odds_tabs:
-        for section in tab.get("sections", []):
-            for row in section.get("rows", []):
-                for odd in row.get("odds", []):
-                    key = (
-                        odd.get("market"),
-                        odd.get("selection"),
-                        str(odd.get("coefficient")),
-                    )
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    odds.append(odd)
-    return odds
-
-
 @require_POST
 def join(request, slug: str):
     tournament = get_object_or_404(Tournament, slug=slug, status=Tournament.Status.PUBLISHED)
@@ -464,362 +294,8 @@ def join(request, slug: str):
     return redirect(tournament.get_absolute_url())
 
 
-@require_POST
-def create_coupon(request, slug: str):
-    tournament = get_object_or_404(Tournament, slug=slug)
-
-    try:
-        payload = json.loads(request.body.decode("utf-8"))
-    except (json.JSONDecodeError, UnicodeDecodeError):
-        return JsonResponse({"ok": False, "error": "Некорректный JSON."}, status=400)
-    if coupon_publish_limited(request.user):
-        return JsonResponse({"ok": False, "error": COUPON_PUBLISH_LIMIT_MESSAGE}, status=429)
-
-    try:
-        coupon, tournament_coupon = create_tournament_coupon(
-            user=request.user,
-            tournament=tournament,
-            payload=payload,
-        )
-    except PermissionDenied as exc:
-        return JsonResponse({"ok": False, "error": str(exc)}, status=403)
-    except InsufficientCoins as exc:
-        return JsonResponse({"ok": False, "error": str(exc)}, status=402)
-    except CouponMatchVerificationError as exc:
-        return JsonResponse({"ok": False, "error": str(exc)}, status=503)
-    except CouponOddsChangedError as exc:
-        return JsonResponse(
-            {"ok": False, "error": _validation_message(exc), "odds_changed": exc.changes},
-            status=409,
-        )
-    except ValidationError as exc:
-        return JsonResponse({"ok": False, "error": _validation_message(exc)}, status=400)
-
-    coin_wallet = ensure_coin_wallet(request.user)
-    return JsonResponse(
-        {
-            "ok": True,
-            "coupon_id": coupon.id,
-            "tournament_coupon_id": tournament_coupon.id,
-            "tournament_id": tournament.id,
-            "message": "Прогноз турнира опубликован.",
-            "coupon_url": reverse("front:prediction_detail", kwargs={"prediction_id": coupon.id}),
-            "coin_balance": coin_wallet.balance,
-            "coin_balance_display": format_coins(coin_wallet.balance),
-        }
-    )
-
-
 def _validation_message(exc: ValidationError) -> str:
     return exc.messages[0] if exc.messages else "Некорректные данные."
-
-
-class PredictionMatchScope:
-    PREMATCH = Match.SyncScope.PREMATCH
-    WATCHED = date_views.WATCHED_SCOPE
-
-
-class MatchQuery:
-    @staticmethod
-    def base(period_start, period_end, active_scope: str):
-        return Match.objects.filter(
-            starts_at__gte=period_start,
-            starts_at__lte=period_end,
-            sync_scope=Match.SyncScope.PREMATCH,
-        )
-
-    @staticmethod
-    def decorate(queryset, user):
-        if user.is_authenticated:
-            watch_exists = MatchWatch.objects.filter(
-                user=user,
-                match_id=OuterRef("pk"),
-                match__sync_scope__in=date_views.ACTIVE_WATCH_SCOPES,
-            )
-            watched_annotation = Exists(watch_exists)
-        else:
-            watched_annotation = Value(False, output_field=BooleanField())
-
-        return (
-            queryset.select_related("sport", "league__country", "home_team__country", "away_team__country", "odds")
-            .annotate(
-                is_watched=watched_annotation,
-                scope_order=Case(
-                    When(sync_scope=Match.SyncScope.PREMATCH, then=Value(1)),
-                    default=Value(3),
-                    output_field=IntegerField(),
-                ),
-                predictions_count=Count(
-                    "predictions__coupon",
-                    filter=Q(
-                        predictions__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-                        predictions__coupon__audience=PredictionCoupon.Audience.FREE,
-                    ),
-                    distinct=True,
-                ),
-            )
-            .order_by("-is_watched", "scope_order", "starts_at", "id")
-        )
-
-
-def _tournament_scope_filters():
-    return (
-        (PredictionMatchScope.PREMATCH, "Предстоящие"),
-        (PredictionMatchScope.WATCHED, "Отслеживаемые"),
-    )
-
-
-def _tournament_sport_filters(allowed_sport_codes: set[str]):
-    filters = list(date_views.SPORT_FILTERS)
-    if not allowed_sport_codes:
-        return filters
-    return [
-        (code, label)
-        for code, label in filters
-        if code == "all" or code in allowed_sport_codes
-    ]
-
-
-def _filter_tournament_allowed_sports(queryset, allowed_sport_codes: set[str]):
-    if not allowed_sport_codes:
-        return queryset
-    return queryset.filter(sport__code__in=allowed_sport_codes)
-
-
-def _filter_tournament_sport(queryset, sport_code: str):
-    if sport_code == "all":
-        return queryset
-    return queryset.filter(sport__code=sport_code)
-
-
-def _exclude_tournament_used_matches(queryset, tournament: Tournament, participant: TournamentParticipant):
-    used_match_ids = TournamentPredictionEntry.objects.filter(
-        tournament=tournament,
-        participant=participant,
-        tournament_coupon__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-    ).values("match_id")
-    return queryset.exclude(id__in=used_match_ids)
-
-
-def _match_allowed_for_tournament(
-    tournament: Tournament,
-    participant: TournamentParticipant,
-    match: Match,
-) -> bool:
-    allowed_sport_ids = set(tournament.allowed_sports.values_list("id", flat=True))
-    if allowed_sport_ids and match.sport_id not in allowed_sport_ids:
-        return False
-    return not TournamentPredictionEntry.objects.filter(
-        tournament=tournament,
-        participant=participant,
-        match=match,
-        tournament_coupon__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-    ).exists()
-
-
-def _tournament_content_view_mode(request) -> str:
-    requested = request.GET.get("view_mode")
-    return requested if requested in {"grid", "table"} else "table"
-
-
-def _tournament_page(matches_queryset, raw_page):
-    paginator = Paginator(matches_queryset, date_views.MATCHES_PAGE_SIZE)
-    try:
-        return paginator.page(raw_page or "1")
-    except PageNotAnInteger:
-        return paginator.page(1)
-    except EmptyPage:
-        return paginator.page(paginator.num_pages)
-
-
-def _tournament_table_lazy_response(
-    request,
-    *,
-    tournament: Tournament,
-    participant: TournamentParticipant,
-    matches_queryset,
-    can_write_coupon: bool,
-    active_sport: str,
-):
-    sport_code = request.GET.get("table_sport", "").strip().lower()
-    valid_sports = {sport for sport, _ in date_views.SPORT_FILTERS if sport != "all"}
-    if sport_code not in valid_sports:
-        return JsonResponse(
-            {"ok": False, "error": "Некорректный вид спорта."},
-            status=400,
-        )
-
-    groups = date_views._table_match_groups(
-        matches_queryset,
-        active_sport=sport_code or active_sport,
-        limit=date_views._table_window_size(request.GET.get("window")),
-    )
-    sport_group = groups[0] if groups else None
-    html = ""
-    if sport_group is not None:
-        sport_group["open"] = True
-        used_match_ids = _tournament_used_match_ids(tournament, participant)
-        _decorate_tournament_table_groups(
-            [sport_group],
-            tournament,
-            participant,
-            used_match_ids=used_match_ids,
-        )
-        html = render_to_string(
-            "game/includes/_match_table_sport.html",
-            {
-                "tournament": tournament,
-                "sport": sport_group,
-                "can_write_coupon": can_write_coupon,
-                "tournament_prediction_mode": True,
-            },
-            request=request,
-        )
-
-    return JsonResponse(
-        {
-            "ok": True,
-            "html": html,
-            "sport": sport_code,
-            "window": sport_group["loaded_count"] if sport_group else 0,
-            "total": sport_group["count"] if sport_group else 0,
-            "has_next": bool(sport_group and sport_group["has_next"]),
-            "next_window": sport_group["next_window"] if sport_group and sport_group["has_next"] else None,
-        }
-    )
-
-
-def _tournament_used_match_ids(
-    tournament: Tournament,
-    participant: TournamentParticipant,
-) -> set[int]:
-    return set(
-        TournamentPredictionEntry.objects.filter(
-            tournament=tournament,
-            participant=participant,
-            tournament_coupon__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        ).values_list("match_id", flat=True)
-    )
-
-
-def _decorate_tournament_matches(
-    matches: list[Match],
-    tournament: Tournament,
-    participant: TournamentParticipant,
-    *,
-    used_match_ids: set[int] | None = None,
-) -> None:
-    if used_match_ids is None:
-        used_match_ids = _tournament_used_match_ids(tournament, participant)
-    for match in matches:
-        match.coupon_odds = build_match_winner_odds(match)
-        match.tournament_match_used = match.id in used_match_ids
-
-
-def _decorate_tournament_table_groups(
-    table_groups: list[dict],
-    tournament: Tournament,
-    participant: TournamentParticipant,
-    *,
-    used_match_ids: set[int] | None = None,
-) -> None:
-    if used_match_ids is None:
-        used_match_ids = _tournament_used_match_ids(tournament, participant)
-    for sport_group in table_groups:
-        for league_group in sport_group.get("leagues", []):
-            _decorate_tournament_matches(
-                list(league_group.get("items", [])),
-                tournament,
-                participant,
-                used_match_ids=used_match_ids,
-            )
-
-
-def _tournament_scope_tabs(
-    request,
-    tournament: Tournament,
-    *,
-    participant: TournamentParticipant,
-    active_scope: str,
-    active_sport: str,
-    period_start,
-    period_end,
-    allowed_sport_codes: set[str],
-) -> list[dict]:
-    tabs = []
-    for scope, label in _tournament_scope_filters():
-        queryset = MatchQuery.base(period_start, period_end, scope)
-        queryset = _filter_tournament_allowed_sports(queryset, allowed_sport_codes)
-        queryset = _filter_tournament_sport(queryset, active_sport)
-        if scope == PredictionMatchScope.WATCHED:
-            queryset = queryset.filter(notification_watchers__user=request.user).distinct()
-        queryset = _exclude_tournament_used_matches(queryset, tournament, participant)
-        tabs.append(
-            {
-                "scope": scope,
-                "label": label,
-                "count": queryset.count(),
-                "url": _tournament_predict_url(
-                    tournament,
-                    scope=scope,
-                    sport=active_sport,
-                ),
-            }
-        )
-    return tabs
-
-
-def _tournament_sport_tabs(
-    request,
-    tournament: Tournament,
-    *,
-    participant: TournamentParticipant,
-    active_scope: str,
-    active_sport: str,
-    period_start,
-    period_end,
-    allowed_sport_codes: set[str],
-) -> list[dict]:
-    base_queryset = MatchQuery.base(period_start, period_end, active_scope)
-    base_queryset = _filter_tournament_allowed_sports(base_queryset, allowed_sport_codes)
-    if active_scope == PredictionMatchScope.WATCHED:
-        base_queryset = base_queryset.filter(notification_watchers__user=request.user).distinct()
-    base_queryset = _exclude_tournament_used_matches(base_queryset, tournament, participant)
-
-    count_rows = list(
-        base_queryset.values("sport__code")
-        .annotate(total=Count("id", distinct=True))
-        .order_by()
-    )
-    sport_counts = {
-        row["sport__code"]: row["total"]
-        for row in count_rows
-        if row["sport__code"]
-    }
-    all_count = sum(row["total"] for row in count_rows)
-
-    tabs = []
-    for sport, label in _tournament_sport_filters(allowed_sport_codes):
-        tabs.append(
-            {
-                "code": sport,
-                "label": label,
-                "count": all_count if sport == "all" else sport_counts.get(sport, 0),
-                "url": _tournament_predict_url(
-                    tournament,
-                    scope=active_scope,
-                    sport=sport,
-                ),
-            }
-        )
-    return tabs
-
-
-def _tournament_predict_url(tournament: Tournament, *, scope, sport) -> str:
-    return (
-        f"{reverse('tournaments:predict', kwargs={'slug': tournament.slug})}"
-        f"?scope={scope}&sport={sport}"
-    )
 
 
 def _tournament_index_query(**params) -> str:
@@ -835,30 +311,32 @@ def _tournament_index_query(**params) -> str:
 
 def _tournament_index_sport_tabs(active_sport: str, active_filter: str, active_sort: str):
     core = [
-        ("football", "Футбол", "⚽"),
-        ("basketball", "Баскетбол", "🏀"),
-        ("tennis", "Теннис", "🎾"),
-        ("hockey", "Хоккей", "🏒"),
+        ("football", "Футбол", "f"),
+        ("hockey", "Хоккей", "h"),
+        ("tennis", "Теннис", "t"),
+        ("basketball", "Баскетбол", "b"),
     ]
     sports = list(Sport.objects.filter(code__in=[code for code, _, _ in core]).only("code", "name", "name_ru"))
     by_code = {sport.code: sport for sport in sports}
     tabs = [
         SimpleNamespace(
             code="all",
-            label="Все виды",
-            icon="🏆",
+            label="Любые",
+            tile_key="x",
+            icon_code="express",
             is_active=active_sport == "all",
             url=_tournament_index_query(filter=active_filter, sort=active_sort),
         )
     ]
-    for code, fallback_label, icon in core:
+    for code, fallback_label, tile_key in core:
         sport = by_code.get(code)
         label = (sport.name_ru or sport.name) if sport else fallback_label
         tabs.append(
             SimpleNamespace(
                 code=code,
                 label=label,
-                icon=icon,
+                tile_key=tile_key,
+                icon_code=code,
                 is_active=active_sport == code,
                 url=_tournament_index_query(sport=code, filter=active_filter, sort=active_sort),
             )
@@ -866,22 +344,21 @@ def _tournament_index_sport_tabs(active_sport: str, active_filter: str, active_s
     return tabs
 
 
-def _tournament_index_filter_tabs(active_sport: str, active_filter: str, active_sort: str):
+def _tournament_index_filter_tabs(active_sport: str, active_filter: str, active_sort: str, counts):
     filters = [
-        ("all", "Все", ""),
-        ("popular", "Популярные", "🔥"),
-        ("finished", "Завершенные", "◷"),
-        ("high_prize", "С высоким призом", "🏆"),
+        ("all", "Все", "Все"),
+        ("live", "Идут сейчас", "Идут"),
+        ("upcoming", "Скоро старт", "Скоро"),
+        ("finished", "Завершённые", "Завершённые"),
+        ("mine", "Мои", "Мои"),
     ]
     return [
         SimpleNamespace(
-            key=key,
-            label=label,
-            icon=icon,
+            key=key, label=label, mobile_label=mobile_label, count=counts.get(key, 0),
             is_active=active_filter == key,
             url=_tournament_index_query(sport=active_sport, filter=key, sort=active_sort),
         )
-        for key, label, icon in filters
+        for key, label, mobile_label in filters
     ]
 
 
@@ -977,10 +454,8 @@ def _tournament_home_tab(
     prize_total = sum((prize.amount for prize in home_prizes if prize.money), Decimal("0"))
     first_sport = allowed_sports[0] if allowed_sports else None
     achievements = _tournament_achievement_list(tournament)
-    first_place_achievement = next(
-        (achievement for achievement in achievements if achievement.kind == TournamentAchievement.Kind.FIRST_PLACE),
-        achievements[0] if achievements else None,
-    )
+    first_prize = next((prize for prize in _active_prizes_by_place(tournament) if prize.place == 1), None)
+    first_place_achievement = (first_prize.achievement if first_prize else None) or (achievements[0] if achievements else None)
 
     if runtime_status["key"] == "finished":
         date_hint = "Турнир завершён"
@@ -1049,11 +524,7 @@ def _tournament_home_tab(
 
 
 def _tournament_home_prize_rows(tournament: Tournament) -> list[SimpleNamespace]:
-    prizes = _active_prizes_by_place(tournament)
-    if prizes:
-        rows = [_tournament_home_prize_row(prize) for prize in prizes]
-    else:
-        rows = _legacy_home_prize_rows(tournament)
+    rows = [_tournament_home_prize_row(prize) for prize in _active_prizes_by_place(tournament)]
 
     max_value = max((row.metric_value for row in rows), default=Decimal("1"))
     if max_value <= 0:
@@ -1101,28 +572,6 @@ def _tournament_home_prize_row(prize: TournamentPrize) -> SimpleNamespace:
     )
 
 
-def _legacy_home_prize_rows(tournament: Tournament) -> list[SimpleNamespace]:
-    rows = []
-    for place, amount in (
-        (1, tournament.prize_first or Decimal("0")),
-        (2, tournament.prize_second or Decimal("0")),
-        (3, tournament.prize_third or Decimal("0")),
-    ):
-        rows.append(
-            SimpleNamespace(
-                place=place,
-                label=f"{place} место",
-                amount=amount,
-                money=True,
-                value_label=f"{format_money(amount)} ₽",
-                reward_kind="money",
-                metric_value=amount,
-                width=0,
-            )
-        )
-    return rows
-
-
 def _tournament_eligibility_summary(tournament: Tournament, eligibility: dict) -> dict:
     authenticated = any(rule.get("code") != "auth" for rule in eligibility.get("rules", [])) or not any(
         rule.get("code") == "auth" for rule in eligibility.get("rules", [])
@@ -1154,13 +603,8 @@ def _tournament_eligibility_summary(tournament: Tournament, eligibility: dict) -
 
 
 def _tournament_access_badges(tournament: Tournament, eligibility: dict) -> list[dict]:
-    badges = [
-        {
-            "label": tournament.get_access_type_display(),
-            "tone": "warning" if tournament.access_type == Tournament.AccessType.CLOSED else "ok",
-        }
-    ]
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    badges = []
+    if tournament.is_paid_entry:
         badges.append(
             {
                 "label": f"Вход: {format_coins(eligibility.get('entry_fee_coins', 0))}",
@@ -1170,8 +614,7 @@ def _tournament_access_badges(tournament: Tournament, eligibility: dict) -> list
         )
     else:
         badges.append({"label": "Бесплатный вход", "tone": "ok"})
-    if tournament.analysts_only:
-        badges.append({"label": "Только капперы", "tone": "neutral"})
+    badges.append({"label": "Только капперы", "tone": "neutral"})
     if tournament.vip_only:
         badges.append({"label": "Только VIP", "tone": "warning"})
     if tournament.new_users_only:
@@ -1218,35 +661,17 @@ def _tournament_personal_eligibility_rows(eligibility: dict) -> list[dict]:
 
 
 def _tournament_public_eligibility_rows(tournament: Tournament) -> list[dict]:
-    rows = []
-    if tournament.analysts_only:
-        rows.append({"title": "Статус каппера", "meta": "обязательно", "state": "neutral"})
+    rows = [{"title": "Статус каппера", "meta": "обязательно", "state": "neutral"}]
     if tournament.vip_only:
         rows.append({"title": "VIP-статус", "meta": "обязательно", "state": "neutral"})
     if tournament.new_users_only:
         rows.append({"title": "Новый пользователь", "meta": "обязательно", "state": "neutral"})
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    if tournament.is_paid_entry:
         rows.append(
             {
                 "title": "Коины для участия",
                 "meta": f"нужно {format_coins(tournament.entry_fee_coins)}",
                 "meta_coin": True,
-                "state": "neutral",
-            }
-        )
-    if tournament.min_user_predictions:
-        rows.append(
-            {
-                "title": "Опубликованные прогнозы",
-                "meta": f"нужно {tournament.min_user_predictions}",
-                "state": "neutral",
-            }
-        )
-    if tournament.min_user_wins:
-        rows.append(
-            {
-                "title": "Выигранные прогнозы",
-                "meta": f"нужно {tournament.min_user_wins}",
                 "state": "neutral",
             }
         )
@@ -1260,15 +685,10 @@ def _configured_public_eligibility_rows(tournament: Tournament) -> list[dict]:
         title = rule.title or rule.get_rule_type_display()
         if rule.sport_id:
             title = f"{title} ({rule.sport.name_ru or rule.sport.name})"
-        meta = (
-            "обязательно"
-            if rule.rule_type in ("vip_status", "new_user")
-            else _operator_requirement_label(rule.operator, rule.value)
-        )
         rows.append(
             {
                 "title": title,
-                "meta": meta,
+                "meta": _operator_requirement_label(rule.operator, rule.value),
                 "state": "neutral",
                 "description": rule.description,
             }
@@ -1298,26 +718,13 @@ def _eligibility_rule_meta(rule: dict) -> str:
 
 def _default_participation_rules(tournament: Tournament) -> list[str]:
     rules = [
-        "Открытый турнир" if tournament.access_type == Tournament.AccessType.OPEN else "Закрытый турнир",
-        (
-            "Платное участие"
-            if tournament.entry_type == Tournament.EntryType.PAID
-            else "Бесплатное участие"
-        ),
+        "Платное участие" if tournament.is_paid_entry else "Бесплатное участие",
+        "Участвовать могут только капперы",
     ]
-    if tournament.analysts_only:
-        rules.append("Участвовать могут только капперы")
     if tournament.vip_only:
         rules.append("Нужен активный VIP-статус")
     if tournament.new_users_only:
         rules.append("Турнир доступен только новым пользователям")
-    if tournament.min_user_predictions:
-        rules.append(f"Минимум опубликованных прогнозов — {tournament.min_user_predictions}")
-    if tournament.min_user_wins:
-        rules.append(f"Минимум выигранных прогнозов — {tournament.min_user_wins}")
-    if tournament.eligibility_sport_id:
-        sport_name = tournament.eligibility_sport.name_ru or tournament.eligibility_sport.name
-        rules.append(f"Активность для допуска считается по спорту: {sport_name}")
     for rule in _configured_public_eligibility_rows(tournament):
         meta = f": {rule['meta']}" if rule.get("meta") else ""
         rules.append(f"{rule['title']}{meta}")
@@ -1329,16 +736,40 @@ def _default_format_rules(tournament: Tournament, *, allowed_sports_label: str) 
         f"Прогнозы только на матчи: {allowed_sports_label}",
         f"Минимальный коэффициент прогноза — {tournament.min_coefficient:.2f}",
         f"Тип прогноза: {tournament.get_coupon_type_rule_display()}",
+        f"Формат прогнозов: {tournament.get_prediction_format_display()}",
         (
             f"Минимальная уверенность прогноза — {tournament.min_confidence}%"
             if tournament.min_confidence
             else "Уверенность прогноза без ограничения"
         ),
-        "Рейтинг формируется по ROI",
-        "Учитываются только рассчитанные прогнозы",
-        "При равенстве выше участник с большим числом прибыльных ставок",
+        *_scoring_rules(tournament),
         "Результаты обновляются автоматически",
     ]
+
+
+def _scoring_rules(tournament: Tournament) -> list[str]:
+    rules = []
+    if tournament.uses_points:
+        rules.extend([
+            "Турнирные очки v1: выигрыш — кф при публикации × 10, дробная часть отбрасывается; проигрыш — −5, возврат — 0",
+            "Экспресс считается одним прогнозом по общему коэффициенту",
+            "При равных очках выше участник с большим числом побед, затем вступивший раньше; далее — ID участника",
+        ])
+        if tournament.streak_bonus_enabled:
+            rules.append(f"Каждая непересекающаяся тройка побед по порядку публикации: +{tournament.streak_bonus_points}; проигрыш, возврат и ожидающий расчёта купон прерывают серию")
+        if tournament.high_odds_bonus_enabled:
+            rules.append(f"Выигрыш с коэффициентом строго выше 3.00: +{tournament.high_odds_bonus_points}")
+        if tournament.daily_bonus_enabled:
+            rules.append(f"Пять опубликованных прогнозов за день: +{tournament.daily_bonus_points} один раз за дату; возвраты и ожидающие расчёта учитываются, отменённые — нет")
+    else:
+        rules.extend(["Рейтинг формируется по ROI", "При равном ROI выше участник с большей прибылью"])
+    rules.extend([
+        f"Дневной лимит: {tournament.daily_coupon_limit or 'без ограничения'}; часовой пояс — {tournament.scoring_timezone}; отмена не освобождает лимит",
+        "Участники без рассчитанных прогнозов находятся в конце таблицы и не получают призы",
+        "Прогноз публикуется строго до начала события; матчи должны начаться до окончания турнира",
+        "Итоги фиксируются после окончания турнира и расчёта всех прогнозов; призовые места заданы в разделе «Призы»",
+    ])
+    return rules
 
 
 def _tournament_about_stages(tournament: Tournament) -> list[SimpleNamespace]:
@@ -1389,14 +820,7 @@ def _tournament_about_stages(tournament: Tournament) -> list[SimpleNamespace]:
 
 def _tournament_prizes_tab(tournament: Tournament) -> dict:
     achievements = _tournament_achievement_list(tournament)
-    achievement_by_place = _achievement_by_prize_place(achievements)
-    rows = [
-        _tournament_prize_row(
-            prize,
-            achievement=prize.achievement or achievement_by_place.get(prize.place),
-        )
-        for prize in _active_prizes_by_place(tournament)
-    ]
+    rows = [_tournament_prize_row(prize, achievement=prize.achievement) for prize in _active_prizes_by_place(tournament)]
     first_prize = next((row for row in rows if row.place == 1), None)
     feature_achievement = (
         first_prize.achievement
@@ -1427,22 +851,6 @@ def _active_prizes_by_place(tournament: Tournament) -> list[TournamentPrize]:
         list(getattr(tournament, "active_prizes", []) or []),
         key=lambda prize: (prize.place, prize.sort_order, prize.id),
     )
-
-
-def _achievement_by_prize_place(achievements: list[TournamentAchievement]) -> dict[int, TournamentAchievement]:
-    kind_by_place = {
-        1: TournamentAchievement.Kind.FIRST_PLACE,
-        2: TournamentAchievement.Kind.SECOND_PLACE,
-        3: TournamentAchievement.Kind.THIRD_PLACE,
-    }
-    achievement_by_kind = {}
-    for achievement in achievements:
-        achievement_by_kind.setdefault(achievement.kind, achievement)
-    return {
-        place: achievement_by_kind[kind]
-        for place, kind in kind_by_place.items()
-        if kind in achievement_by_kind
-    }
 
 
 def _tournament_prize_row(prize: TournamentPrize, *, achievement: TournamentAchievement | None = None) -> SimpleNamespace:
@@ -1535,26 +943,25 @@ def _tournament_prize_notes(tournament: Tournament) -> list[dict]:
         {
             "icon": "clock",
             "title": "Срок выплаты",
-            "text": tournament.reward_payout_text
-            or "Призы начисляются в течение 24 часов после окончания турнира.",
+            "text": "Призы начисляются после окончания турнира, когда рассчитаны все его прогнозы.",
         },
         {
             "icon": "wallet",
             "title": "Куда начисляются деньги",
-            "text": tournament.reward_wallet_text
-            or "Денежный приз поступает на основной игровой счет КапперХаб.",
+            "text": "Денежный приз поступает на основной игровой счет КапперХаб.",
         },
         {
             "icon": "coins",
             "title": "Куда начисляются коины",
-            "text": tournament.reward_coins_wallet_text
-            or "Призовые коины поступают на виртуальный счет пользователя.",
+            "text": "Призовые коины поступают на виртуальный счет пользователя.",
         },
         {
             "icon": "rules",
             "title": "Призовая зона",
-            "text": tournament.reward_rules_text
-            or f"Для попадания в призовую зону прогнозы должны учитывать минимальный коэффициент {tournament.min_coefficient:.2f}.",
+            "text": (
+                "В призовую зону попадают участники хотя бы с одним рассчитанным прогнозом; "
+                f"минимальный коэффициент — {tournament.min_coefficient:.2f}."
+            ),
         },
     ]
 
@@ -1581,7 +988,7 @@ def _tournament_about_tab(
             "date_title": f"{date_format(timezone.localtime(tournament.starts_at), 'j E')} — {date_format(timezone.localtime(tournament.ends_at), 'j E')}",
             "date_caption": f"{timezone.localtime(tournament.ends_at):%Y} года",
             "participants_title": str(participants_count),
-            "participants_caption": "капперов" if tournament.analysts_only else "участников",
+            "participants_caption": "капперов",
             "prize_title": f"{format_money(money_total)} ₽" if money_total > 0 else "Призы",
             "prize_caption": _about_prize_caption(money_total, coins_total, vip_prizes),
             "entry_title": entry_text["title"],
@@ -1599,7 +1006,7 @@ def _tournament_about_tab(
                 "icon": "chart",
                 "tone": "",
                 "title": "Как считаются результаты",
-                "text": "Рейтинг формируется по ROI и прибыли. Учитываются только рассчитанные прогнозы.",
+                "text": ". ".join(_scoring_rules(tournament)),
             },
             {
                 "icon": "shield",
@@ -1636,11 +1043,7 @@ def _allowed_sports_label(allowed_sports: list[Sport]) -> str:
 
 
 def _about_access_text(tournament: Tournament, eligibility: dict) -> str:
-    parts = [tournament.get_access_type_display().lower()]
-    if tournament.analysts_only:
-        parts.append("только для капперов")
-    else:
-        parts.append("для всех пользователей")
+    parts = ["только для капперов"]
     if tournament.vip_only:
         parts.append("нужен VIP")
     if tournament.new_users_only:
@@ -1653,7 +1056,7 @@ def _about_access_text(tournament: Tournament, eligibility: dict) -> str:
 
 
 def _about_entry_text(tournament: Tournament) -> dict:
-    if tournament.entry_type == Tournament.EntryType.PAID:
+    if tournament.is_paid_entry:
         price = format_coins(tournament.entry_fee_coins)
         return {
             "title": price,
@@ -1738,10 +1141,11 @@ def _tournament_results_tab(request, tournament: Tournament, leaderboard: list[d
         ]
 
     page_obj = _paginate_list(rows, request.GET.get("page"), per_page)
-    updates = _tournament_result_updates(rows)
+    updates = _tournament_recent_results(tournament)
     top_rows = rows[:3]
 
     return {
+        "uses_points": tournament.uses_points,
         "rows": list(page_obj.object_list),
         "top_rows": top_rows,
         "updates": updates,
@@ -1759,7 +1163,7 @@ def _tournament_results_tab(request, tournament: Tournament, leaderboard: list[d
 def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
     user = row["user"]
     display_name = (
-        getattr(user.analyst_profile, "display_name", "")
+        getattr(getattr(user, "analyst_profile", None), "display_name", "")
         or user.get_full_name()
         or user.username
     )
@@ -1769,12 +1173,13 @@ def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
     refunds_count = int(row["refunds_count"] or 0)
     decided_count = wins_count + losses_count + refunds_count
     winrate = int(round((wins_count / decided_count) * 100)) if decided_count else 0
-    points = (
-        Decimal(row["roi_percent"] or 0)
-        + Decimal(wins_count)
-        + (Decimal(coupons_count) * Decimal("0.5"))
-    ).quantize(Decimal("0.1"))
     return {
+        "score_label": row["score_label"], "score_unit": row["score_unit"],
+        "base_points": row["base_points"], "bonus_points": row["bonus_points"], "points": row["points"],
+        "score_positive": (row["points"] if row["uses_points"] else row["roi_percent"]) > 0,
+        "score_negative": (row["points"] if row["uses_points"] else row["roi_percent"]) < 0,
+        "base_positive": (row["base_points"] if row["uses_points"] else row["profit"]) > 0,
+        "base_negative": (row["base_points"] if row["uses_points"] else row["profit"]) < 0,
         "rank": int(row["rank"] or 0),
         "user": user,
         "name": display_name,
@@ -1785,30 +1190,60 @@ def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
         "wins_count": wins_count,
         "winrate": winrate,
         "roi_percent": row["roi_percent"],
-        "points": points,
+        "profit": row["profit"],
+        "profit_label": _signed_coins(row["profit"]),
     }
 
 
-def _tournament_result_updates(rows: list[dict]) -> list[dict]:
-    updates = []
-    for row in rows[3:8]:
-        direction = "up" if row["rank"] % 2 == 0 else "down"
-        delta = 1 + (row["rank"] % 3)
-        updates.append(
+def _signed_coins(value) -> str:
+    # Payouts are stake × odds, so a profit can carry kopecks; the table shows whole coins.
+    amount = int(Decimal(value or 0).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    return ("+" if amount > 0 else "-" if amount < 0 else "") + format_coins(abs(amount))
+
+
+def _tournament_recent_results(tournament: Tournament, *, limit: int = 6) -> list[dict]:
+    """The latest settled tournament coupons: what actually moved the table."""
+    settled = (
+        TournamentCoupon.objects.filter(
+            tournament=tournament,
+            participant__status=TournamentParticipant.Status.ACTIVE,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            coupon__state_status__in=(
+                PredictionCoupon.StateStatus.WIN,
+                PredictionCoupon.StateStatus.LOSE,
+                PredictionCoupon.StateStatus.REFUND,
+            ),
+        )
+        .select_related("participant__user__analyst_profile", "coupon")
+        .prefetch_related("point_accruals")
+        .order_by("-coupon__settled_at", "-id")[:limit]
+    )
+    results = []
+    for link in settled:
+        coupon, user = link.coupon, link.participant.user
+        if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+            direction, profit, verdict = "up", coupon.possible_payout - coupon.total_stake, "зашёл"
+        elif coupon.state_status == PredictionCoupon.StateStatus.LOSE:
+            direction, profit, verdict = "down", -coupon.total_stake, "не зашёл"
+        else:
+            direction, profit, verdict = "refund", Decimal("0"), "возврат"
+        coefficient = link.published_coefficient if tournament.uses_points else (
+            (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if coupon.total_stake
+            else Decimal("0")
+        )
+        results.append(
             {
-                "row": row,
                 "direction": direction,
-                "delta": delta,
-                "text": (
-                    f"Поднялся на {row['rank']} место"
-                    if direction == "up"
-                    else f"Опустился на {row['rank']} место"
-                ),
-                "time": f"{max(2, row['rank'] * 3)} мин назад",
+                "profit_label": (f'{sum(item.points for item in link.point_accruals.all()):+d} очк.'
+                    if tournament.uses_points else _signed_coins(profit)),
+                "name": getattr(getattr(user, "analyst_profile", None), "display_name", "") or user.get_full_name() or user.username,
+                "avatar_url": user.avatar.url if user.avatar else "",
+                "text": f"{coupon.get_coupon_type_display()} · кф {coefficient} — {verdict}",
+                "settled_at": coupon.settled_at,
             }
         )
-    return updates
-
+    return results
 
 def _paginate_list(items: list, page_number, per_page: int):
     paginator = Paginator(items, per_page)
@@ -1864,137 +1299,3 @@ def _runtime_status(tournament: Tournament, now) -> dict:
         "target_at": tournament.ends_at,
         "target_label": "До окончания",
     }
-
-
-def _tournament_prediction_cards(request, tournament: Tournament):
-    coupons = (
-        PredictionCoupon.objects.filter(
-            tournament_link__tournament=tournament,
-            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
-        )
-        .select_related("author", "author__analyst_profile", "metrics")
-        .prefetch_related(
-            Prefetch(
-                "predictions",
-                queryset=Prediction.objects.select_related(
-                    "match__sport",
-                    "match__league__country",
-                    "match__home_team",
-                    "match__away_team",
-                ).order_by("id"),
-                to_attr="card_positions",
-            )
-        )
-        .annotate(
-            likes_count=Coalesce(
-                F("metrics__likes_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            favorites_count=Coalesce(
-                F("metrics__favorites_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            comments_count=Coalesce(
-                F("metrics__comments_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-            views_count=Coalesce(
-                F("metrics__views_count"),
-                Value(0),
-                output_field=IntegerField(),
-            ),
-        )
-    )
-    coupons = annotate_vip_status(coupons, user_outer_ref="author_id").order_by(
-        "-published_at",
-        "-created_at",
-    )[:12]
-
-    liked_ids: set[int] = set()
-    favorite_ids: set[int] = set()
-    following_ids: set[int] = set()
-    if request.user.is_authenticated:
-        coupon_ids = [coupon.id for coupon in coupons]
-        liked_ids = set(
-            PredictionLike.objects.filter(
-                user=request.user,
-                prediction_id__in=coupon_ids,
-            ).values_list("prediction_id", flat=True)
-        )
-        favorite_ids = set(
-            PredictionFavorite.objects.filter(
-                user=request.user,
-                prediction_id__in=coupon_ids,
-            ).values_list("prediction_id", flat=True)
-        )
-        following_ids = set(
-            AnalystFollow.objects.filter(follower=request.user).values_list(
-                "analyst_id",
-                flat=True,
-            )
-        )
-
-    cards = []
-    for coupon in coupons:
-        card = _prediction_card(coupon)
-        if card is None:
-            continue
-        author = coupon.author
-        attach_vip_status_to_user(author, coupon)
-        card.is_liked = coupon.id in liked_ids
-        card.is_favorite = coupon.id in favorite_ids
-        card.is_own = request.user.is_authenticated and request.user.id == author.id
-        card.is_following_author = author.id in following_ids and not card.is_own
-        cards.append(card)
-    return cards
-
-
-def _prediction_card(coupon: PredictionCoupon):
-    positions = list(getattr(coupon, "card_positions", []) or [])
-    if not positions:
-        return None
-
-    item = positions[0]
-    count = getattr(coupon, "positions_count", None) or len(positions)
-    coefficient = _combined_coefficient(coupon)
-    selection = item.selection
-    market = item.market
-    if count > 1:
-        market = f"Экспресс · {count} игр"
-        selection = f"{item.selection} + ещё {count - 1}"
-
-    profile = getattr(coupon.author, "analyst_profile", None)
-    expert_name = (
-        profile.display_name
-        if profile and profile.display_name
-        else coupon.author.get_full_name() or coupon.author.username
-    )
-
-    return SimpleNamespace(
-        id=coupon.id,
-        coupon=coupon,
-        match=item.match,
-        market=market,
-        selection=selection,
-        coefficient=coefficient,
-        state_status=coupon.state_status,
-        created_at=coupon.published_at or coupon.created_at,
-        positions_count=count,
-        likes_count=getattr(coupon, "likes_count", 0),
-        favorites_count=getattr(coupon, "favorites_count", 0),
-        comments_count=getattr(coupon, "comments_count", 0),
-        views_count=getattr(coupon, "views_count", 0),
-        expert_name=expert_name,
-        expert_initials=_initials(expert_name),
-        expert_avatar_url=coupon.author.avatar.url if coupon.author.avatar else "",
-        expert_verified=bool(profile and profile.is_verified),
-    )
-
-
-def _combined_coefficient(coupon: PredictionCoupon) -> Decimal:
-    if not coupon.total_stake:
-        return Decimal("0.00")
-    return (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"))

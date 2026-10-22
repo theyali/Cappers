@@ -9,19 +9,21 @@ from .models import (
     TournamentEligibilityRule,
     TournamentFAQ,
     TournamentParticipant,
+    TournamentPointAccrual,
     TournamentPredictionEntry,
     TournamentPrize,
     TournamentPrizeAward,
     TournamentResult,
     TournamentStage,
 )
+from .services.join import cancel_tournament
 from .services.leaderboard import finalize_tournament_results
 
 
 class TournamentAchievementInline(admin.TabularInline):
     model = TournamentAchievement
     extra = 0
-    fields = ("title", "kind", "icon", "sort_order")
+    fields = ("title", "icon", "sort_order")
 
 
 class TournamentStageInline(admin.TabularInline):
@@ -79,69 +81,56 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "status",
-        "access_type",
-        "entry_type",
+        "scoring_method",
         "entry_fee_coins",
         "starts_at",
         "ends_at",
+        "prediction_format",
         "coupon_type_rule",
         "min_coefficient",
         "min_confidence",
-        "prize_first_display",
-        "prize_second_display",
-        "prize_third_display",
         "is_featured",
         "finalized_at",
     )
     list_filter = (
         "status",
-        "access_type",
-        "entry_type",
-        "analysts_only",
+        "scoring_method",
         "vip_only",
         "new_users_only",
         "eligibility_mode",
+        "prediction_format",
         "coupon_type_rule",
         "is_featured",
         "starts_at",
         "ends_at",
         "allowed_sports",
-        "eligibility_sport",
     )
-    search_fields = ("title", "slug", "description", "rules_text")
+    search_fields = ("title", "slug", "description")
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("allowed_sports",)
     readonly_fields = ("finalized_at", "created_at", "updated_at")
-    actions = ("finalize_results",)
+    actions = ("finalize_results", "cancel_and_refund")
     fieldsets = (
-        (None, {"fields": ("title", "slug", "description", "rules_text", "status", "is_featured")}),
+        (None, {"fields": ("title", "slug", "description", "status", "is_featured")}),
         (
-            "Тексты наград",
-            {"fields": ("reward_payout_text", "reward_wallet_text", "reward_coins_wallet_text", "reward_rules_text")},
+            "Кто может участвовать",
+            {"fields": ("vip_only", "new_users_only")},
         ),
-        (
-            "Тип доступа",
-            {
-                "fields": (
-                    "access_type",
-                    "analysts_only",
-                    "vip_only",
-                    "new_users_only",
-                )
-            },
-        ),
-        ("Стоимость участия", {"fields": ("entry_type", "entry_fee_coins")}),
+        ("Стоимость участия", {"fields": ("entry_fee_coins",)}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),
+        ("Начисление очков", {"fields": Tournament.scoring_fields}),
         ("Изображения карточки", {"fields": ("card_image", "hero_image", "hero_icon", "card_icon_bg_color")}),
         ("Спонсор карточки", {"fields": ("sponsor_name", "sponsor_logo", "sponsor_url")}),
-        ("Призы, ₽", {"fields": ("prize_first", "prize_second", "prize_third")}),
         (
             "Условия прогнозов",
-            {"fields": ("min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
+            {"fields": ("prediction_format", "min_coefficient", "min_confidence", "coupon_type_rule", "allowed_sports")},
         ),
         (
             "Условия допуска",
-            {"fields": ("eligibility_mode", "min_user_predictions", "min_user_wins", "eligibility_sport")},
+            {
+                "fields": ("eligibility_mode",),
+                "description": "Сами условия — в таблице «Условия допуска» ниже.",
+            },
         ),
         ("Системные поля", {"fields": ("finalized_at", "created_at", "updated_at")}),
     )
@@ -168,23 +157,27 @@ class TournamentAdmin(admin.ModelAdmin):
             message += " Пропущены: " + "; ".join(skipped)
         self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
-    @admin.display(description="1 место, ₽", ordering="prize_first")
-    def prize_first_display(self, obj):
-        return f"{obj.prize_first} ₽"
-
-    @admin.display(description="2 место, ₽", ordering="prize_second")
-    def prize_second_display(self, obj):
-        return f"{obj.prize_second} ₽"
-
-    @admin.display(description="3 место, ₽", ordering="prize_third")
-    def prize_third_display(self, obj):
-        return f"{obj.prize_third} ₽"
+    @admin.action(description="Отменить турнир (в архив) и вернуть взносы")
+    def cancel_and_refund(self, request, queryset):
+        cancelled = refunded = 0
+        skipped = []
+        for tournament in queryset.order_by("id"):
+            try:
+                refunded += cancel_tournament(tournament)
+            except ValidationError as exc:
+                skipped.append(f"«{tournament.title}»: {exc.messages[0]}")
+            else:
+                cancelled += 1
+        message = f"Отменено турниров: {cancelled}, возвращено взносов: {refunded}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
+        self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
 
 
 @admin.register(TournamentAchievement)
 class TournamentAchievementAdmin(admin.ModelAdmin):
-    list_display = ("title", "tournament", "kind", "sort_order")
-    list_filter = ("kind", "tournament")
+    list_display = ("title", "tournament", "sort_order")
+    list_filter = ("tournament",)
     search_fields = ("title", "description", "tournament__title")
     autocomplete_fields = ("tournament",)
 
@@ -287,7 +280,7 @@ class TournamentCouponAdmin(admin.ModelAdmin):
         "coupon__id",
     )
     autocomplete_fields = ("tournament", "participant", "coupon")
-    readonly_fields = ("created_at",)
+    readonly_fields = ("created_at", "published_at", "published_coefficient")
     inlines = (TournamentPredictionEntryInline,)
 
 
@@ -313,6 +306,7 @@ class TournamentResultAdmin(admin.ModelAdmin):
         "tournament",
         "rank",
         "participant",
+        "points",
         "profit",
         "roi_percent",
         "prize_amount_display",
@@ -327,3 +321,16 @@ class TournamentResultAdmin(admin.ModelAdmin):
     @admin.display(description="Приз, ₽", ordering="prize_amount")
     def prize_amount_display(self, obj):
         return f"{obj.prize_amount} ₽"
+
+
+@admin.register(TournamentPointAccrual)
+class TournamentPointAccrualAdmin(admin.ModelAdmin):
+    list_display = ("participant", "tournament_coupon", "kind", "points", "source_key")
+    list_filter = ("kind", "participant__tournament")
+    readonly_fields = ("participant", "tournament_coupon", "kind", "points", "source_key")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

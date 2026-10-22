@@ -6,6 +6,7 @@ from django.core.exceptions import ValidationError
 from game.cover_images import prediction_editor_covers
 from game.models import PredictionCoupon, PredictionCoverImage
 from game.services.prediction_editor import can_use_rich_prediction_fields, validate_paid_prediction_content, validate_paid_prediction_settings
+from tournaments.services.coupons import predictable_tournaments
 
 
 MAX_CUSTOM_COVER_SIZE = 5 * 1024 * 1024
@@ -72,6 +73,7 @@ class RichPredictionCouponForm(forms.Form):
         required=False,
         help_text="До 7 тегов через запятую.",
     )
+    tournament = forms.ChoiceField(label="Турнир", required=False)
     published_status = forms.ChoiceField(
         required=False,
         choices=(
@@ -86,6 +88,10 @@ class RichPredictionCouponForm(forms.Form):
         self.coupon = coupon
         self.sport = sport
         self.can_use_rich_fields = can_use_rich_prediction_fields(user)
+        self.tournaments = predictable_tournaments(user)
+        self.fields["tournament"].choices = [("", "Без турнира")] + [
+            (str(tournament.pk), tournament.title) for tournament in self.tournaments
+        ]
 
         covers = PredictionCoverImage.objects.none()
         if self.can_use_rich_fields:
@@ -93,14 +99,25 @@ class RichPredictionCouponForm(forms.Form):
         self.fields["cover_image"].queryset = covers
 
         if not self.can_use_rich_fields:
-            for field_name in ("description", "cover_image", "custom_cover_image"):
+            # Tournament predictions need a description, so participants may write one.
+            locked_fields = ("cover_image", "custom_cover_image") if self.tournaments else ("description", "cover_image", "custom_cover_image")
+            for field_name in locked_fields:
                 self.fields[field_name].disabled = True
                 self.fields[field_name].required = False
 
         if coupon is not None and coupon.published_status == PredictionCoupon.PublishedStatus.PUBLISHED:
-            # The stake was charged on publish; the stake and the audience stay fixed afterwards.
+            # The stake was charged on publish; the stake, the confidence, the audience and the tournament
+            # stay fixed afterwards.
             self.fields["total_stake"].disabled = True
+            self.fields["confidence"].disabled = True
             self.fields["is_paid"].disabled = True
+            self.fields["tournament"].disabled = True
+
+    def _tournament_requires_text(self, tournament_id) -> bool:
+        # A published coupon keeps its tournament even after the tournament leaves the user's live list.
+        known = list(self.tournaments) + ([self.coupon.tournament] if self.coupon and self.coupon.tournament_id else [])
+        tournament = next((item for item in known if str(item.pk) == str(tournament_id)), None)
+        return tournament is None or tournament.requires_prediction_text
 
     def clean_custom_cover_image(self):
         image = self.cleaned_data.get("custom_cover_image")
@@ -164,6 +181,17 @@ class RichPredictionCouponForm(forms.Form):
         is_paid = bool(cleaned_data.get("is_paid"))
         description = (cleaned_data.get("description") or "").strip()
 
+        tournament = cleaned_data.get("tournament")
+        publishing = cleaned_data.get("published_status") == PredictionCoupon.PublishedStatus.PUBLISHED
+        if tournament and is_paid:
+            self.add_error("is_paid", "Платный прогноз нельзя отправить в турнир.")
+        if tournament and publishing and self._tournament_requires_text(tournament):
+            try:
+                validate_paid_prediction_content(cleaned_data.get("headline"), description, kind="турнирного прогноза")
+            except ValidationError as exc:
+                for field, messages in exc.message_dict.items():
+                    for message in messages:
+                        self.add_error(field, message)
         if is_paid and not self.can_use_rich_fields:
             self.add_error(
                 "is_paid",
