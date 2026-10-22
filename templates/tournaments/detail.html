@@ -20,6 +20,11 @@
                         <span>Результаты</span>
                         <span class="profile-sidebar-chevron" aria-hidden="true"></span>
                     </button>
+                    <button class="profile-sidebar-link" id="tournament-tab-participants" type="button" role="tab" aria-selected="false" aria-controls="tournament-panel-participants" data-tournament-tab="participants">
+                        <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" only %}</span>
+                        <span>Участники</span>
+                        <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+                    </button>
                     <button class="profile-sidebar-link" id="tournament-tab-prizes" type="button" role="tab" aria-selected="false" aria-controls="tournament-panel-prizes" data-tournament-tab="prizes">
                         <span class="profile-sidebar-link-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 10h16v10H4zM3 7h18v4H3zM12 7v13"></path><path d="M12 7c-1.8 0-4.5-.7-4.5-2.6C7.5 3.1 8.5 2 9.8 2 11.7 2 12 4.7 12 7Zm0 0c1.8 0 4.5-.7 4.5-2.6C16.5 3.1 15.5 2 14.2 2 12.3 2 12 4.7 12 7Z"></path></svg></span>
                         <span>Призы</span>
@@ -433,6 +438,10 @@
 
                 <section class="tournament-tab-panel" id="tournament-panel-results" role="tabpanel" aria-labelledby="tournament-tab-results" data-tournament-panel="results" hidden>
                     {% include "tournaments/includes/_results_tab.html" %}
+                </section>
+
+                <section class="tournament-tab-panel" id="tournament-panel-participants" role="tabpanel" aria-labelledby="tournament-tab-participants" data-tournament-panel="participants" hidden>
+                    {% include "tournaments/includes/_participants_tab.html" %}
                 </section>
 
                 <section class="tournament-tab-panel" id="tournament-panel-about" role="tabpanel" aria-labelledby="tournament-tab-about" data-tournament-panel="about" hidden>

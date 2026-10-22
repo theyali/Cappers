@@ -18,6 +18,8 @@ def validate_participant_can_predict(
 ) -> None:
     if tournament.status != Tournament.Status.PUBLISHED:
         raise TournamentRuleError("Турнир недоступен для прогнозов.")
+    if tournament.finalized_at:
+        raise TournamentRuleError("Итоги турнира уже зафиксированы.")
     now = timezone.now()
     if now < tournament.starts_at:
         raise TournamentRuleError("Турнир ещё не начался.")
@@ -37,6 +39,8 @@ def validate_tournament_coupon(
     items: list[dict],
 ) -> None:
     validate_participant_can_predict(tournament, participant)
+    if not items:
+        raise TournamentRuleError("Добавьте хотя бы один матч в прогноз.")
 
     min_confidence = tournament.min_confidence or 0
     if min_confidence > 0 and confidence < min_confidence:
@@ -59,6 +63,8 @@ def _validate_match_window(tournament: Tournament, items: list[dict]) -> None:
     # A match after the end would keep the coupon unsettled and hold back results and prizes for everyone.
     for item in items:
         match = item["match"]
+        if match.starts_at is not None and (match.starts_at <= timezone.now() or match.sync_scope != Match.SyncScope.PREMATCH):
+            raise TournamentRuleError("Прогноз нужно опубликовать до начала матча.")
         if match.starts_at is None or match.starts_at > tournament.ends_at:
             raise TournamentRuleError(
                 f"Матч «{match.home_team_name or 'Хозяева'} — {match.away_team_name or 'Гости'}» "

@@ -48,6 +48,7 @@ class TournamentPredictionEntryTests(TestCase):
             role=User.Role.ANALYST,
         )
         self.tournament = Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="September Profit Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
@@ -126,6 +127,7 @@ class TournamentServiceTests(TestCase):
             role=User.Role.READER,
         )
         self.tournament = Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Rules Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
@@ -524,6 +526,8 @@ class TournamentAccessRewardTests(TestCase):
             tournament=tournament,
             participant=participant,
             rank=1,
+            coupons_count=1,
+            wins_count=1,
             prize_amount=Decimal("0.00"),
             profit=Decimal("100.00"),
             roi_percent=Decimal("100.00"),
@@ -856,6 +860,7 @@ class TournamentPageTests(TestCase):
             role=User.Role.ANALYST,
         )
         self.tournament = Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Page Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
@@ -876,6 +881,7 @@ class TournamentPageTests(TestCase):
 
     def test_index_lists_published_tournament_cards(self):
         Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Hidden Cup",
             status=Tournament.Status.DRAFT,
             starts_at=timezone.now(),
@@ -1018,6 +1024,99 @@ class TournamentPageTests(TestCase):
 
 
 class TournamentCatalogCardTests(TestCase):
+    def test_ajax_filter_and_sort_return_only_catalog_fragment(self):
+        future = Tournament.objects.create(title="Будущий AJAX турнир", status="published",
+            starts_at=timezone.now() + timedelta(days=1), ends_at=timezone.now() + timedelta(days=3))
+        response = self.client.get(reverse("tournaments:index"), {"filter": "upcoming", "sort": "prize"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest")
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertTrue(payload["ok"])
+        self.assertIn(future.title, payload["html"])
+        self.assertNotIn(self.tournament.title, payload["html"])
+        self.assertIn('class="is-upcoming is-active"', payload["html"])
+        self.assertIn('По призовому фонду', payload["html"])
+        self.assertIn('data-tournament-sort-link', payload["html"])
+        self.assertNotIn('<select', payload["html"])
+        self.assertIn('Любые', payload["html"])
+        self.assertIn('matches-sport-chip-glyph', payload["html"])
+        self.assertIn('data-tournament-filter-link', payload["html"])
+        self.assertNotIn('<html', payload["html"])
+        self.assertNotIn('tournaments-sidebar', payload["html"])
+        self.assertNotIn('<script', payload["html"])
+        empty = self.client.get(reverse("tournaments:index"), {"filter": "mine"},
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest").json()
+        self.assertTrue(empty["ok"])
+        self.assertIn('tournaments-empty', empty["html"])
+
+    def test_catalog_points_modal_is_outside_ajax_fragment(self):
+        response = self.client.get(reverse("tournaments:index"))
+        self.assertContains(response, 'id="tournament-rules-modal"', count=1)
+        self.assertContains(response, 'data-tournament-rules-open')
+        self.assertContains(response, '131 очко (116 + 15)')
+        self.assertContains(response, 'Серия из 3 зашедших подряд')
+        payload = self.client.get(reverse("tournaments:index"),
+            HTTP_X_REQUESTED_WITH="XMLHttpRequest").json()
+        self.assertIn('data-tournament-rules-open', payload["html"])
+        self.assertNotIn('<dialog', payload["html"])
+
+    def test_catalog_sort_button_cycles_and_preserves_filters(self):
+        for current, following in (("start", "prize"), ("prize", "popular"), ("popular", "start")):
+            response = self.client.get(reverse("tournaments:index"),
+                {"sport": "tennis", "filter": "upcoming", "sort": current})
+            from urllib.parse import urlparse, parse_qs
+            params = parse_qs(urlparse(response.context["sort_url"]).query)
+            self.assertEqual(params.get("sort", ["start"]), [following])
+            self.assertEqual(params["sport"], ["tennis"])
+            self.assertEqual(params["filter"], ["upcoming"])
+
+    def test_catalog_status_counts_filters_and_personal_strip_use_real_tournaments(self):
+        upcoming = Tournament.objects.create(title="Скорый турнир", status="published",
+            starts_at=timezone.now() + timedelta(days=1), ends_at=timezone.now() + timedelta(days=3))
+        finished = Tournament.objects.create(title="Прошлый турнир", status="published",
+            starts_at=timezone.now() - timedelta(days=3), ends_at=timezone.now() - timedelta(days=1))
+        user = User.objects.create_user(username="my-tournament-strip", role=User.Role.ANALYST)
+        for tournament in (self.tournament, upcoming):
+            TournamentParticipant.objects.create(user=user, tournament=tournament)
+        self.client.force_login(user)
+        page = self.client.get(reverse("tournaments:index"))
+        self.assertEqual(page.context["active_filter"], "all")
+        self.assertCountEqual([card.tournament.pk for card in page.context["tournaments"]], [self.tournament.pk, upcoming.pk, finished.pk])
+        counts = {tab.key: tab.count for tab in page.context["status_filter_tabs"]}
+        self.assertEqual(counts, {"all": 3, "live": 1, "upcoming": 1, "finished": 1, "mine": 2})
+        self.assertEqual(len(page.context["my_tournaments"]), 2)
+        self.assertContains(page, "2 активных")
+        self.assertContains(page, "Турниры <span>КапперХаб</span>")
+        self.assertNotContains(page, "tournaments/tournaments.png")
+        self.assertNotContains(page, "Топ-3 турниров")
+        for status, expected in (("live", [self.tournament.pk]), ("upcoming", [upcoming.pk]), ("finished", [finished.pk]), ("mine", [self.tournament.pk, upcoming.pk])):
+            response = self.client.get(reverse("tournaments:index"), {"filter": status, "sort": "prize"})
+            self.assertCountEqual([card.tournament.pk for card in response.context["tournaments"]], expected)
+            self.assertTrue(all("sort=prize" in tab.url for tab in response.context["sport_tabs"]))
+        self.client.logout()
+        guest = self.client.get(reverse("tournaments:index"))
+        self.assertFalse(guest.context["my_tournaments"])
+        self.assertContains(guest, "чтобы видеть свои турниры")
+
+    def test_personal_strip_positions_match_leaderboard_in_two_queries(self):
+        from tournaments.services.leaderboard import user_tournament_positions
+        user = User.objects.create_user(username="strip-ranking-author", role=User.Role.ANALYST)
+        opponent = User.objects.create_user(username="strip-ranking-opponent", role=User.Role.ANALYST)
+        second = Tournament.objects.create(title="Второй турнир", status="published",
+            starts_at=timezone.now() - timedelta(hours=1), ends_at=timezone.now() + timedelta(days=2))
+        for tournament in (self.tournament, second):
+            TournamentParticipant.objects.create(user=user, tournament=tournament)
+            participant = TournamentParticipant.objects.create(user=opponent, tournament=tournament)
+            coupon = PredictionCoupon.objects.create(author=opponent, published_status="published",
+                state_status="win", total_stake=100, possible_payout=250)
+            TournamentCoupon.objects.create(tournament=tournament, participant=participant, coupon=coupon)
+        with self.assertNumQueries(2):
+            positions = user_tournament_positions(user, [self.tournament.pk, second.pk])
+        for tournament in (self.tournament, second):
+            canonical = next(row for row in tournament_leaderboard(tournament, use_cache=False) if row["user"].pk == user.pk)
+            self.assertEqual(positions[tournament.pk]["rank"], canonical["rank"])
+            self.assertEqual(positions[tournament.pk]["profit"], canonical["profit"])
+
     def test_reader_action_links_to_become_capper_but_results_and_capper_action_remain(self):
         reader = User.objects.create_user(username="tournament-reader-cta", role=User.Role.READER)
         self.client.force_login(reader)
@@ -1035,12 +1134,13 @@ class TournamentCatalogCardTests(TestCase):
         reader.save(update_fields=["role"])
         self.tournament.ends_at = timezone.now() - timedelta(minutes=1)
         self.tournament.save(update_fields=["ends_at"])
-        response = self.client.get(reverse("tournaments:index"))
+        response = self.client.get(reverse("tournaments:index"), {"filter": "finished"})
         self.assertContains(response, "Итоги")
         self.assertNotContains(response, 'tournament-card-action" href="/cabinet/become-capper/"')
 
     def setUp(self):
         self.tournament = Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Экспресс-челлендж",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(hours=1),
@@ -1125,3 +1225,72 @@ class TournamentCatalogCardTests(TestCase):
             response,
             'class="tournament-detail-hero-icon" data-tournament-icon-color="#0F7A43"',
         )
+
+
+class TournamentParticipantsTests(TestCase):
+    def setUp(self):
+        cache.clear()
+        self.tournament = Tournament.objects.create(title="Participants Cup", status="published",
+            starts_at=timezone.now() - timedelta(hours=1), ends_at=timezone.now() + timedelta(days=1))
+        self.users = [User.objects.create_user(username=f"participant-{i:02}", role=User.Role.ANALYST)
+                      for i in range(13)]
+        self.members = [TournamentParticipant.objects.create(tournament=self.tournament, user=user)
+                        for user in self.users]
+        create_money_prizes(self.tournament, "1000", "500", "250")
+        self.url = reverse("tournaments:participants", kwargs={"slug": self.tournament.slug})
+
+    def test_participants_include_zero_predictions_and_own_member_with_real_points(self):
+        self.client.force_login(self.users[0])
+        page = self.client.get(self.tournament.get_absolute_url())
+        self.assertContains(page, 'data-tournament-tab="participants"')
+        directory = page.context["participants_tab"]
+        self.assertEqual(directory["total"], 13)
+        self.assertEqual(directory["own"]["username"], self.users[0].username)
+        self.assertTrue(directory["can_predict"])
+        self.assertTrue(all(row["points_label"] == "0" and row["coupons_count"] == 0 for row in directory["rows"]))
+        self.assertTrue(directory["next_url"])
+        self.assertEqual(directory["rows"][0]["money_label"], "")
+
+    def test_search_pagination_reverse_order_and_private_tournaments(self):
+        response = self.client.get(self.url, {"participants_q": "participant-12"})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('participant-12', response.json()["html"])
+        self.assertNotIn('participant-11', response.json()["html"])
+        second = self.client.get(self.tournament.get_absolute_url(), {"participants_page": 2})
+        self.assertEqual(len(second.context["participants_tab"]["rows"]), 3)
+        reverse_page = self.client.get(self.tournament.get_absolute_url(), {"participants_order": "asc"})
+        self.assertEqual(reverse_page.context["participants_tab"]["rows"][0]["rank"], 13)
+        empty = self.client.get(self.url, {"participants_q": "missing-person"}).json()
+        self.assertIn("Участники не найдены", empty["html"])
+        self.tournament.status = "draft"
+        self.tournament.save(update_fields=["status"])
+        self.assertEqual(self.client.get(self.url).status_code, 404)
+
+    def test_form_uses_latest_five_published_settled_coupons_only(self):
+        states = ["win", "lose", "win", "refund", "lose", "win"]
+        for i, state in enumerate(states):
+            coupon = PredictionCoupon.objects.create(author=self.users[0], published_status="published",
+                state_status=state, total_stake=100, possible_payout=200,
+                published_at=timezone.now() - timedelta(minutes=10-i))
+            TournamentCoupon.objects.create(tournament=self.tournament, participant=self.members[0], coupon=coupon)
+        for published, state in (("draft", "win"), ("published", "pending")):
+            coupon = PredictionCoupon.objects.create(author=self.users[0], published_status=published,
+                state_status=state, total_stake=100, possible_payout=200, published_at=timezone.now())
+            TournamentCoupon.objects.create(tournament=self.tournament, participant=self.members[0], coupon=coupon)
+        page = self.client.get(self.tournament.get_absolute_url(), {"participants_q": self.users[0].username})
+        row = page.context["participants_tab"]["rows"][0]
+        self.assertEqual([item["state"] for item in row["form"]], states[-5:])
+        self.assertEqual(row["coupons_count"], 7)
+        self.assertEqual(row["wins_count"], 3)
+
+    def test_directory_queries_are_batched_and_reader_profile_is_supported(self):
+        from tournaments.services.participants import build_tournament_participants_context
+        from django.test import RequestFactory
+        reader = User.objects.create_user(username="legacy-participant", role=User.Role.READER)
+        TournamentParticipant.objects.create(tournament=self.tournament, user=reader)
+        leaderboard = tournament_leaderboard(self.tournament, use_cache=False)
+        request = RequestFactory().get("/", {"participants_q": reader.username})
+        request.user = reader
+        with self.assertNumQueries(2):
+            context = build_tournament_participants_context(request, self.tournament, leaderboard=leaderboard)
+        self.assertEqual(context["rows"][0]["profile_url"], reverse("cabinet:user_profile", kwargs={"username": reader.username}))

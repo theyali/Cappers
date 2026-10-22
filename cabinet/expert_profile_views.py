@@ -5,7 +5,6 @@ from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.formats import date_format
-from django.utils.html import strip_tags
 from django.utils import timezone
 from django.views.decorators.csrf import ensure_csrf_cookie
 from django.views.decorators.cache import never_cache
@@ -23,7 +22,7 @@ from game.services.bet_options import MARKET_TITLES, human_market_label
 from notifications.models import Notification, NotificationSectionState
 from notifications.services import refresh_section_state
 from tournaments.models import Tournament, TournamentParticipant, TournamentResult
-from tournaments.services.leaderboard import tournament_leaderboard
+from tournaments.services.leaderboard import user_tournament_positions
 
 from achievements.evaluators import user_achievement_metrics
 
@@ -339,13 +338,6 @@ def _expert_achievement_badges(profile: AnalystProfile, context: dict) -> list[d
     return list(reversed(badges))
 
 
-def _participant_leaderboard_row(participant: TournamentParticipant) -> dict | None:
-    for row in tournament_leaderboard(participant.tournament):
-        if row["participant"].pk == participant.pk:
-            return row
-    return None
-
-
 def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
     participations = list(
         TournamentParticipant.objects.filter(
@@ -366,6 +358,7 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
         .order_by("-finalized_at", "-id")
     }
 
+    positions = user_tournament_positions(user, [participant.tournament_id for participant in participations])
     rows = []
     for participant in participations:
         tournament = participant.tournament
@@ -379,7 +372,7 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
             and runtime_status in {"live", "finished"}
             and participant.status == TournamentParticipant.Status.ACTIVE
         ):
-            leaderboard_row = _participant_leaderboard_row(participant)
+            leaderboard_row = positions.get(tournament.pk)
 
         if participant.status == TournamentParticipant.Status.DISQUALIFIED:
             status_key = "disqualified"
@@ -453,6 +446,9 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
                 "wins_count": wins_count,
                 "losses_count": losses_count,
                 "refunds_count": refunds_count,
+                "uses_points": tournament.uses_points,
+                "points": getattr(source, "points", 0) if result is not None else (source or {}).get("points", 0),
+                "bonus_points": getattr(source, "bonus_points", 0) if result is not None else (source or {}).get("bonus_points", 0),
                 "profit": profit,
                 "roi_percent": roi_percent,
                 "prize_amount": result.prize_amount if result is not None else 0,

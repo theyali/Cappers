@@ -1,6 +1,9 @@
 """Tournament predictions go through the shared coupon: the capper picks a tournament in the coupon,
 the coupon is checked against the tournament's rules and is published as a rich prediction."""
 
+from datetime import datetime, time, timedelta
+from zoneinfo import ZoneInfo
+
 from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
@@ -68,6 +71,9 @@ def tournament_rules(user, tournaments: list[Tournament] | None = None) -> list[
             "coupon_type": tournament.coupon_type_rule,
             "requires_text": tournament.requires_prediction_text,
             "ends_at": tournament.ends_at.isoformat(),
+            "scoring_method": tournament.scoring_method,
+            "daily_coupon_limit": tournament.daily_coupon_limit,
+            "scoring_timezone": tournament.scoring_timezone,
             "used_match_ids": used.get(tournament.pk, []),
         }
         for tournament in tournaments
@@ -88,6 +94,7 @@ def resolve_tournament_choice(user, value) -> Tournament | None:
     return tournament
 
 
+@transaction.atomic
 def attach_coupon_to_tournament(coupon: PredictionCoupon, tournament: Tournament) -> TournamentCoupon:
     """Check a coupon being published against the tournament's rules and enter it; call inside the publish
     transaction so a refused coupon is not published either."""
@@ -98,6 +105,20 @@ def attach_coupon_to_tournament(coupon: PredictionCoupon, tournament: Tournament
     )
     if participant is None:
         raise TournamentRuleError("Подключитесь к турниру, чтобы сделать прогноз.")
+    tournament = Tournament.objects.select_for_update().get(pk=tournament.pk)
+    existing = TournamentCoupon.objects.filter(coupon=coupon).first()
+    if existing:
+        if existing.tournament_id != tournament.pk or existing.participant_id != participant.pk:
+            raise TournamentRuleError("Прогноз уже относится к другому турниру.")
+        return existing
+    if tournament.daily_coupon_limit:
+        local_day = timezone.now().astimezone(ZoneInfo(tournament.scoring_timezone)).date()
+        day_start = datetime.combine(local_day, time.min, tzinfo=ZoneInfo(tournament.scoring_timezone))
+        day_end = datetime.combine(local_day + timedelta(days=1), time.min, tzinfo=ZoneInfo(tournament.scoring_timezone))
+        # Cancellations revoke points but do not free publication slots.
+        if TournamentCoupon.objects.filter(participant=participant, published_at__gte=day_start,
+                published_at__lt=day_end).count() >= tournament.daily_coupon_limit:
+            raise TournamentRuleError(f"Лимит турнира — {tournament.daily_coupon_limit} прогнозов в день.")
     predictions = list(coupon.predictions.select_related("match__sport", "match__home_team", "match__away_team"))
     validate_tournament_coupon(
         tournament,

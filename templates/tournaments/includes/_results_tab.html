@@ -18,7 +18,7 @@
                     <a href="{% url 'front:expert_profile' username=row.username %}">{{ row.name }}</a>
                     <small>{{ row.coupons_count }} прогнозов</small>
                 </div>
-                <strong>{{ row.roi_percent|floatformat:1 }}%<small>ROI</small></strong>
+                <strong>{{ row.score_label }}<small>{{ row.score_unit }}</small></strong>
             </div>
         </article>
         {% endfor %}
@@ -51,8 +51,8 @@
                     <span>Прогнозов</span>
                     <span>Побед</span>
                     <span>Проходимость</span>
-                    <span>Прибыль</span>
-                    <span>ROI</span>
+                    <span>{% if results_tab.uses_points %}Базовые очки{% else %}Прибыль{% endif %}</span>
+                    <span>{% if results_tab.uses_points %}Всего очков{% else %}ROI{% endif %}</span>
                 </div>
                 <div class="tournament-results-table-body">
                     {% for row in results_tab.rows %}
@@ -77,8 +77,8 @@
                         <span>{{ row.coupons_count }}</span>
                         <span>{{ row.wins_count }}</span>
                         <span>{{ row.winrate }}%</span>
-                        <span class="{% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">{{ row.profit_label }}</span>
-                        <strong class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{{ row.roi_percent|floatformat:1 }}%</strong>
+                        <span class="{% if row.base_positive %}is-positive{% elif row.base_negative %}is-negative{% endif %}">{% if results_tab.uses_points %}{{ row.base_points }}{% else %}{{ row.profit_label }}{% endif %}</span>
+                        <strong title="Бонусы: {{ row.bonus_points }}" class="{% if row.score_positive %}is-positive{% elif row.score_negative %}is-negative{% endif %}">{{ row.score_label }}</strong>
                     </div>
                     {% endfor %}
                 </div>

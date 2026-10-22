@@ -9,6 +9,7 @@ from cabinet.referrals import REFERRAL_ACTION_TOURNAMENT, credit_referral_income
 from cabinet.vip import extend_vip
 from tournaments.models import (
     Tournament,
+    TournamentParticipant,
     TournamentPrize,
     TournamentPrizeAward,
     TournamentResult,
@@ -41,6 +42,10 @@ def award_tournament_prizes(tournament: Tournament, *, results=None) -> list[Tou
 
     awards = []
     for result in final_results:
+        if not (result.wins_count or result.losses_count or result.refunds_count):
+            continue
+        if result.participant.status != TournamentParticipant.Status.ACTIVE:
+            continue
         prize = prizes_by_place.get(result.rank)
         snapshot = _award_snapshot(result, prize)
         if not _has_any_award(snapshot):

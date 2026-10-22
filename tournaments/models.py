@@ -1,4 +1,5 @@
 from decimal import Decimal
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -34,6 +35,10 @@ def _unique_slug(model: type[models.Model], value: str, lookup_pk: int | None = 
 
 
 class Tournament(models.Model):
+    class ScoringMethod(models.TextChoices):
+        ROI = "roi", "ROI (прежние правила)"
+        POINTS = "points_v1", "Турнирные очки v1"
+
     class Status(models.TextChoices):
         DRAFT = "draft", "Черновик"
         PUBLISHED = "published", "Опубликован"
@@ -129,6 +134,15 @@ class Tournament(models.Model):
         default=None,
         help_text="Оставьте пустым или укажите 0, если уверенность не участвует в условиях турнира.",
     )
+    scoring_method = models.CharField("Рейтинг", max_length=16, choices=ScoringMethod.choices, default=ScoringMethod.POINTS)
+    scoring_timezone = models.CharField("Часовой пояс турнирного дня", max_length=64, default=settings.TIME_ZONE)
+    daily_coupon_limit = models.PositiveSmallIntegerField("Прогнозов в день (0 — без лимита)", default=5)
+    streak_bonus_enabled = models.BooleanField("Бонус за три победы подряд", default=True)
+    streak_bonus_points = models.PositiveSmallIntegerField("Очки за три победы", default=10)
+    high_odds_bonus_enabled = models.BooleanField("Бонус за выигрыш с кф > 3.00", default=True)
+    high_odds_bonus_points = models.PositiveSmallIntegerField("Очки за кф > 3.00", default=15)
+    daily_bonus_enabled = models.BooleanField("Бонус за пять публикаций за день", default=True)
+    daily_bonus_points = models.PositiveSmallIntegerField("Очки за пять публикаций", default=5)
     coupon_type_rule = models.CharField(
         "Тип прогноза",
         max_length=16,
@@ -177,6 +191,25 @@ class Tournament(models.Model):
             raise ValidationError({"min_confidence": "Уверенность должна быть от 0 до 100%."})
         if self.min_coefficient is not None and self.min_coefficient < 0:
             raise ValidationError({"min_coefficient": "Значение не может быть отрицательным."})
+        try:
+            ZoneInfo(self.scoring_timezone)
+        except (ZoneInfoNotFoundError, ValueError):
+            raise ValidationError({"scoring_timezone": "Укажите часовой пояс IANA, например Asia/Baku."})
+        if self.pk and (self.finalized_at or self.tournament_coupons.exists()):
+            previous = type(self).objects.get(pk=self.pk)
+            for field in self.scoring_fields:
+                if getattr(previous, field) != getattr(self, field):
+                    raise ValidationError({field: "Правила начисления нельзя менять после первой публикации."})
+
+    scoring_fields = (
+        "scoring_method", "scoring_timezone", "daily_coupon_limit", "streak_bonus_enabled",
+        "streak_bonus_points", "high_odds_bonus_enabled", "high_odds_bonus_points",
+        "daily_bonus_enabled", "daily_bonus_points",
+    )
+
+    @property
+    def uses_points(self) -> bool:
+        return self.scoring_method == self.ScoringMethod.POINTS
 
     def save(self, *args, **kwargs) -> None:
         if not self.slug:
@@ -536,6 +569,18 @@ class TournamentCoupon(models.Model):
         verbose_name="Прогноз",
     )
     created_at = models.DateTimeField("Создан", auto_now_add=True)
+    published_coefficient = models.DecimalField("Коэффициент при публикации", max_digits=40, decimal_places=16, default=0, editable=False)
+    published_at = models.DateTimeField("Публикация в турнире", default=timezone.now, editable=False)
+
+    def save(self, *args, **kwargs):
+        if self._state.adding:
+            self.published_at = self.coupon.published_at or timezone.now()
+            coefficient = Decimal("1")
+            predictions = list(self.coupon.predictions.all())
+            for prediction in predictions:
+                coefficient *= prediction.coefficient
+            self.published_coefficient = coefficient if predictions else Decimal("0")
+        super().save(*args, **kwargs)
 
     class Meta:
         verbose_name = "Прогноз турнира"
@@ -555,6 +600,25 @@ class TournamentCoupon(models.Model):
 
     def __str__(self) -> str:
         return f"{self.tournament} · прогноз #{self.coupon_id}"
+
+
+class TournamentPointAccrual(models.Model):
+    class Kind(models.TextChoices):
+        BASE = "base", "Исход купона"
+        STREAK = "streak", "Три победы подряд"
+        HIGH_ODDS = "high_odds", "Выигрыш с кф > 3.00"
+        DAILY = "daily", "Пять публикаций за день"
+
+    participant = models.ForeignKey(TournamentParticipant, on_delete=models.CASCADE, related_name="point_accruals")
+    tournament_coupon = models.ForeignKey(TournamentCoupon, on_delete=models.CASCADE, related_name="point_accruals")
+    kind = models.CharField("Причина", max_length=16, choices=Kind.choices)
+    source_key = models.CharField("Источник", max_length=80)
+    points = models.BigIntegerField("Очки")
+
+    class Meta:
+        verbose_name = "Начисление турнирных очков"
+        verbose_name_plural = "Начисления турнирных очков"
+        constraints = [models.UniqueConstraint(fields=("participant", "source_key"), name="unique_tournament_point_source")]
 
 
 class TournamentPredictionEntry(models.Model):
@@ -642,6 +706,9 @@ class TournamentResult(models.Model):
     total_stake = models.DecimalField("Сумма ставок", max_digits=12, decimal_places=2, default=0)
     profit = models.DecimalField("Прибыль", max_digits=12, decimal_places=2, default=0)
     roi_percent = models.DecimalField("ROI, %", max_digits=8, decimal_places=2, default=0)
+    base_points = models.BigIntegerField("Базовые очки", default=0)
+    bonus_points = models.BigIntegerField("Бонусные очки", default=0)
+    points = models.BigIntegerField("Всего очков", default=0)
     prize_amount = models.DecimalField("Приз", max_digits=12, decimal_places=2, default=0)
     achievement = models.ForeignKey(
         TournamentAchievement,

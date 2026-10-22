@@ -30,7 +30,8 @@ from tournaments.models import (
 )
 from tournaments.services.eligibility import check_tournament_eligibility
 from tournaments.services.join import TournamentJoinError, get_active_participant, join_tournament
-from tournaments.services.leaderboard import tournament_leaderboard
+from tournaments.services.leaderboard import tournament_leaderboard, user_tournament_positions
+from tournaments.services.participants import build_tournament_participants_context
 from wallets.services import format_coins, format_money
 
 
@@ -99,13 +100,33 @@ def index(request):
         )
         for tournament in tournament_list
     ]
-    if active_filter == "finished":
-        cards = [card for card in cards if card.runtime_status["key"] == "finished"]
+    filter_counts = {
+        key: sum(card.runtime_status["key"] == key for card in cards)
+        for key in ("live", "upcoming", "finished")
+    }
+    filter_counts["all"] = len(cards)
+    filter_counts["mine"] = sum(card.is_joined for card in cards)
+    my_tournaments = sorted(
+        (card for card in cards if card.is_joined and card.runtime_status["key"] != "finished"),
+        key=lambda card: (card.runtime_status["key"] != "live", card.tournament.starts_at),
+    )
+    my_tournaments_count = len(my_tournaments)
+    my_tournaments = my_tournaments[:2]
+    my_positions = user_tournament_positions(request.user, [card.tournament.pk for card in my_tournaments])
+    for card in my_tournaments:
+        position = my_positions.get(card.tournament.pk)
+        card.my_rank = position["rank"] if position else None
+        card.my_profit_label = position["score_label"] if position else "0"
+        card.my_score_unit = position["score_unit"] if position else ("очков" if card.tournament.uses_points else "ROI")
+    if active_filter in {"live", "upcoming", "finished"}:
+        cards = [card for card in cards if card.runtime_status["key"] == active_filter]
+    elif active_filter == "mine":
+        cards = [card for card in cards if card.is_joined]
     elif active_filter == "popular":
         cards = sorted(cards, key=lambda card: card.participants_count, reverse=True)
     elif active_filter == "high_prize":
         cards = sorted(cards, key=lambda card: card.prize_total, reverse=True)
-    else:
+    elif active_filter != "all":
         active_filter = "all"
 
     if active_sort == "prize":
@@ -115,24 +136,30 @@ def index(request):
     else:
         active_sort = "start"
 
-    top_tournaments = sorted(cards, key=lambda card: card.prize_total, reverse=True)[:3]
     my_prizes = _tournament_user_prizes(request.user)
-    return render(
-        request,
-        "tournaments/index.html",
-        {
-            "tournaments": cards,
-            "show_become_capper": request.user.is_authenticated and not request.user.is_analyst,
-            "top_tournaments": top_tournaments,
-            "sport_tabs": _tournament_index_sport_tabs(active_sport, active_filter, active_sort),
-            "status_filter_tabs": _tournament_index_filter_tabs(active_sport, active_filter, active_sort),
-            "active_sport": active_sport,
-            "active_filter": active_filter,
-            "active_sort": active_sort,
-            "my_prizes": my_prizes,
-            "now": now,
-        },
-    )
+    context = {
+        "tournaments": cards,
+        "show_become_capper": request.user.is_authenticated and not request.user.is_analyst,
+        "my_tournaments": my_tournaments,
+        "my_tournaments_count_label": f"{my_tournaments_count} {plural_ru(my_tournaments_count, 'активный', 'активных', 'активных')}",
+        "my_tournaments_url": _tournament_index_query(filter="mine"),
+        "sport_tabs": _tournament_index_sport_tabs(active_sport, active_filter, active_sort),
+        "status_filter_tabs": _tournament_index_filter_tabs(active_sport, active_filter, active_sort, filter_counts),
+        "active_sport": active_sport,
+        "active_filter": active_filter,
+        "active_sort": active_sort,
+        "sort_label": {"start": "По дате начала", "prize": "По призовому фонду", "popular": "По участникам"}[active_sort],
+        "sort_url": _tournament_index_query(sport=active_sport, filter=active_filter,
+            sort={"start": "prize", "prize": "popular", "popular": "start"}[active_sort]),
+        "catalog_empty_title": "По этим условиям турниров нет" if tournament_list else "Турниров пока нет",
+        "catalog_empty_text": "Выберите другой статус или вид спорта." if tournament_list else "Когда появятся турниры, они будут показаны здесь.",
+        "my_prizes": my_prizes,
+        "now": now,
+    }
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        html = render_to_string("tournaments/includes/_catalog_content.html", context, request=request)
+        return JsonResponse({"ok": True, "html": html})
+    return render(request, "tournaments/index.html", context)
 
 
 def detail(request, slug: str):
@@ -191,6 +218,7 @@ def detail(request, slug: str):
                 tournament,
                 leaderboard,
             ),
+            "participants_tab": build_tournament_participants_context(request, tournament, leaderboard=leaderboard),
             "prizes_tab": prizes_tab,
             "about_tab": _tournament_about_tab(
                 tournament,
@@ -217,6 +245,16 @@ def detail(request, slug: str):
 
 
 @require_GET
+@require_GET
+def participants(request, slug: str):
+    tournament = get_object_or_404(Tournament, slug=slug, status=Tournament.Status.PUBLISHED)
+    context = build_tournament_participants_context(request, tournament)
+    html = render_to_string("tournaments/includes/_participants_tab.html",
+        {"tournament": tournament, "participants_tab": context,
+         "runtime_status": _runtime_status(tournament, timezone.now())}, request=request)
+    return JsonResponse({"ok": True, "html": html})
+
+
 def results(request, slug: str):
     tournament = get_object_or_404(
         Tournament.objects.prefetch_related("allowed_sports", "achievements"),
@@ -273,30 +311,32 @@ def _tournament_index_query(**params) -> str:
 
 def _tournament_index_sport_tabs(active_sport: str, active_filter: str, active_sort: str):
     core = [
-        ("football", "Футбол", "⚽"),
-        ("basketball", "Баскетбол", "🏀"),
-        ("tennis", "Теннис", "🎾"),
-        ("hockey", "Хоккей", "🏒"),
+        ("football", "Футбол", "f"),
+        ("hockey", "Хоккей", "h"),
+        ("tennis", "Теннис", "t"),
+        ("basketball", "Баскетбол", "b"),
     ]
     sports = list(Sport.objects.filter(code__in=[code for code, _, _ in core]).only("code", "name", "name_ru"))
     by_code = {sport.code: sport for sport in sports}
     tabs = [
         SimpleNamespace(
             code="all",
-            label="Все виды",
-            icon="🏆",
+            label="Любые",
+            tile_key="x",
+            icon_code="express",
             is_active=active_sport == "all",
             url=_tournament_index_query(filter=active_filter, sort=active_sort),
         )
     ]
-    for code, fallback_label, icon in core:
+    for code, fallback_label, tile_key in core:
         sport = by_code.get(code)
         label = (sport.name_ru or sport.name) if sport else fallback_label
         tabs.append(
             SimpleNamespace(
                 code=code,
                 label=label,
-                icon=icon,
+                tile_key=tile_key,
+                icon_code=code,
                 is_active=active_sport == code,
                 url=_tournament_index_query(sport=code, filter=active_filter, sort=active_sort),
             )
@@ -304,22 +344,21 @@ def _tournament_index_sport_tabs(active_sport: str, active_filter: str, active_s
     return tabs
 
 
-def _tournament_index_filter_tabs(active_sport: str, active_filter: str, active_sort: str):
+def _tournament_index_filter_tabs(active_sport: str, active_filter: str, active_sort: str, counts):
     filters = [
-        ("all", "Все", ""),
-        ("popular", "Популярные", "🔥"),
-        ("finished", "Завершенные", "◷"),
-        ("high_prize", "С высоким призом", "🏆"),
+        ("all", "Все", "Все"),
+        ("live", "Идут сейчас", "Идут"),
+        ("upcoming", "Скоро старт", "Скоро"),
+        ("finished", "Завершённые", "Завершённые"),
+        ("mine", "Мои", "Мои"),
     ]
     return [
         SimpleNamespace(
-            key=key,
-            label=label,
-            icon=icon,
+            key=key, label=label, mobile_label=mobile_label, count=counts.get(key, 0),
             is_active=active_filter == key,
             url=_tournament_index_query(sport=active_sport, filter=key, sort=active_sort),
         )
-        for key, label, icon in filters
+        for key, label, mobile_label in filters
     ]
 
 
@@ -703,11 +742,34 @@ def _default_format_rules(tournament: Tournament, *, allowed_sports_label: str) 
             if tournament.min_confidence
             else "Уверенность прогноза без ограничения"
         ),
-        "Рейтинг формируется по ROI",
-        "Учитываются только рассчитанные прогнозы",
-        "При равном ROI выше участник с большей прибылью",
+        *_scoring_rules(tournament),
         "Результаты обновляются автоматически",
     ]
+
+
+def _scoring_rules(tournament: Tournament) -> list[str]:
+    rules = []
+    if tournament.uses_points:
+        rules.extend([
+            "Турнирные очки v1: выигрыш — кф при публикации × 10, дробная часть отбрасывается; проигрыш — −5, возврат — 0",
+            "Экспресс считается одним прогнозом по общему коэффициенту",
+            "При равных очках выше участник с большим числом побед, затем вступивший раньше; далее — ID участника",
+        ])
+        if tournament.streak_bonus_enabled:
+            rules.append(f"Каждая непересекающаяся тройка побед по порядку публикации: +{tournament.streak_bonus_points}; проигрыш, возврат и ожидающий расчёта купон прерывают серию")
+        if tournament.high_odds_bonus_enabled:
+            rules.append(f"Выигрыш с коэффициентом строго выше 3.00: +{tournament.high_odds_bonus_points}")
+        if tournament.daily_bonus_enabled:
+            rules.append(f"Пять опубликованных прогнозов за день: +{tournament.daily_bonus_points} один раз за дату; возвраты и ожидающие расчёта учитываются, отменённые — нет")
+    else:
+        rules.extend(["Рейтинг формируется по ROI", "При равном ROI выше участник с большей прибылью"])
+    rules.extend([
+        f"Дневной лимит: {tournament.daily_coupon_limit or 'без ограничения'}; часовой пояс — {tournament.scoring_timezone}; отмена не освобождает лимит",
+        "Участники без рассчитанных прогнозов находятся в конце таблицы и не получают призы",
+        "Прогноз публикуется строго до начала события; матчи должны начаться до окончания турнира",
+        "Итоги фиксируются после окончания турнира и расчёта всех прогнозов; призовые места заданы в разделе «Призы»",
+    ])
+    return rules
 
 
 def _tournament_about_stages(tournament: Tournament) -> list[SimpleNamespace]:
@@ -944,7 +1006,7 @@ def _tournament_about_tab(
                 "icon": "chart",
                 "tone": "",
                 "title": "Как считаются результаты",
-                "text": "Рейтинг формируется по ROI и прибыли. Учитываются только рассчитанные прогнозы.",
+                "text": ". ".join(_scoring_rules(tournament)),
             },
             {
                 "icon": "shield",
@@ -1083,6 +1145,7 @@ def _tournament_results_tab(request, tournament: Tournament, leaderboard: list[d
     top_rows = rows[:3]
 
     return {
+        "uses_points": tournament.uses_points,
         "rows": list(page_obj.object_list),
         "top_rows": top_rows,
         "updates": updates,
@@ -1111,6 +1174,12 @@ def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
     decided_count = wins_count + losses_count + refunds_count
     winrate = int(round((wins_count / decided_count) * 100)) if decided_count else 0
     return {
+        "score_label": row["score_label"], "score_unit": row["score_unit"],
+        "base_points": row["base_points"], "bonus_points": row["bonus_points"], "points": row["points"],
+        "score_positive": (row["points"] if row["uses_points"] else row["roi_percent"]) > 0,
+        "score_negative": (row["points"] if row["uses_points"] else row["roi_percent"]) < 0,
+        "base_positive": (row["base_points"] if row["uses_points"] else row["profit"]) > 0,
+        "base_negative": (row["base_points"] if row["uses_points"] else row["profit"]) < 0,
         "rank": int(row["rank"] or 0),
         "user": user,
         "name": display_name,
@@ -1146,6 +1215,7 @@ def _tournament_recent_results(tournament: Tournament, *, limit: int = 6) -> lis
             ),
         )
         .select_related("participant__user__analyst_profile", "coupon")
+        .prefetch_related("point_accruals")
         .order_by("-coupon__settled_at", "-id")[:limit]
     )
     results = []
@@ -1157,7 +1227,7 @@ def _tournament_recent_results(tournament: Tournament, *, limit: int = 6) -> lis
             direction, profit, verdict = "down", -coupon.total_stake, "не зашёл"
         else:
             direction, profit, verdict = "refund", Decimal("0"), "возврат"
-        coefficient = (
+        coefficient = link.published_coefficient if tournament.uses_points else (
             (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
             if coupon.total_stake
             else Decimal("0")
@@ -1165,7 +1235,8 @@ def _tournament_recent_results(tournament: Tournament, *, limit: int = 6) -> lis
         results.append(
             {
                 "direction": direction,
-                "profit_label": _signed_coins(profit),
+                "profit_label": (f'{sum(item.points for item in link.point_accruals.all()):+d} очк.'
+                    if tournament.uses_points else _signed_coins(profit)),
                 "name": getattr(getattr(user, "analyst_profile", None), "display_name", "") or user.get_full_name() or user.username,
                 "avatar_url": user.avatar.url if user.avatar else "",
                 "text": f"{coupon.get_coupon_type_display()} · кф {coefficient} — {verdict}",

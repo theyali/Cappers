@@ -9,6 +9,7 @@ from .models import (
     TournamentEligibilityRule,
     TournamentFAQ,
     TournamentParticipant,
+    TournamentPointAccrual,
     TournamentPredictionEntry,
     TournamentPrize,
     TournamentPrizeAward,
@@ -80,6 +81,7 @@ class TournamentAdmin(admin.ModelAdmin):
     list_display = (
         "title",
         "status",
+        "scoring_method",
         "entry_fee_coins",
         "starts_at",
         "ends_at",
@@ -92,6 +94,7 @@ class TournamentAdmin(admin.ModelAdmin):
     )
     list_filter = (
         "status",
+        "scoring_method",
         "vip_only",
         "new_users_only",
         "eligibility_mode",
@@ -115,6 +118,7 @@ class TournamentAdmin(admin.ModelAdmin):
         ),
         ("Стоимость участия", {"fields": ("entry_fee_coins",)}),
         ("Даты", {"fields": ("starts_at", "ends_at")}),
+        ("Начисление очков", {"fields": Tournament.scoring_fields}),
         ("Изображения карточки", {"fields": ("card_image", "hero_image", "hero_icon", "card_icon_bg_color")}),
         ("Спонсор карточки", {"fields": ("sponsor_name", "sponsor_logo", "sponsor_url")}),
         (
@@ -276,7 +280,7 @@ class TournamentCouponAdmin(admin.ModelAdmin):
         "coupon__id",
     )
     autocomplete_fields = ("tournament", "participant", "coupon")
-    readonly_fields = ("created_at",)
+    readonly_fields = ("created_at", "published_at", "published_coefficient")
     inlines = (TournamentPredictionEntryInline,)
 
 
@@ -302,6 +306,7 @@ class TournamentResultAdmin(admin.ModelAdmin):
         "tournament",
         "rank",
         "participant",
+        "points",
         "profit",
         "roi_percent",
         "prize_amount_display",
@@ -316,3 +321,16 @@ class TournamentResultAdmin(admin.ModelAdmin):
     @admin.display(description="Приз, ₽", ordering="prize_amount")
     def prize_amount_display(self, obj):
         return f"{obj.prize_amount} ₽"
+
+
+@admin.register(TournamentPointAccrual)
+class TournamentPointAccrualAdmin(admin.ModelAdmin):
+    list_display = ("participant", "tournament_coupon", "kind", "points", "source_key")
+    list_filter = ("kind", "participant__tournament")
+    readonly_fields = ("participant", "tournament_coupon", "kind", "points", "source_key")
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

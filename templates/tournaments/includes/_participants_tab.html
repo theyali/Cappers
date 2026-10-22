@@ -1,0 +1,60 @@
+{% load site_extras %}
+<div class="tournament-participants" data-tournament-participants data-participants-endpoint="{{ participants_tab.endpoint }}" aria-busy="false">
+    <header class="tournament-participants-heading">
+        <div><span class="tournament-participants-eyebrow">Участники турнира</span><h2>{{ tournament.title }}</h2></div>
+        <span class="tournament-participants-state">{{ runtime_status.label }}</span>
+        <p class="tournament-participants-mobile-summary">{{ participants_tab.total }} участников · призовой фонд {{ participants_tab.prize_fund }} ₽</p>
+    </header>
+    <div class="tournament-participants-stats">
+        <div><strong>{{ participants_tab.total }}</strong><span>участников</span></div>
+        <div><strong>{{ participants_tab.total_coupons }}</strong><span>прогнозов за турнир</span></div>
+        <div><strong>{{ participants_tab.prize_fund }} ₽</strong><span>призовой фонд</span></div>
+        <div><strong>{{ participants_tab.prize_count }}</strong><span>призовых мест</span></div>
+    </div>
+    {% if participants_tab.own %}
+    <section class="tournament-participants-own" aria-label="Ваше место в турнире">
+        <span class="tournament-participants-rank">{{ participants_tab.own.rank }}</span>
+        <div class="tournament-participants-own-copy"><strong>Вы в турнире · {{ participants_tab.own.rank }} место</strong><small>{{ participants_tab.own.points_label }} {{ participants_tab.metric_unit }} · {{ participants_tab.own.coupons_count }} прогнозов · {{ participants_tab.own.wins_count }} зашло</small></div>
+        <div class="tournament-participants-gap"><small>До призовой зоны</small><strong>{{ participants_tab.gap_label }}</strong></div>
+        {% if participants_tab.can_predict %}<a class="tournament-participants-predict" href="{{ participants_tab.prediction_url }}"><span class="tournament-participants-desktop-label">Добавить прогноз</span><span class="tournament-participants-mobile-label">Прогноз</span></a>{% endif %}
+    </section>
+    {% endif %}
+    <section class="tournament-participants-card" aria-labelledby="tournament-participants-table-title">
+        <form class="tournament-participants-toolbar" method="get" action="{{ tournament.get_absolute_url }}" data-participants-search-form>
+            <h3 id="tournament-participants-table-title">{% include "front/includes/_solar_icon.html" with name="users-group-rounded-bold" icon_size=19 only %}Таблица участников</h3>
+            <input type="hidden" name="tab" value="participants">
+            <input type="hidden" name="participants_order" value="{{ participants_tab.order }}">
+            <label class="tournament-participants-search">{% include "front/includes/_solar_icon.html" with name="search-bold" icon_size=16 only %}<input name="participants_q" value="{{ participants_tab.query }}" placeholder="Поиск по капперу" aria-label="Поиск по капперу" type="search" maxlength="150" data-participants-search></label>
+            <a class="tournament-participants-sort" href="{{ participants_tab.sort_url }}" data-participants-link aria-label="Изменить порядок участников" title="{% if participants_tab.order == 'desc' %}Сначала лидеры{% else %}В обратном порядке{% endif %}">{% include "front/includes/_solar_icon.html" with name="match_filters" icon_size=15 only %}<span class="tournament-participants-desktop-label">{{ participants_tab.sort_label }}</span><span class="tournament-participants-mobile-label">{{ participants_tab.metric_label }}</span></a>
+        </form>
+        <p class="tournament-participants-error" data-participants-error role="alert" hidden>Не удалось обновить участников. <button type="button" data-participants-retry>Повторить</button></p>
+        <div class="tournament-participants-list" role="table" aria-label="Таблица участников">
+            <div class="tournament-participants-table-head" role="row">
+                <span role="columnheader" class="tournament-participants-person-col">Каппер</span><span role="columnheader" class="tournament-participants-count">Прогнозов</span><span role="columnheader" class="tournament-participants-wins">Зашло</span><span role="columnheader" class="tournament-participants-form">Форма</span><span role="columnheader" class="tournament-participants-points">{{ participants_tab.metric_label }}</span><span role="columnheader" class="tournament-participants-prize">Приз</span>
+            </div>
+            <div data-participants-rows role="rowgroup">
+                {% for row in participants_tab.rows %}
+                <div class="tournament-participants-row is-place-{{ row.rank }}{% if row.is_own %} is-own{% endif %}" role="row">
+                    <div class="tournament-participants-person-col" role="cell">
+                        <span class="tournament-participants-rank">{{ row.rank }}</span>
+                        <a class="tournament-participants-person" href="{{ row.profile_url }}">
+                            <span class="tournament-participants-avatar">{% if row.avatar_url %}<img src="{{ row.avatar_url }}" width="38" height="38" alt="" loading="lazy">{% else %}{{ row.name|slice:':1'|upper }}{% endif %}</span>
+                            <span class="tournament-participants-person-copy"><span class="tournament-participants-name"><strong>{{ row.name }}</strong>{% if row.is_own %}<b class="tournament-participants-you">Вы</b>{% endif %}{% if row.is_verified %}<svg class="tournament-participants-verified" viewBox="0 0 20 20" aria-label="Проверенный эксперт"><path fill="#2f6bff" d="M10 .5 13 2l3.3.7.7 3.3 1.5 4-1.5 3-.7 3.3-3.3.7-3 1.5L7 17l-3.3-.7L3 13 .5 10 3 7l.7-3.3L7 3Z"/><path d="m6 10 2.5 2.5L14 7" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>{% endif %}</span><small class="tournament-participants-handle">@{{ row.username }}</small><small class="tournament-participants-mobile-counts">{{ row.coupons_count }} прогн. · {{ row.wins_count }} зашло</small></span>
+                        </a>
+                    </div>
+                    <span class="tournament-participants-count" role="cell">{{ row.coupons_count }}</span>
+                    <span class="tournament-participants-wins" role="cell">{{ row.wins_count }}</span>
+                    <span class="tournament-participants-form" role="cell">{% for outcome in row.form %}<i class="is-{{ outcome.state }}" title="{{ outcome.label }}" role="img" aria-label="{{ outcome.label }}"></i>{% empty %}<span>—</span>{% endfor %}</span>
+                    <span class="tournament-participants-score" role="cell"><strong class="tournament-participants-points" title="Базовые: {{ row.base_points }}; бонусы: {{ row.bonus_points }}">{{ row.points_label }}</strong><span class="tournament-participants-prize">{% if row.money_label %}<strong>{{ row.money_label }} ₽</strong>{% endif %}{% if row.coins %}<span>{{ row.coins }} {% include "front/includes/_coin_icon.html" %}</span>{% endif %}{% if row.prize_title %}<small>{{ row.prize_title }}</small>{% endif %}{% if not row.money_label and not row.coins and not row.prize_title %}<span class="tournament-participants-desktop-label">—</span><small class="tournament-participants-mobile-label">{{ participants_tab.metric_unit }}</small>{% endif %}</span></span>
+                </div>
+                {% empty %}<p class="tournament-participants-empty">{% if participants_tab.query %}Участники не найдены. Попробуйте другое имя.{% else %}В турнире пока нет участников.{% endif %}</p>{% endfor %}
+            </div>
+        </div>
+        <nav class="tournament-participants-pagination" aria-label="Страницы участников">
+            <span>Показаны {{ participants_tab.page.start_index }}–{{ participants_tab.page.end_index }} из {{ participants_tab.filtered_total }} участников</span>
+            {% for item in participants_tab.pages %}{% if item.ellipsis %}<span>…</span>{% else %}<a class="{% if item.is_current %}is-active{% endif %}" href="{{ item.url }}" data-participants-link{% if item.is_current %} aria-current="page"{% endif %}>{{ item.number }}</a>{% endif %}{% endfor %}
+            {% if participants_tab.next_url %}<a href="{{ participants_tab.next_url }}" data-participants-link>Дальше {% include "front/includes/_solar_icon.html" with name="match_next" icon_size=14 only %}</a>{% endif %}
+        </nav>
+        {% if participants_tab.next_url %}<a class="tournament-participants-more" href="{{ participants_tab.next_url }}" data-participants-more>Показать ещё · из {{ participants_tab.filtered_total }} {% include "front/includes/_solar_icon.html" with name="match_next" icon_size=14 only %}</a>{% endif %}
+    </section>
+</div>

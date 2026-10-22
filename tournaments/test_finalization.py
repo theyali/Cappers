@@ -31,6 +31,7 @@ PENDING = PredictionCoupon.StateStatus.PENDING
 class FinalizationTestCase(TestCase):
     def setUp(self):
         self.tournament = Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Final Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(days=3),
@@ -127,12 +128,14 @@ class TournamentFinalizationTests(FinalizationTestCase):
 
     def test_periodic_finalization_skips_running_and_draft_tournaments(self):
         Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Running Cup",
             status=Tournament.Status.PUBLISHED,
             starts_at=timezone.now() - timedelta(days=1),
             ends_at=timezone.now() + timedelta(days=1),
         )
         Tournament.objects.create(
+            scoring_method=Tournament.ScoringMethod.ROI, daily_coupon_limit=0,
             title="Draft Cup",
             status=Tournament.Status.DRAFT,
             starts_at=timezone.now() - timedelta(days=3),

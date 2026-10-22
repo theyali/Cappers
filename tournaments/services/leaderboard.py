@@ -4,6 +4,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Q, Sum
 from django.utils import timezone
 
 from game.models import PredictionCoupon
@@ -13,6 +14,7 @@ from tournaments.models import (
     TournamentCoupon,
     TournamentParticipant,
     TournamentPrize,
+    TournamentPointAccrual,
     TournamentResult,
 )
 
@@ -25,7 +27,13 @@ logger = logging.getLogger(__name__)
 
 
 def _leaderboard_cache_key(tournament: Tournament) -> str:
-    return f"tournaments:leaderboard:v5:{tournament.pk}"
+    return f"tournaments:leaderboard:v6:{tournament.pk}"
+
+
+def invalidate_tournament_leaderboard(tournament_id):
+    key = f"tournaments:leaderboard:v6:{tournament_id}"
+    cache.delete(key)
+    transaction.on_commit(lambda: cache.delete(key))
 
 
 def tournament_leaderboard(
@@ -64,13 +72,73 @@ def tournament_leaderboard(
         )
         .order_by("created_at", "id")
     )
+    if tournament.uses_points:
+        coupons = _with_point_totals(coupons)
 
     for tournament_coupon in coupons:
         participant_id = tournament_coupon.participant_id
         if participant_id not in rows:
             rows[participant_id] = _empty_row(tournament_coupon.participant)
         _apply_coupon(rows[participant_id], tournament_coupon.coupon)
+        _apply_link_points(rows[participant_id], tournament_coupon)
 
+    ordered = _rank_rows(rows, tournament=tournament)
+
+    if use_cache:
+        cache.set(cache_key, ordered, TOURNAMENT_LEADERBOARD_CACHE_TTL)
+    return ordered
+
+
+def user_tournament_positions(user, tournament_ids) -> dict:
+    """Current positions for several tournament cards in two batched queries."""
+    if not tournament_ids:
+        return {}
+    grouped = {tournament_id: {} for tournament_id in tournament_ids}
+    tournaments, saved = {}, {}
+    participants = TournamentParticipant.objects.filter(tournament_id__in=tournament_ids).filter(
+        Q(status=TournamentParticipant.Status.ACTIVE) | Q(tournament__finalized_at__isnull=False, result__isnull=False),
+    ).select_related("user", "user__analyst_profile", "tournament", "result")
+    for participant in participants:
+        tournaments[participant.tournament_id] = participant.tournament
+        grouped[participant.tournament_id][participant.pk] = _empty_row(participant)
+        result = getattr(participant, "result", None)
+        if participant.tournament.finalized_at and result:
+            saved.setdefault(participant.tournament_id, []).append(_row_from_result(result, participant.tournament))
+    coupons = TournamentCoupon.objects.filter(
+        tournament_id__in=tournament_ids,
+        participant__status=TournamentParticipant.Status.ACTIVE,
+        coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+    ).select_related("coupon")
+    if any(tournament.uses_points for tournament in tournaments.values()):
+        coupons = _with_point_totals(coupons)
+    for entry in coupons:
+        row = grouped[entry.tournament_id].get(entry.participant_id)
+        if row is not None:
+            _apply_coupon(row, entry.coupon)
+            _apply_link_points(row, entry)
+    return {
+        tournament_id: row
+        for tournament_id, rows in grouped.items()
+        for row in (saved.get(tournament_id, []) if tournaments.get(tournament_id) and tournaments[tournament_id].finalized_at
+            else _rank_rows(rows, tournament=tournaments.get(tournament_id)))
+        if row["user"].pk == user.pk
+    }
+
+
+def _with_point_totals(links):
+    return links.annotate(
+        base_points_total=Sum("point_accruals__points", filter=Q(point_accruals__kind=TournamentPointAccrual.Kind.BASE)),
+        bonus_points_total=Sum("point_accruals__points", filter=~Q(point_accruals__kind=TournamentPointAccrual.Kind.BASE)),
+    )
+
+
+def _apply_link_points(row, link):
+    row["base_points"] += getattr(link, "base_points_total", 0) or 0
+    row["bonus_points"] += getattr(link, "bonus_points_total", 0) or 0
+    row["points"] = row["base_points"] + row["bonus_points"]
+
+
+def _rank_rows(rows, *, tournament=None):
     normalized_rows = []
     for row in rows.values():
         row["total_stake"] = _money(row["total_stake"])
@@ -81,29 +149,36 @@ def tournament_leaderboard(
     # Places go by ROI, so a single huge stake cannot outweigh steady play; profit breaks ties.
     # Participants without a settled coupon have no result yet and go below everyone who has one,
     # so doing nothing cannot outrank a loss.
+    uses_points = bool(tournament and tournament.uses_points)
+    for row in normalized_rows:
+        row["uses_points"] = uses_points
+        row["score_label"] = str(row["points"]) if uses_points else f'{row["roi_percent"]:.2f}%'
+        row["score_unit"] = "очков" if uses_points else "ROI"
     ordered = sorted(
         normalized_rows,
         key=lambda row: (
             has_tournament_result(row),
-            row["roi_percent"],
-            row["profit"],
+            row["points"] if uses_points else row["roi_percent"],
+            0 if uses_points else row["profit"],
             row["wins_count"],
-            row["coupons_count"],
+            0 if uses_points else row["coupons_count"],
             -row["participant"].joined_at.timestamp(),
+            -row["participant"].pk,
         ),
         reverse=True,
     )
     for index, row in enumerate(ordered, start=1):
         row["rank"] = index
 
-    if use_cache:
-        cache.set(cache_key, ordered, TOURNAMENT_LEADERBOARD_CACHE_TTL)
     return ordered
 
 
 @transaction.atomic
 def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult]:
     """Fix places and award prizes once, after every tournament coupon is settled."""
+    # The same participant -> tournament order as publication and point recalculation.
+    # Inserting results also checks participant foreign keys, so lock them before the tournament.
+    list(TournamentParticipant.objects.select_for_update().filter(tournament=tournament).order_by("pk"))
     tournament = Tournament.objects.select_for_update().get(pk=tournament.pk)
     if tournament.finalized_at:
         raise ValidationError("Итоги турнира уже зафиксированы.")
@@ -142,6 +217,9 @@ def finalize_tournament_results(tournament: Tournament) -> list[TournamentResult
             total_stake=row["total_stake"],
             profit=row["profit"],
             roi_percent=row["roi_percent"],
+            base_points=row["base_points"],
+            bonus_points=row["bonus_points"],
+            points=row["points"],
             prize_amount=prizes[row["rank"]],
             achievement=achievement_for_rank(tournament, row["rank"]) if has_tournament_result(row) else None,
         )
@@ -215,20 +293,30 @@ def _final_rows(tournament: Tournament) -> list[dict]:
     )
     rows = []
     for result in results:
-        row = _empty_row(result.participant)
-        row.update(
-            rank=result.rank,
-            coupons_count=result.coupons_count,
-            wins_count=result.wins_count,
-            losses_count=result.losses_count,
-            refunds_count=result.refunds_count,
-            pending_count=result.pending_count,
-            total_stake=result.total_stake,
-            profit=result.profit,
-            roi_percent=result.roi_percent,
-        )
-        rows.append(row)
+        rows.append(_row_from_result(result, tournament))
     return rows
+
+
+def _row_from_result(result, tournament):
+    row = _empty_row(result.participant)
+    row.update(
+        rank=result.rank,
+        coupons_count=result.coupons_count,
+        wins_count=result.wins_count,
+        losses_count=result.losses_count,
+        refunds_count=result.refunds_count,
+        pending_count=result.pending_count,
+        total_stake=result.total_stake,
+        profit=result.profit,
+        roi_percent=result.roi_percent,
+        base_points=result.base_points,
+        bonus_points=result.bonus_points,
+        points=result.points,
+        uses_points=tournament.uses_points,
+        score_label=str(result.points) if tournament.uses_points else f"{result.roi_percent:.2f}%",
+        score_unit="очков" if tournament.uses_points else "ROI",
+    )
+    return row
 
 
 def has_tournament_result(row: dict) -> bool:
@@ -262,6 +350,9 @@ def _empty_row(participant: TournamentParticipant) -> dict:
         "total_stake": Decimal("0"),
         "profit": Decimal("0"),
         "roi_percent": Decimal("0"),
+        "base_points": 0,
+        "bonus_points": 0,
+        "points": 0,
     }
 
 

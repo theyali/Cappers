@@ -406,7 +406,7 @@ def website_settings(request):
         "bookmakers": bookmakers_context["bookmakers"],
         "home_bookmakers": bookmakers_context["home_bookmakers"],
         "breadcrumbs": _breadcrumbs_for_request(request),
-        "breadcrumbs_inside_content": request.resolver_match is not None and request.resolver_match.view_name in {"front:predictions", "front:following_feed", "game:match_list"},
+        "breadcrumbs_inside_content": request.resolver_match is not None and request.resolver_match.view_name in {"front:predictions", "front:following_feed", "game:match_list", "tournaments:index"},
         "hide_footer": _hide_footer_for_request(request),
         "home_wiki_videos": home_wiki_videos,
         "roulette_available_spins": _roulette_available_spins(request),
