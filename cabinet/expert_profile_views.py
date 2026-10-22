@@ -373,7 +373,12 @@ def _expert_tournament_rows(user: User) -> tuple[list[dict], list[dict]]:
         is_finished = runtime_status == "finished" or tournament.status == Tournament.Status.ARCHIVED
         result = results_by_participant.get(participant.pk)
         leaderboard_row = None
-        if result is None and runtime_status in {"live", "finished"}:
+        # Only active participants are in the table; those who left or were disqualified need no lookup.
+        if (
+            result is None
+            and runtime_status in {"live", "finished"}
+            and participant.status == TournamentParticipant.Status.ACTIVE
+        ):
             leaderboard_row = _participant_leaderboard_row(participant)
 
         if participant.status == TournamentParticipant.Status.DISQUALIFIED:

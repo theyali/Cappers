@@ -15,6 +15,7 @@ from .models import (
     TournamentResult,
     TournamentStage,
 )
+from .services.join import cancel_tournament
 from .services.leaderboard import finalize_tournament_results
 
 
@@ -105,7 +106,7 @@ class TournamentAdmin(admin.ModelAdmin):
     prepopulated_fields = {"slug": ("title",)}
     filter_horizontal = ("allowed_sports",)
     readonly_fields = ("finalized_at", "created_at", "updated_at")
-    actions = ("finalize_results",)
+    actions = ("finalize_results", "cancel_and_refund")
     fieldsets = (
         (None, {"fields": ("title", "slug", "description", "status", "is_featured")}),
         (
@@ -148,6 +149,22 @@ class TournamentAdmin(admin.ModelAdmin):
             else:
                 finalized += 1
         message = f"Итоги зафиксированы: {finalized}."
+        if skipped:
+            message += " Пропущены: " + "; ".join(skipped)
+        self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)
+
+    @admin.action(description="Отменить турнир (в архив) и вернуть взносы")
+    def cancel_and_refund(self, request, queryset):
+        cancelled = refunded = 0
+        skipped = []
+        for tournament in queryset.order_by("id"):
+            try:
+                refunded += cancel_tournament(tournament)
+            except ValidationError as exc:
+                skipped.append(f"«{tournament.title}»: {exc.messages[0]}")
+            else:
+                cancelled += 1
+        message = f"Отменено турниров: {cancelled}, возвращено взносов: {refunded}."
         if skipped:
             message += " Пропущены: " + "; ".join(skipped)
         self.message_user(request, message, level=messages.WARNING if skipped else messages.SUCCESS)

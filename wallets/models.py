@@ -49,6 +49,7 @@ class CoinTransaction(models.Model):
         COPYBET_PAYOUT_REVERSAL = "copybet_payout_reversal", "Сторно выплаты по копиставке"
         DAILY_TASK_REWARD = "daily_task_reward", "Ежедневное задание"
         TOURNAMENT_ENTRY_FEE = "tournament_entry_fee", "Вход в турнир"
+        TOURNAMENT_ENTRY_REFUND = "tournament_entry_refund", "Возврат взноса за турнир"
         TOURNAMENT_PRIZE_COINS = "tournament_prize_coins", "Приз турнира"
         ADJUSTMENT = "adjustment", "Корректировка"
 

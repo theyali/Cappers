@@ -277,6 +277,17 @@ class TournamentServiceTests(TestCase):
         self.assertEqual(results[idle_participant.pk].prize_amount, Decimal("0.00"))
         self.assertIsNone(results[idle_participant.pk].achievement)
 
+    def test_cancelled_coupon_frees_its_match_for_the_tournament(self):
+        from game.services.settlement import cancel_published_coupon
+
+        coupon = self._coupon()
+        attach_coupon_to_tournament(coupon, self.tournament)
+        cancel_published_coupon(coupon.pk, reason="test")
+
+        self.assertEqual(tournament_rules(self.analyst)[0]["used_match_ids"], [])
+        attach_coupon_to_tournament(self._coupon(), self.tournament)
+        self.assertEqual(TournamentPredictionEntry.objects.filter(tournament=self.tournament).count(), 1)
+
     def test_places_go_by_roi_not_by_stake_size(self):
         big = User.objects.create_user(username="big-stake", password="safe-test-password", role=User.Role.ANALYST)
         big_participant = TournamentParticipant.objects.create(tournament=self.tournament, user=big)
@@ -662,6 +673,30 @@ class TournamentAccessRewardTests(TestCase):
         PredictionLike.objects.create(prediction=coupon, user=users[199])
 
         self.assertTrue(check_tournament_eligibility(self.analyst, tournament)["allowed"])
+
+    def test_rejoining_a_paid_tournament_does_not_charge_again(self):
+        tournament = self._tournament("Rejoin Cup", entry_fee_coins=300)
+        join_tournament(self.analyst, tournament)
+        TournamentParticipant.objects.filter(tournament=tournament).update(status=TournamentParticipant.Status.LEFT)
+
+        join_tournament(self.analyst, tournament)
+
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 700)
+
+    def test_cancelled_tournament_refunds_entry_fees(self):
+        from tournaments.services.join import cancel_tournament
+
+        tournament = self._tournament("Cancelled Cup", entry_fee_coins=300)
+        join_tournament(self.analyst, tournament)
+
+        self.assertEqual(cancel_tournament(tournament), 1)
+
+        tournament.refresh_from_db()
+        self.assertEqual(tournament.status, Tournament.Status.ARCHIVED)
+        self.analyst.coin_wallet.refresh_from_db()
+        self.assertEqual(self.analyst.coin_wallet.balance, 1000)
+        self.assertEqual(cancel_tournament(tournament), 0)
 
     def test_paid_tournament_charges_coins(self):
         tournament = self._tournament(

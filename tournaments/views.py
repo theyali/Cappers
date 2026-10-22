@@ -58,7 +58,14 @@ def index(request):
                 filter=Q(participants__status=TournamentParticipant.Status.ACTIVE),
                 distinct=True,
             ),
-            coupons_count=Count("tournament_coupons", distinct=True),
+            coupons_count=Count(
+                "tournament_coupons",
+                filter=Q(
+                    tournament_coupons__participant__status=TournamentParticipant.Status.ACTIVE,
+                    tournament_coupons__coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                ),
+                distinct=True,
+            ),
         )
         .order_by("-is_featured", "-starts_at", "-id")
     )

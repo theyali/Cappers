@@ -21,11 +21,17 @@ class TournamentCouponCreateError(ValidationError):
 
 
 def predictable_tournaments(user) -> list[Tournament]:
-    """Live published tournaments where the user is an active participant."""
+    """Live published tournaments where the user is an active participant.
+
+    Kept on the user object for the rest of the request: the coupon panel, the editor context, its form and
+    the access checks all ask for it."""
     if not getattr(user, "is_authenticated", False) or not getattr(user, "is_analyst", False):
         return []
+    cached = getattr(user, "_predictable_tournaments", None)
+    if cached is not None:
+        return list(cached)
     now = timezone.now()
-    return list(
+    tournaments = list(
         Tournament.objects.filter(
             status=Tournament.Status.PUBLISHED,
             starts_at__lte=now,
@@ -37,6 +43,8 @@ def predictable_tournaments(user) -> list[Tournament]:
         .order_by("ends_at", "id")
         .distinct()
     )
+    user._predictable_tournaments = tournaments
+    return list(tournaments)
 
 
 def tournament_rules(user, tournaments: list[Tournament] | None = None) -> list[dict]:
