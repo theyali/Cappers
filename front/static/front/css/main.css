@@ -21063,6 +21063,7 @@ body:has(.tournament-detail-page) .breadcrumbs-container {
     font-weight: 700;
 }
 .tournament-results-update.is-down > b { color: #ff554f; }
+.tournament-results-update.is-refund > b { color: rgba(255, 255, 255, 0.6); }
 .tournament-results-update div {
     min-width: 0;
     display: grid;

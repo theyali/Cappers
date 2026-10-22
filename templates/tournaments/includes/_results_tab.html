@@ -18,7 +18,7 @@
                     <a href="{% url 'front:expert_profile' username=row.username %}">{{ row.name }}</a>
                     <small>{{ row.coupons_count }} прогнозов</small>
                 </div>
-                <strong>{{ row.points|floatformat:1 }}<small>баллов</small></strong>
+                <strong>{{ row.roi_percent|floatformat:1 }}%<small>ROI</small></strong>
             </div>
         </article>
         {% endfor %}
@@ -51,8 +51,8 @@
                     <span>Прогнозов</span>
                     <span>Побед</span>
                     <span>Проходимость</span>
-                    <span>Прибыль (ROI)</span>
-                    <span>Баллы</span>
+                    <span>Прибыль</span>
+                    <span>ROI</span>
                 </div>
                 <div class="tournament-results-table-body">
                     {% for row in results_tab.rows %}
@@ -77,8 +77,8 @@
                         <span>{{ row.coupons_count }}</span>
                         <span>{{ row.wins_count }}</span>
                         <span>{{ row.winrate }}%</span>
-                        <span class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{{ row.roi_percent|floatformat:1 }}%</span>
-                        <strong>{{ row.points|floatformat:1 }}</strong>
+                        <span class="{% if row.profit > 0 %}is-positive{% elif row.profit < 0 %}is-negative{% endif %}">{{ row.profit_label }}</span>
+                        <strong class="{% if row.roi_percent > 0 %}is-positive{% elif row.roi_percent < 0 %}is-negative{% endif %}">{{ row.roi_percent|floatformat:1 }}%</strong>
                     </div>
                     {% endfor %}
                 </div>
@@ -113,28 +113,28 @@
         <aside class="tournament-results-history">
             <div class="tournament-results-history-title">
                 <span aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path></svg></span>
-                <strong>История обновлений</strong>
-                <small>Все изменения</small>
+                <strong>Последние результаты</strong>
+                <small>Рассчитанные прогнозы турнира</small>
             </div>
             {% if results_tab.updates %}
             <div class="tournament-results-history-list">
                 {% for update in results_tab.updates %}
                 <div class="tournament-results-update is-{{ update.direction }}">
-                    <b>{% if update.direction == "up" %}↑ +{{ update.delta }}{% else %}↓ -{{ update.delta }}{% endif %}</b>
-                    <span class="tournament-results-avatar is-small"{% if update.row.avatar_url %} data-skeleton-image{% endif %}>
-                        {% if update.row.avatar_url %}
-                            <img src="{{ update.row.avatar_url }}" width="34" height="34" alt="" loading="lazy">
+                    <b>{{ update.profit_label }}</b>
+                    <span class="tournament-results-avatar is-small"{% if update.avatar_url %} data-skeleton-image{% endif %}>
+                        {% if update.avatar_url %}
+                            <img src="{{ update.avatar_url }}" width="34" height="34" alt="" loading="lazy">
                         {% else %}
-                            {{ update.row.name|slice:":1"|upper }}
+                            {{ update.name|slice:":1"|upper }}
                         {% endif %}
                     </span>
-                    <div><strong>{{ update.row.name }}</strong><small>{{ update.text }}</small></div>
-                    <time>{{ update.time }}</time>
+                    <div><strong>{{ update.name }}</strong><small>{{ update.text }}</small></div>
+                    {% if update.settled_at %}<time datetime="{{ update.settled_at|date:'c' }}">{{ update.settled_at|timesince }} назад</time>{% endif %}
                 </div>
                 {% endfor %}
             </div>
             {% else %}
-            <p class="tournament-results-history-empty">Изменений пока нет.</p>
+            <p class="tournament-results-history-empty">Рассчитанных прогнозов пока нет.</p>
             {% endif %}
         </aside>
     </div>

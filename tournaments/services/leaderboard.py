@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 def _leaderboard_cache_key(tournament: Tournament) -> str:
-    return f"tournaments:leaderboard:v4:{tournament.pk}"
+    return f"tournaments:leaderboard:v5:{tournament.pk}"
 
 
 def tournament_leaderboard(
@@ -78,14 +78,15 @@ def tournament_leaderboard(
         row["roi_percent"] = _percent(row["profit"], row["total_stake"])
         normalized_rows.append(row)
 
+    # Places go by ROI, so a single huge stake cannot outweigh steady play; profit breaks ties.
     # Participants without a settled coupon have no result yet and go below everyone who has one,
-    # so a zero profit from doing nothing cannot outrank a loss.
+    # so doing nothing cannot outrank a loss.
     ordered = sorted(
         normalized_rows,
         key=lambda row: (
             has_tournament_result(row),
-            row["profit"],
             row["roi_percent"],
+            row["profit"],
             row["wins_count"],
             row["coupons_count"],
             -row["participant"].joined_at.timestamp(),

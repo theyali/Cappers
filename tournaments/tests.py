@@ -277,6 +277,27 @@ class TournamentServiceTests(TestCase):
         self.assertEqual(results[idle_participant.pk].prize_amount, Decimal("0.00"))
         self.assertIsNone(results[idle_participant.pk].achievement)
 
+    def test_places_go_by_roi_not_by_stake_size(self):
+        big = User.objects.create_user(username="big-stake", password="safe-test-password", role=User.Role.ANALYST)
+        big_participant = TournamentParticipant.objects.create(tournament=self.tournament, user=big)
+        for participant, stake, payout in ((big_participant, "1000", "1500"), (self.participant, "100", "300")):
+            coupon = PredictionCoupon.objects.create(
+                author=participant.user,
+                published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+                state_status=PredictionCoupon.StateStatus.WIN,
+                total_stake=Decimal(stake),
+                possible_payout=Decimal(payout),
+                confidence=95,
+                published_at=timezone.now(),
+            )
+            TournamentCoupon.objects.create(tournament=self.tournament, participant=participant, coupon=coupon)
+
+        rows = tournament_leaderboard(self.tournament, use_cache=False)
+
+        self.assertEqual([row["participant"] for row in rows], [self.participant, big_participant])
+        self.assertEqual(rows[0]["roi_percent"], Decimal("200.00"))
+        self.assertEqual(rows[1]["profit"], Decimal("500.00"))
+
     def test_match_after_tournament_end_is_refused(self):
         late_match = Match.objects.create(
             external_id=880003,
@@ -756,7 +777,7 @@ class TournamentPageTests(TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["user"].pk, self.analyst.pk)
         self.assertEqual(rows[0]["coupons_count"], 0)
-        self.assertEqual(rows[0]["points"], 0)
+        self.assertEqual(rows[0]["roi_percent"], 0)
         ajax = self.client.get(reverse("tournaments:results", kwargs={"slug": self.tournament.slug})).json()
         self.assertEqual(ajax["total"], 1)
         self.assertIn(self.analyst.username, ajax["html"])
@@ -894,6 +915,29 @@ class TournamentPageTests(TestCase):
                 status=TournamentParticipant.Status.ACTIVE,
             ).exists()
         )
+
+    def test_results_tab_lists_real_settled_coupons(self):
+        participant = TournamentParticipant.objects.create(tournament=self.tournament, user=self.analyst)
+        coupon = PredictionCoupon.objects.create(
+            author=self.analyst,
+            published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            state_status=PredictionCoupon.StateStatus.WIN,
+            total_stake=Decimal("100.00"),
+            possible_payout=Decimal("230.50"),
+            confidence=80,
+            published_at=timezone.now(),
+            settled_at=timezone.now(),
+        )
+        TournamentCoupon.objects.create(tournament=self.tournament, participant=participant, coupon=coupon)
+
+        response = self.client.get(self.tournament.get_absolute_url())
+
+        updates = response.context["results_tab"]["updates"]
+        self.assertEqual(len(updates), 1)
+        self.assertEqual((updates[0]["direction"], updates[0]["profit_label"]), ("up", "+131"))
+        self.assertIn("кф 2.31 — зашёл", updates[0]["text"])
+        self.assertContains(response, "Последние результаты")
+        self.assertNotContains(response, "мин назад</time>")
 
     def test_detail_results_show_participant_coupons(self):
         participant = TournamentParticipant.objects.create(

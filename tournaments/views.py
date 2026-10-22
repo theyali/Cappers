@@ -1,5 +1,5 @@
 from datetime import timedelta
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from types import SimpleNamespace
 from urllib.parse import urlencode
 
@@ -17,9 +17,10 @@ from django.views.decorators.http import require_GET
 from django.views.decorators.http import require_POST
 
 from cabinet.vip import active_vip_subscriptions, plural_ru
-from game.models import Sport
+from game.models import PredictionCoupon, Sport
 from tournaments.models import (
     Tournament,
+    TournamentCoupon,
     TournamentAchievement,
     TournamentFAQ,
     TournamentParticipant,
@@ -708,7 +709,7 @@ def _default_format_rules(tournament: Tournament, *, allowed_sports_label: str) 
         ),
         "Рейтинг формируется по ROI",
         "Учитываются только рассчитанные прогнозы",
-        "При равенстве выше участник с большим числом прибыльных ставок",
+        "При равном ROI выше участник с большей прибылью",
         "Результаты обновляются автоматически",
     ]
 
@@ -1082,7 +1083,7 @@ def _tournament_results_tab(request, tournament: Tournament, leaderboard: list[d
         ]
 
     page_obj = _paginate_list(rows, request.GET.get("page"), per_page)
-    updates = _tournament_result_updates(rows)
+    updates = _tournament_recent_results(tournament)
     top_rows = rows[:3]
 
     return {
@@ -1113,11 +1114,6 @@ def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
     refunds_count = int(row["refunds_count"] or 0)
     decided_count = wins_count + losses_count + refunds_count
     winrate = int(round((wins_count / decided_count) * 100)) if decided_count else 0
-    points = (
-        Decimal(row["roi_percent"] or 0)
-        + Decimal(wins_count)
-        + (Decimal(coupons_count) * Decimal("0.5"))
-    ).quantize(Decimal("0.1"))
     return {
         "rank": int(row["rank"] or 0),
         "user": user,
@@ -1129,30 +1125,58 @@ def _tournament_result_row(row: dict, *, vip_user_ids: set[int]) -> dict:
         "wins_count": wins_count,
         "winrate": winrate,
         "roi_percent": row["roi_percent"],
-        "points": points,
+        "profit": row["profit"],
+        "profit_label": _signed_coins(row["profit"]),
     }
 
 
-def _tournament_result_updates(rows: list[dict]) -> list[dict]:
-    updates = []
-    for row in rows[3:8]:
-        direction = "up" if row["rank"] % 2 == 0 else "down"
-        delta = 1 + (row["rank"] % 3)
-        updates.append(
+def _signed_coins(value) -> str:
+    # Payouts are stake × odds, so a profit can carry kopecks; the table shows whole coins.
+    amount = int(Decimal(value or 0).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    return ("+" if amount > 0 else "-" if amount < 0 else "") + format_coins(abs(amount))
+
+
+def _tournament_recent_results(tournament: Tournament, *, limit: int = 6) -> list[dict]:
+    """The latest settled tournament coupons: what actually moved the table."""
+    settled = (
+        TournamentCoupon.objects.filter(
+            tournament=tournament,
+            participant__status=TournamentParticipant.Status.ACTIVE,
+            coupon__published_status=PredictionCoupon.PublishedStatus.PUBLISHED,
+            coupon__state_status__in=(
+                PredictionCoupon.StateStatus.WIN,
+                PredictionCoupon.StateStatus.LOSE,
+                PredictionCoupon.StateStatus.REFUND,
+            ),
+        )
+        .select_related("participant__user__analyst_profile", "coupon")
+        .order_by("-coupon__settled_at", "-id")[:limit]
+    )
+    results = []
+    for link in settled:
+        coupon, user = link.coupon, link.participant.user
+        if coupon.state_status == PredictionCoupon.StateStatus.WIN:
+            direction, profit, verdict = "up", coupon.possible_payout - coupon.total_stake, "зашёл"
+        elif coupon.state_status == PredictionCoupon.StateStatus.LOSE:
+            direction, profit, verdict = "down", -coupon.total_stake, "не зашёл"
+        else:
+            direction, profit, verdict = "refund", Decimal("0"), "возврат"
+        coefficient = (
+            (coupon.possible_payout / coupon.total_stake).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+            if coupon.total_stake
+            else Decimal("0")
+        )
+        results.append(
             {
-                "row": row,
                 "direction": direction,
-                "delta": delta,
-                "text": (
-                    f"Поднялся на {row['rank']} место"
-                    if direction == "up"
-                    else f"Опустился на {row['rank']} место"
-                ),
-                "time": f"{max(2, row['rank'] * 3)} мин назад",
+                "profit_label": _signed_coins(profit),
+                "name": getattr(getattr(user, "analyst_profile", None), "display_name", "") or user.get_full_name() or user.username,
+                "avatar_url": user.avatar.url if user.avatar else "",
+                "text": f"{coupon.get_coupon_type_display()} · кф {coefficient} — {verdict}",
+                "settled_at": coupon.settled_at,
             }
         )
-    return updates
-
+    return results
 
 def _paginate_list(items: list, page_number, per_page: int):
     paginator = Paginator(items, per_page)
