@@ -23,9 +23,11 @@ ROULETTE_SETTINGS_CACHE_SECONDS = 60
 FOOTER_VISIBLE_ROUTES = {
     "front:index",
     "front:wiki",
+    "front:sports_news",
     "front:news_detail",
     "front:how_it_works",
     "front:bookmakers",
+    "front:bonuses",
     "front:article_detail",
     "front:static_page",
     "front:about",

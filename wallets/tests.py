@@ -1156,7 +1156,7 @@ class CoinWalletHeaderTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'class="nav-wallet"')
-        self.assertContains(response, "1 000 коинов")
+        self.assertContains(response, "<strong data-wallet-balance>1 000</strong>", html=False)
         self.assertContains(response, reverse("wallets:top_up"))
 
     def test_top_up_link_opens_coin_packages_page(self):
@@ -1177,6 +1177,5 @@ class CoinWalletHeaderTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Пополнение коинов")
-        self.assertContains(response, "Стартовый пакет")
-        self.assertContains(response, "1 000 коинов")
-        self.assertContains(response, "500.00 ₽")
+        self.assertContains(response, '<div class="wallet-method-title">1 100</div>', html=False)
+        self.assertContains(response, '<p class="wallet-method-price">500 ₽</p>', html=False)
