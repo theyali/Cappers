@@ -1,7 +1,7 @@
 from decimal import Decimal
 from tempfile import TemporaryDirectory
 from datetime import timedelta
-from io import StringIO
+from io import BytesIO, StringIO
 from types import SimpleNamespace
 from unittest.mock import patch
 
@@ -10,6 +10,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.core.management.base import CommandError
 from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
+from django.urls import reverse
+from PIL import Image
 
 from bots.models import (
     BotAccount,
@@ -40,8 +42,170 @@ from bots.services import (
 from cabinet.models import PresetAvatar, User
 from cabinet.presence import UserPresence
 from front.models import PredictionLike
-from game.models import Match, MatchOdds, Prediction, PredictionCoupon, Sport
+from game.models import Country, Match, MatchOdds, Prediction, PredictionCoupon, Sport
 from tournaments.models import Tournament, TournamentCoupon, TournamentParticipant
+
+
+@override_settings(STORAGES={
+    "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+    "staticfiles": {"BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage"},
+})
+class BotProfileEditingTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.staff = User.objects.create_user(username="bot-admin", is_staff=True)
+        cls.real_user = User.objects.create_user(username="ordinary-user")
+        cls.expert = User.objects.create_user(username="expert-bot", role=User.Role.ANALYST)
+        cls.bot = BotAccount.objects.create(user=cls.expert, kind=BotAccount.Kind.EXPERT)
+        cls.country = Country.objects.create(code="AZ", name="Azerbaijan", name_ru="Азербайджан")
+
+    def setUp(self):
+        self.client.force_login(self.staff)
+        self.url = reverse("bots:edit_account", args=[self.bot.pk])
+
+    def payload(self, **changes):
+        return {
+            "account-username": self.expert.username, "account-first_name": "Иван",
+            "account-last_name": "Петров", "account-gender": User.Gender.MALE,
+            "account-country": str(self.country.pk), "account-email": "bot@example.test",
+            "account-telegram_username": "expert_telegram",
+            "profile-display_name": "Публичное имя", "profile-bio": "Описание бота",
+            "profile-specialization": "Футбольная аналитика", "profile-favorite_sports": "Футбол",
+            "profile-favorite_leagues": "АПЛ", "profile-telegram_channel": "@channel",
+            "profile-telegram_account": "@account", "profile-instagram": "@instagram",
+            "profile-threads": "@threads", "profile-youtube": "https://youtube.com/@channel",
+            "profile-tiktok": "@tiktok", "profile-facebook": "https://facebook.com/bot",
+            "profile-x": "@expert", "profile-is_public": "on", "profile-is_verified": "on",
+            "profile-is_recommended": "on", "bot-is_active": "on", "bot-persona": "Футболист",
+            **changes,
+        }
+
+    def test_full_editor_is_private_and_only_accepts_bots(self):
+        self.client.logout()
+        self.assertEqual(self.client.get(self.url).status_code, 302)
+        self.client.force_login(self.real_user)
+        self.assertEqual(self.client.get(self.url).status_code, 403)
+        self.assertEqual(self.client.post(self.url, self.payload()).status_code, 403)
+        self.client.force_login(self.staff)
+        self.assertEqual(self.client.get(reverse("bots:edit_account", args=[999999])).status_code, 404)
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="account-country"')
+        self.assertContains(response, 'name="profile-youtube"')
+        self.assertContains(response, 'name="account-remove_avatar"')
+
+    def test_saves_all_public_fields_country_and_bot_settings(self):
+        response = self.client.post(self.url, self.payload())
+        self.assertRedirects(response, reverse("bots:manage_accounts"))
+        self.expert.refresh_from_db()
+        profile = self.expert.analyst_profile
+        self.bot.refresh_from_db()
+        self.assertEqual(self.expert.country_id, self.country.pk)
+        self.assertEqual(self.expert.gender, User.Gender.MALE)
+        self.assertEqual(self.expert.telegram_username, "expert_telegram")
+        self.assertEqual(profile.display_name, "Публичное имя")
+        self.assertEqual(profile.bio, "Описание бота")
+        self.assertEqual(len(profile.social_links), 8)
+        self.assertEqual(profile.favorite_leagues, "АПЛ")
+        self.assertTrue(profile.is_verified)
+        self.assertTrue(profile.is_recommended)
+        self.assertEqual(self.bot.persona, "Футболист")
+
+    def test_can_clear_all_social_links_description_country_and_avatar(self):
+        self.client.post(self.url, self.payload())
+        self.expert.avatar = "users/old-avatar.png"
+        self.expert.save(update_fields=["avatar"])
+        data = self.payload(**{
+            "account-country": "", "account-remove_avatar": "on", "profile-bio": "",
+            **{f"profile-{name}": "" for name in (
+                "telegram_channel", "telegram_account", "instagram", "threads", "youtube", "tiktok", "facebook", "x",
+            )},
+        })
+        data.pop("bot-is_active")
+        response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, 302)
+        self.expert.refresh_from_db()
+        self.bot.refresh_from_db()
+        self.assertIsNone(self.expert.country_id)
+        self.assertFalse(self.expert.avatar)
+        self.assertEqual(self.expert.analyst_profile.bio, "")
+        self.assertEqual(self.expert.analyst_profile.social_links, [])
+        self.assertFalse(self.bot.is_active)
+
+    def test_invalid_profile_keeps_every_model_unchanged_and_preserves_input(self):
+        response = self.client.post(self.url, self.payload(**{"profile-bio": "x" * 2001}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["profile_form"].errors)
+        self.assertContains(response, "bot@example.test")
+        self.expert.refresh_from_db()
+        self.bot.refresh_from_db()
+        self.assertEqual(self.expert.first_name, "")
+        self.assertEqual(self.expert.analyst_profile.bio, "")
+        self.assertEqual(self.bot.persona, "")
+
+    def test_rejects_duplicate_username_and_email_without_partial_saves(self):
+        User.objects.filter(pk=self.real_user.pk).update(email="used@example.test")
+        for changes in ({"account-username": self.real_user.username.upper()}, {"account-email": "USED@example.test"}):
+            response = self.client.post(self.url, self.payload(**changes))
+            self.assertEqual(response.status_code, 200)
+            self.assertTrue(response.context["user_form"].errors)
+        self.expert.refresh_from_db()
+        self.assertEqual(self.expert.username, "expert-bot")
+        self.assertEqual(self.expert.analyst_profile.bio, "")
+
+    def test_email_change_resets_verification_and_security_flags_are_not_editable(self):
+        User.objects.filter(pk=self.expert.pk).update(email="old@example.test", email_verified=True)
+        self.client.post(self.url, self.payload(**{"account-is_staff": "on", "account-is_superuser": "on"}))
+        self.expert.refresh_from_db()
+        self.assertEqual(self.expert.email, "bot@example.test")
+        self.assertFalse(self.expert.email_verified)
+        self.assertFalse(self.expert.is_staff)
+        self.assertFalse(self.expert.is_superuser)
+
+    def test_reader_profile_can_be_stored_without_changing_role(self):
+        reader = User.objects.create_user(username="reader-bot")
+        bot = BotAccount.objects.create(user=reader, kind=BotAccount.Kind.READER)
+        response = self.client.post(reverse("bots:edit_account", args=[bot.pk]), self.payload(**{"account-username": reader.username}))
+        self.assertEqual(response.status_code, 302)
+        reader.refresh_from_db()
+        self.assertEqual(reader.role, User.Role.READER)
+        self.assertEqual(reader.analyst_profile.bio, "Описание бота")
+
+    def test_quick_edit_preserves_custom_public_name_and_profile_fields(self):
+        profile = self.expert.analyst_profile
+        profile.display_name = "Своё имя"
+        profile.bio = "Сохранить описание"
+        profile.youtube = "@channel"
+        profile.save()
+        prefix = f"bot-{self.bot.pk}"
+        response = self.client.post(reverse("bots:manage_accounts"), {
+            "bot_id": self.bot.pk, f"{prefix}-username": self.expert.username,
+            f"{prefix}-first_name": "Новое имя", f"{prefix}-last_name": "",
+        })
+        self.assertEqual(response.status_code, 302)
+        profile.refresh_from_db()
+        self.assertEqual(profile.display_name, "Своё имя")
+        self.assertEqual(profile.bio, "Сохранить описание")
+        self.assertEqual(profile.youtube, "@channel")
+
+    def test_avatar_uploads_preserve_profile_and_country(self):
+        with TemporaryDirectory() as media_dir, override_settings(MEDIA_ROOT=media_dir):
+            self.client.post(self.url, self.payload())
+            for target, field_name, data in (
+                (self.url, "account-avatar", self.payload()),
+                (reverse("bots:upload_avatar", args=[self.bot.pk]), "avatar", {}),
+            ):
+                content = BytesIO()
+                Image.new("RGB", (16, 16)).save(content, format="PNG")
+                response = self.client.post(target, {
+                    **data, field_name: SimpleUploadedFile("avatar.png", content.getvalue(), content_type="image/png"),
+                })
+                self.assertIn(response.status_code, (200, 302))
+                self.expert.refresh_from_db()
+                self.assertTrue(self.expert.avatar)
+                self.assertEqual(self.expert.country_id, self.country.pk)
+                self.assertEqual(self.expert.analyst_profile.bio, "Описание бота")
+                self.assertEqual(self.expert.analyst_profile.display_name, "Публичное имя")
 
 
 class BotPickSelectionTests(SimpleTestCase):

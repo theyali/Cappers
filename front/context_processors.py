@@ -144,7 +144,7 @@ def _load_global_context() -> dict:
         "partner": [],
     }
     for item in footer_buttons:
-        if item.kind == "app" and not (item.url or "").strip("# "):
+        if item.kind in {"app", "social"} and not (item.url or "").strip("# \t\r\n"):
             continue
         footer_buttons_by_kind.setdefault(item.kind, []).append(item)
     footer_groups = _ensure_required_footer_links(footer_groups)

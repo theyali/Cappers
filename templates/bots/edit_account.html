@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Редактирование бота @{{ bot.user.username }} — Cappers{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+        <section class="matches-list-panel profile-page">
+            <div class="matches-mobile-scope-panel" aria-label="Разделы профиля на мобильных устройствах">
+                <nav class="matches-tabs" aria-label="Разделы профиля">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+            <form method="post" enctype="multipart/form-data" class="profile-list-card bot-profile-editor" data-bot-profile-editor novalidate>
+                {% csrf_token %}
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Администрирование · {{ bot.get_kind_display }}</p>
+                        <h1>Профиль @{{ bot.user.username }}</h1>
+                        <p>Чтобы удалить описание или соцссылку, очистите поле и сохраните изменения.</p>
+                        {% if bot.user.is_reader %}<p>Описание, соцсети и статусы каппера будут отображаться, если бот станет экспертом.</p>{% endif %}
+                    </div>
+                </div>
+                {% if user_form.errors or profile_form.errors or settings_form.errors %}
+                <div class="profile-form-alert" role="alert" tabindex="-1" data-bot-form-errors>
+                    <p>Не удалось сохранить профиль. Исправьте отмеченные поля.</p>
+                    {{ user_form.non_field_errors }}{{ profile_form.non_field_errors }}{{ settings_form.non_field_errors }}
+                </div>
+                {% endif %}
+                <section class="profile-edit-section" aria-labelledby="bot-avatar-title">
+                    <h2 id="bot-avatar-title">Аватар</h2>
+                    {% if avatar_url %}<img src="{{ avatar_url }}" width="80" height="80" alt="Текущий аватар бота" class="bot-profile-avatar">{% endif %}
+                    <div class="profile-field">
+                        <label for="{{ user_form.avatar.id_for_label }}">{{ user_form.avatar.label }}</label>
+                        {{ user_form.avatar }}{{ user_form.avatar.errors }}
+                        <small>JPG, PNG или WebP до 5 МБ. Аватар сохранится вместе с профилем.</small>
+                    </div>
+                    <label class="profile-visibility">{{ user_form.remove_avatar }}<span>{{ user_form.remove_avatar.label }}</span></label>
+                </section>
+                {% for section in field_sections %}
+                <section class="profile-edit-section" aria-labelledby="bot-section-{{ forloop.counter }}">
+                    <h2 id="bot-section-{{ forloop.counter }}">{{ section.title }}</h2>
+                    <div class="profile-fields-grid">
+                        {% for field in section.fields %}
+                        <div class="profile-field{% if field.name == 'bio' %} profile-field-full{% endif %}">
+                            <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                            {{ field }}{{ field.errors }}
+                            {% if field.help_text %}<small>{{ field.help_text }}</small>{% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </section>
+                {% endfor %}
+                <section class="profile-edit-section" aria-labelledby="bot-settings-title">
+                    <h2 id="bot-settings-title">Параметры бота</h2>
+                    <div class="profile-field">
+                        <label for="{{ settings_form.persona.id_for_label }}">{{ settings_form.persona.label }}</label>
+                        {{ settings_form.persona }}{{ settings_form.persona.errors }}
+                    </div>
+                    {% for field in status_fields %}
+                    <label class="profile-visibility">{{ field }}<span>{{ field.label }}</span></label>
+                    {{ field.errors }}
+                    {% endfor %}
+                </section>
+                <div class="profile-edit-actions">
+                    <button class="profile-save-button" type="submit">Сохранить изменения</button>
+                    <a class="profile-row-action" href="{% url 'bots:manage_accounts' %}">Вернуться к ботам</a>
+                </div>
+            </form>
+        </section>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'admin/js/vendor/jquery/jquery.min.js' %}" defer></script>
+<script src="{% static 'bots/js/manage_accounts.js' %}" defer></script>
+{% endblock %}
