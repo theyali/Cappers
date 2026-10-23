@@ -3,7 +3,7 @@ from django.db import transaction
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import strip_tags
-from django.utils.text import slugify
+from cappers.slugs import publication_slug
 
 from cabinet.comments.services.anti_spam import check_comment_spam
 from cabinet.comments.services.moderation import (
@@ -13,78 +13,6 @@ from cabinet.comments.services.moderation import (
 )
 from cabinet.models import CapperArticle, CapperArticleDailyUsage, User
 from cabinet.vip import get_active_vip
-
-
-_CYRILLIC_TRANSLIT = str.maketrans(
-    {
-        "а": "a",
-        "б": "b",
-        "в": "v",
-        "г": "g",
-        "д": "d",
-        "е": "e",
-        "ё": "e",
-        "ж": "zh",
-        "з": "z",
-        "и": "i",
-        "й": "y",
-        "к": "k",
-        "л": "l",
-        "м": "m",
-        "н": "n",
-        "о": "o",
-        "п": "p",
-        "р": "r",
-        "с": "s",
-        "т": "t",
-        "у": "u",
-        "ф": "f",
-        "х": "h",
-        "ц": "c",
-        "ч": "ch",
-        "ш": "sh",
-        "щ": "sch",
-        "ъ": "",
-        "ы": "y",
-        "ь": "",
-        "э": "e",
-        "ю": "yu",
-        "я": "ya",
-        "А": "A",
-        "Б": "B",
-        "В": "V",
-        "Г": "G",
-        "Д": "D",
-        "Е": "E",
-        "Ё": "E",
-        "Ж": "Zh",
-        "З": "Z",
-        "И": "I",
-        "Й": "Y",
-        "К": "K",
-        "Л": "L",
-        "М": "M",
-        "Н": "N",
-        "О": "O",
-        "П": "P",
-        "Р": "R",
-        "С": "S",
-        "Т": "T",
-        "У": "U",
-        "Ф": "F",
-        "Х": "H",
-        "Ц": "C",
-        "Ч": "Ch",
-        "Ш": "Sh",
-        "Щ": "Sch",
-        "Ъ": "",
-        "Ы": "Y",
-        "Ь": "",
-        "Э": "E",
-        "Ю": "Yu",
-        "Я": "Ya",
-    }
-)
 
 
 MAX_ARTICLE_TAGS = 5
@@ -236,6 +164,23 @@ def save_capper_article(user, data, files, article=None) -> CapperArticle:
         article.cover_image.delete(save=False)
         article.cover_image = None
 
+    for field in article._meta.fields:
+        name = field.name
+        if name not in PUBLICATION_EDITOR_FIELDS or name not in data:
+            continue
+        if name in {"inline_image", "related_link_image"}:
+            uploaded = files.get(name) if files else None
+            if uploaded is not None:
+                setattr(article, name, uploaded)
+            elif data[name] is False:
+                getattr(article, name).delete(save=False)
+                setattr(article, name, "")
+        else:
+            value = data[name]
+            if value is None and name.endswith("_after_paragraph"):
+                value = field.get_default()
+            setattr(article, name, value)
+
     if article.status == CapperArticle.Status.REJECTED:
         article.status = CapperArticle.Status.DRAFT
         article.moderation_note = ""
@@ -248,12 +193,17 @@ def save_capper_article(user, data, files, article=None) -> CapperArticle:
 
 
 def _article_slug(title: str) -> str:
-    transliterated = str(title or "").translate(_CYRILLIC_TRANSLIT)
-    return slugify(transliterated, allow_unicode=False)[:220] or "article"
+    return publication_slug(title, max_length=220)
 
 
 # Field order of the editor, for the error summary at the top.
-EDITOR_FIELDS = ("cover_image", "title", "excerpt", "category", "tags", "content")
+PUBLICATION_EDITOR_FIELDS = (
+    "table_of_contents", "inline_image", "inline_image_caption", "inline_image_after_paragraph",
+    "pull_quote", "quote_after_paragraph", "related_link_url", "related_link_title", "related_link_image",
+    "related_link_after_paragraph", "summary", "summary_after_paragraph", "featured_prediction",
+    "prediction_after_paragraph", "comments_enabled",
+)
+EDITOR_FIELDS = ("cover_image", "title", "excerpt", "category", "tags", "content") + PUBLICATION_EDITOR_FIELDS
 
 
 def build_article_editor_context(user, form, article=None) -> dict:
@@ -399,6 +349,11 @@ def _validate_article_text(
                 article.title,
                 article.excerpt,
                 strip_tags(article.content),
+                article.table_of_contents,
+                article.pull_quote,
+                article.summary,
+                article.inline_image_caption,
+                article.related_link_title,
             )
             if part
         )
@@ -412,6 +367,11 @@ def _validate_article_text(
             article.title,
             article.excerpt,
             article.content,
+            article.table_of_contents,
+            article.pull_quote,
+            article.summary,
+            article.inline_image_caption,
+            article.related_link_title,
         )
         if part
     )

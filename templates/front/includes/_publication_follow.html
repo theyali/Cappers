@@ -1,0 +1,3 @@
+{% if publication_author.can_follow %}
+{% if request.user.is_authenticated %}<button type="button" class="publication-follow{% if publication_author.is_following %} is-active{% endif %}" data-prediction-follow data-analyst-id="{{ publication_author.user.pk }}" data-url="{% url 'cabinet:toggle_follow' user_id=publication_author.user.pk %}" aria-pressed="{{ publication_author.is_following|yesno:'true,false' }}"><span data-follow-label>{% if publication_author.is_following %}Отписаться{% else %}Подписаться{% endif %}</span></button>{% else %}<a class="publication-follow" href="{{ publication_login_url }}">Подписаться</a>{% endif %}
+{% endif %}

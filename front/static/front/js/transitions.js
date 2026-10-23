@@ -105,6 +105,7 @@
     const PREFERENCES_COOKIE = "capperhub_cookie_preferences";
     const categories = ["analytics", "functional", "advertising"];
     const controls = Array.from(dialog.querySelectorAll("[data-cookie-category]"));
+    const documentControls = Array.from(document.querySelectorAll("[data-document-cookie]"));
     const readCookie = (name) => document.cookie.split(";").map((item) => item.trim())
         .find((item) => item.startsWith(name + "="))?.slice(name.length + 1) || "";
     const readStorage = (key) => {
@@ -124,7 +125,9 @@
         document.documentElement.dataset.cookieAnalytics = String(preferences.analytics);
         document.documentElement.dataset.cookieFunctional = String(preferences.functional);
         document.documentElement.dataset.cookieAdvertising = String(preferences.advertising);
+        documentControls.forEach((input) => { input.checked = Boolean(preferences[input.dataset.documentCookie]); });
     };
+    documentControls.forEach((input) => { input.checked = Boolean(preferences[input.dataset.documentCookie]); });
     if (["accepted", "declined", "custom"].includes(choice)) exposeChoice(choice);
     else window.requestAnimationFrame(() => banner.classList.add("is-visible"));
     const persist = (value, selected) => {
@@ -147,6 +150,13 @@
     };
     banner.addEventListener("click", handleChoice);
     dialog.addEventListener("click", handleChoice);
+    document.querySelectorAll("[data-document-cookie-actions]").forEach((element) => element.addEventListener("click", handleChoice));
+    document.querySelectorAll("[data-document-cookie-save]").forEach((button) => button.addEventListener("click", () => {
+        const selected = { ...preferences };
+        documentControls.forEach((input) => { selected[input.dataset.documentCookie] = input.checked; });
+        const values = Object.values(selected);
+        persist(values.every(Boolean) ? "accepted" : values.some(Boolean) ? "custom" : "declined", selected);
+    }));
     document.querySelectorAll("[data-cookie-settings]").forEach((button) => button.addEventListener("click", () => {
         controls.forEach((input) => { input.checked = preferences[input.dataset.cookieCategory]; });
         if (!dialog.open) dialog.showModal();

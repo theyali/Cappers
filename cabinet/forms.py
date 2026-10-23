@@ -435,9 +435,36 @@ class AnalystPaidPlanSettingsForm(forms.Form):
 class CapperArticleForm(forms.ModelForm):
     class Meta:
         model = CapperArticle
-        fields = ("title", "cover_image", "excerpt", "category", "tags", "content")
+        fields = (
+            "title",
+            "cover_image",
+            "excerpt",
+            "category",
+            "tags",
+            "content",
+            "table_of_contents",
+            "inline_image",
+            "inline_image_caption",
+            "inline_image_after_paragraph",
+            "pull_quote",
+            "quote_after_paragraph",
+            "related_link_url",
+            "related_link_title",
+            "related_link_image",
+            "related_link_after_paragraph",
+            "summary",
+            "summary_after_paragraph",
+            "featured_prediction",
+            "prediction_after_paragraph",
+            "comments_enabled",
+        )
         widgets = {
-            "title": forms.TextInput(attrs={"placeholder": "Например: Как я выбираю тоталы в АПЛ", "maxlength": 180}),
+            "title": forms.TextInput(
+                attrs={
+                    "placeholder": "Например: Как я выбираю тоталы в АПЛ",
+                    "maxlength": 180,
+                }
+            ),
             "excerpt": forms.Textarea(
                 attrs={
                     "rows": 3,
@@ -448,17 +475,86 @@ class CapperArticleForm(forms.ModelForm):
             "category": forms.RadioSelect,
             "tags": forms.HiddenInput,
             "content": TinyMCE(mce_attrs=CAPPER_ARTICLE_EDITOR),
+            "table_of_contents": forms.Textarea(attrs={"rows": 4}),
+            "pull_quote": forms.Textarea(attrs={"rows": 3}),
+            "summary": forms.Textarea(attrs={"rows": 3}),
         }
         error_messages = {
             "title": {"required": "Укажите заголовок статьи"},
             "content": {"required": "Добавьте текст статьи"},
         }
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["category"].queryset = ArticleCategory.objects.filter(is_active=True).order_by("sort_order", "name")
+        self.fields["category"].queryset = ArticleCategory.objects.filter(
+            is_active=True
+        ).order_by("sort_order", "name")
         self.fields["category"].empty_label = None
-        self.fields["cover_image"].widget.attrs["accept"] = "image/jpeg,image/png,image/webp"
+        self.fields["cover_image"].widget.attrs["accept"] = (
+            "image/jpeg,image/png,image/webp"
+        )
+        for name in ("inline_image", "related_link_image"):
+            self.fields[name].widget.attrs["accept"] = "image/jpeg,image/png,image/webp"
+        for name in (
+            "inline_image_after_paragraph",
+            "quote_after_paragraph",
+            "related_link_after_paragraph",
+            "summary_after_paragraph",
+            "prediction_after_paragraph",
+        ):
+            self.fields[name].required = False
+        owner = user or (self.instance.author if self.instance.author_id else None)
+        from game.models import PredictionCoupon
+
+        self.fields["featured_prediction"].queryset = (
+            PredictionCoupon.objects.filter(author=owner, published_status="published")
+            if owner
+            else PredictionCoupon.objects.none()
+        )
+        self.extra_content_fields = [self[name] for name in self.Meta.fields[6:]]
+
+    def clean_related_link_url(self):
+        from django.urls import Resolver404, resolve
+        from urllib.parse import urlsplit
+
+        value = self.cleaned_data.get("related_link_url", "").strip()
+        if not value:
+            return value
+        try:
+            if (
+                value.startswith("/")
+                and not value.startswith("//")
+                and resolve(urlsplit(value).path).view_name
+                in {
+                    "front:article_detail",
+                    "front:capper_article_detail",
+                    "front:news_detail",
+                }
+            ):
+                return value
+        except Resolver404:
+            pass
+        raise forms.ValidationError(
+            "Укажите путь к статье или новости на этом сайте, например /articles/example/."
+        )
+
+    def clean_inline_image(self):
+        return self._clean_optional_image("inline_image")
+
+    def clean_related_link_image(self):
+        return self._clean_optional_image("related_link_image")
+
+    def _clean_optional_image(self, name):
+        image = self.cleaned_data.get(name)
+        if image and image.size > 5 * 1024 * 1024:
+            raise forms.ValidationError("Максимальный размер файла — 5 МБ.")
+        if (
+            image
+            and getattr(image, "content_type", "")
+            and image.content_type not in {"image/jpeg", "image/png", "image/webp"}
+        ):
+            raise forms.ValidationError("Разрешены JPG, PNG и WebP.")
+        return image
 
     def clean_cover_image(self):
         image = self.cleaned_data.get("cover_image")
@@ -474,7 +570,6 @@ class CapperArticleForm(forms.ModelForm):
             raise forms.ValidationError("Разрешены JPG, PNG и WebP.")
 
         return image
-
 
 class AnalystAvatarForm(forms.ModelForm):
     class Meta:

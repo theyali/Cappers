@@ -38,6 +38,7 @@ from .services.capper_articles import approve_capper_article, reject_capper_arti
 
 @admin.register(CapperArticle)
 class CapperArticleAdmin(admin.ModelAdmin):
+    autocomplete_fields = ("featured_prediction",)
     list_display = (
         "author",
         "title",
@@ -49,6 +50,7 @@ class CapperArticleAdmin(admin.ModelAdmin):
     search_fields = ("title", "author__username")
     list_select_related = ("author", "reviewed_by")
     readonly_fields = (
+        "views_count",
         "submitted_at",
         "published_at",
         "reviewed_by",

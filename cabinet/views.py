@@ -715,7 +715,7 @@ def capper_article_create(request):
         messages.info(request, "Стать VIP, чтобы публиковать статьи.")
         return redirect("cabinet:capper_articles")
 
-    form = CapperArticleForm(request.POST or None, request.FILES or None)
+    form = CapperArticleForm(request.POST or None, request.FILES or None, user=request.user)
     article = None
     if request.method == "POST" and form.is_valid():
         action = _capper_article_action(request)
@@ -767,6 +767,7 @@ def capper_article_edit(request, article_id):
         request.POST or None,
         request.FILES or None,
         instance=article,
+        user=request.user,
     )
 
     if request.method == "POST" and form.is_valid():

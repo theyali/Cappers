@@ -10,6 +10,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils import timezone
 from tinymce.models import HTMLField
+from cappers.publication_models import PublicationContent
 
 
 REFERRAL_CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
@@ -310,7 +311,7 @@ class UserLeaguePreference(models.Model):
         ]
 
 
-class CapperArticle(models.Model):
+class CapperArticle(PublicationContent):
     class Status(models.TextChoices):
         DRAFT = "draft", "Черновик"
         PENDING = "pending", "На модерации"

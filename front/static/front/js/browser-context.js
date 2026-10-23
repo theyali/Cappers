@@ -72,6 +72,11 @@
             document.documentElement.removeAttribute("data-scroll-restoring");
         };
         const restore = () => {
+            // An explicit anchor takes priority over the previously saved position.
+            if (document.querySelector(":target")) {
+                release();
+                return;
+            }
             tries += 1;
             window.scrollTo(0, savedY);
             if (tries < 12 && Math.abs((window.scrollY || 0) - savedY) > 2) {

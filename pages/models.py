@@ -6,6 +6,16 @@ from django.db import models
 from tinymce.models import HTMLField
 
 
+def document_ui_labels():
+    return {
+        "home": "Главная", "group": "Документы", "contents": "СОДЕРЖАНИЕ",
+        "updated": "Обновлено", "revision": "Редакция", "revision_mobile": "ред.", "pdf": "Скачать PDF",
+        "previous": "← Предыдущий", "next": "Следующий →",
+        "save_cookies": "Сохранить выбор", "accept_cookies": "Принять все",
+        "necessary_cookies": "Только обязательные", "cookies_saved": "Выбор сохранён",
+    }
+
+
 class AdvBanner(models.Model):
     class Size(models.TextChoices):
         FULL_240 = "full_240", "На всю ширину · 240 px"
@@ -323,6 +333,27 @@ class PageSEO(models.Model):
         related_name="pages",
         verbose_name="Промо-баннеры",
     )
+    document_enabled = models.BooleanField("Использовать дизайн документа", default=False)
+    document_title = models.CharField("Заголовок документа", max_length=220, blank=True)
+    document_subtitle = models.TextField("Краткое описание документа", blank=True)
+    document_icon = models.CharField(
+        "Иконка документа", max_length=16, default="document",
+        choices=(("document", "Документ"), ("shield", "Конфиденциальность"), ("cookie", "Cookie")),
+    )
+    document_revision = models.CharField("Редакция документа", max_length=40, blank=True)
+    document_updated_on = models.DateField("Дата редакции документа", null=True, blank=True)
+    document_pdf = models.FileField("PDF документа", upload_to="documents/", blank=True)
+    document_support_title = models.CharField("Поддержка — заголовок", max_length=180, blank=True)
+    document_support_text = models.CharField("Поддержка — пояснение", max_length=255, blank=True)
+    document_support_button = models.CharField("Поддержка — текст кнопки", max_length=80, blank=True)
+    document_support_url = models.CharField("Поддержка — ссылка", max_length=500, blank=True)
+    document_related_pages = models.ManyToManyField(
+        "self", symmetrical=False, blank=True, verbose_name="Связанные документы",
+    )
+    document_labels = models.JSONField(
+        "Подписи интерфейса документа", default=document_ui_labels, blank=True,
+        help_text="Тексты навигации и cookie-кнопок. Структуру и оформление менять не нужно.",
+    )
     is_active = models.BooleanField("Использовать SEO-настройки", default=True, db_index=True)
     updated_at = models.DateTimeField("Обновлено", auto_now=True)
 
@@ -349,6 +380,10 @@ class PageSEO(models.Model):
 
     def clean(self) -> None:
         super().clean()
+        if not isinstance(self.document_labels, dict) or any(
+            not isinstance(value, str) for value in self.document_labels.values()
+        ):
+            raise ValidationError({"document_labels": "Введите JSON-объект с текстовыми подписями."})
         if self.exact_path and not self.exact_path.startswith("/"):
             raise ValidationError({"exact_path": "Путь должен начинаться с /."})
         if self.schema_json_ld:
@@ -364,3 +399,51 @@ class PageSEO(models.Model):
             normalized = self.exact_path.strip()
             self.exact_path = "/" if normalized == "/" else f"/{normalized.strip('/')}/".replace("\\/", "/")
         super().save(*args, **kwargs)
+
+
+class PageDocumentSection(models.Model):
+    class Kind(models.TextChoices):
+        CONTENT = "content", "Текст, списки и таблицы"
+        COOKIE_CATEGORIES = "cookie_categories", "Категории cookie"
+        COOKIE_ACTIONS = "cookie_actions", "Кнопки согласия cookie"
+
+    page = models.ForeignKey(PageSEO, on_delete=models.CASCADE, related_name="document_sections", verbose_name="SEO страница")
+    title = models.CharField("Заголовок раздела", max_length=220)
+    anchor = models.SlugField("Якорь раздела", max_length=100, blank=True, help_text="Необязательно. Пустой якорь формируется автоматически.")
+    content = HTMLField("Содержание раздела", blank=True, help_text="Редактируйте текст, списки и таблицы. Их оформление задаёт шаблон документа.")
+    kind = models.CharField("Тип раздела", max_length=24, choices=Kind.choices, default=Kind.CONTENT)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100)
+    is_active = models.BooleanField("Показывать", default=True)
+
+    class Meta:
+        verbose_name = "Раздел документа"
+        verbose_name_plural = "Разделы документа"
+        ordering = ("sort_order", "pk")
+        constraints = [models.UniqueConstraint(
+            fields=("page", "anchor"), condition=~models.Q(anchor=""), name="pages_document_anchor_unique",
+        )]
+
+    def __str__(self):
+        return self.title
+
+
+class PageDocumentCookie(models.Model):
+    page = models.ForeignKey(PageSEO, on_delete=models.CASCADE, related_name="document_cookies", verbose_name="SEO страница")
+    category = models.CharField("Категория", max_length=16, choices=(
+        ("necessary", "Обязательные"), ("analytics", "Аналитические"),
+        ("functional", "Функциональные"), ("advertising", "Рекламные"),
+    ))
+    title = models.CharField("Название", max_length=100)
+    description = models.TextField("Описание")
+    examples = models.CharField("Примеры", max_length=255, blank=True)
+    required_label = models.CharField("Метка обязательных cookie", max_length=80, blank=True)
+    sort_order = models.PositiveSmallIntegerField("Порядок", default=100)
+
+    class Meta:
+        verbose_name = "Категория cookie документа"
+        verbose_name_plural = "Категории cookie документа"
+        ordering = ("sort_order", "pk")
+        constraints = [models.UniqueConstraint(fields=("page", "category"), name="pages_document_cookie_unique")]
+
+    def __str__(self):
+        return self.title

@@ -147,6 +147,7 @@ class ArticleCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(Article)
 class ArticleAdmin(admin.ModelAdmin):
+    autocomplete_fields = ("author", "featured_prediction")
     list_display = (
         "title",
         "category",
@@ -159,12 +160,13 @@ class ArticleAdmin(admin.ModelAdmin):
     list_filter = ("is_main", "is_published", "category", "created_at")
     search_fields = ("title", "description", "content", "tags", "category__name")
     prepopulated_fields = {"slug": ("title",)}
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("views_count", "created_at", "updated_at")
     fieldsets = (
-        ("Основное", {"fields": ("title", "slug", "category", "description", "image")}),
+        ("Основное", {"fields": ("title", "slug", "author", "category", "description", "image")}),
         ("Метаданные", {"fields": ("reading_time_minutes", "tags", "is_main", "is_published")}),
         ("Содержание", {"fields": ("content",)}),
-        ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+        ("Блоки внутри материала", {"fields": ("table_of_contents", "inline_image", "inline_image_caption", "inline_image_after_paragraph", "pull_quote", "quote_after_paragraph", "related_link_url", "related_link_title", "related_link_image", "related_link_after_paragraph", "summary", "summary_after_paragraph", "featured_prediction", "prediction_after_paragraph", "comments_enabled")}),
+        ("Служебное", {"fields": ("views_count", "created_at", "updated_at"), "classes": ("collapse",)}),
     )
 
 
@@ -185,6 +187,7 @@ class NewsCategoryAdmin(admin.ModelAdmin):
 
 @admin.register(News)
 class NewsAdmin(admin.ModelAdmin):
+    autocomplete_fields = ("featured_prediction",)
     list_display = (
         "title",
         "category",
@@ -197,12 +200,13 @@ class NewsAdmin(admin.ModelAdmin):
     list_filter = ("is_main", "is_published", "category", "created_at")
     search_fields = ("title", "description", "content", "tags", "category__name")
     prepopulated_fields = {"slug": ("title",)}
-    readonly_fields = ("created_at", "updated_at")
+    readonly_fields = ("views_count", "created_at", "updated_at")
     fieldsets = (
         ("Основное", {"fields": ("title", "slug", "category", "description", "image")}),
         ("Метаданные", {"fields": ("reading_time_minutes", "tags", "is_main", "is_published")}),
         ("Содержание", {"fields": ("content",)}),
-        ("Служебное", {"fields": ("created_at", "updated_at"), "classes": ("collapse",)}),
+        ("Блоки внутри материала", {"fields": ("table_of_contents", "inline_image", "inline_image_caption", "inline_image_after_paragraph", "pull_quote", "quote_after_paragraph", "related_link_url", "related_link_title", "related_link_image", "related_link_after_paragraph", "summary", "summary_after_paragraph", "featured_prediction", "prediction_after_paragraph", "comments_enabled")}),
+        ("Служебное", {"fields": ("views_count", "created_at", "updated_at"), "classes": ("collapse",)}),
     )
 
 

@@ -6,6 +6,8 @@ from .models import (
     HelpBlock,
     PagePromoBanner,
     PageSEO,
+    PageDocumentSection,
+    PageDocumentCookie,
     PromoBanner,
 )
 
@@ -116,6 +118,19 @@ class HelpBlockAdmin(admin.ModelAdmin):
     inlines = (HelpAccordionItemInline,)
 
 
+class PageDocumentSectionInline(admin.StackedInline):
+    model = PageDocumentSection
+    extra = 0
+    fields = ("sort_order", "title", "anchor", "kind", "content", "is_active")
+
+
+class PageDocumentCookieInline(admin.StackedInline):
+    model = PageDocumentCookie
+    extra = 0
+    max_num = 4
+    fields = ("sort_order", "category", "title", "description", "examples", "required_label")
+
+
 @admin.register(PageSEO)
 class PageSEOAdmin(admin.ModelAdmin):
     list_display = (
@@ -149,8 +164,8 @@ class PageSEOAdmin(admin.ModelAdmin):
     )
     ordering = ("route_name", "exact_path", "name")
     readonly_fields = ("updated_at",)
-    filter_horizontal = ("adv_banners",)
-    inlines = (PagePromoBannerInline,)
+    filter_horizontal = ("adv_banners", "document_related_pages")
+    inlines = (PagePromoBannerInline, PageDocumentSectionInline, PageDocumentCookieInline)
     fieldsets = (
         (
             "Страница",
@@ -170,6 +185,15 @@ class PageSEOAdmin(admin.ModelAdmin):
                 ),
             },
         ),
+        ("Документ — оформление и содержание", {
+            "fields": ("document_enabled", "document_title", "document_subtitle", "document_icon",
+                       "document_updated_on", "document_revision", "document_pdf", "document_related_pages"),
+            "description": "Разделы, таблицы и категории cookie редактируются ниже. Дизайн общий для всех документов.",
+        }),
+        ("Документ — поддержка", {
+            "fields": ("document_support_title", "document_support_text", "document_support_button", "document_support_url"),
+        }),
+        ("Документ — подписи интерфейса", {"fields": ("document_labels",), "classes": ("collapse",)}),
         (
             "Реклама",
             {

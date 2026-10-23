@@ -168,7 +168,7 @@ urlpatterns = [
     path("about/", TemplateView.as_view(template_name="front/about.html"), name="about"),
     path(
         "rules/",
-        TemplateView.as_view(template_name="front/rules.html"),
+        static_views.rules,
         name="rules",
     ),
     path("pages/<slug:slug>/", static_views.static_page, name="static_page"),
