@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
-from django.core.exceptions import NON_FIELD_ERRORS, ValidationError
+from django.core.exceptions import NON_FIELD_ERRORS, PermissionDenied, ValidationError
 from django.db import transaction
 from django.db.models import (
     Case,
@@ -67,6 +67,7 @@ from .forms import (
 )
 from .capper_forms import CapperFocusForm
 from .services.preferences import sync_user_sport_league_preferences
+from .services.admin_users import build_admin_users_context
 from .models import (
     AnalystFollow,
     AnalystPaidSubscription,
@@ -113,6 +114,15 @@ FOLLOWING_NEW_PREDICTION_KINDS = (
     Notification.Kind.NEW_PREDICTION,
     Notification.Kind.REQUESTED_MATCH_PREDICTION,
 )
+
+
+@login_required
+@require_GET
+@never_cache
+def admin_users(request):
+    if not (request.user.is_staff or request.user.is_superuser):
+        raise PermissionDenied
+    return render(request, "cabinet/admin_users.html", build_admin_users_context(request.GET))
 
 
 def _following_unread_annotations(recipient) -> dict:

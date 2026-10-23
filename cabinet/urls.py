@@ -25,6 +25,7 @@ from .roulette import api as roulette_api
 app_name = "cabinet"
 
 urlpatterns = [
+    path("admin/users/", views.admin_users, name="admin_users"),
     path("coupons/<int:coupon_id>/checkout/", paid_prediction_views.checkout, name="single_coupon_checkout"),
     path("purchases/", paid_prediction_views.purchases, name="coupon_purchases"),
     path("coupon-sales/", paid_prediction_views.purchases, {"sales": True}, name="coupon_sales"),
