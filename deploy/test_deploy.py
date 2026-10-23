@@ -7,13 +7,29 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import textwrap
 import unittest
 
 
+def git(root, *args):
+    return subprocess.run(
+        ["git", "-C", str(root), "-c", "user.name=Deploy test", "-c", "user.email=deploy@example.test",
+         "-c", "commit.gpgsign=false", *args],
+        capture_output=True, text=True, check=True,
+    ).stdout.strip()
+
+
 class DeployTests(unittest.TestCase):
-    def run_deploy(self, *, migration_fails=False, **flags):
+    def run_deploy(self, *, migration_fails=False, service_fails=False, **flags):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
+            git(root, "init", "-q")
+            git(root, "commit", "--allow-empty", "-qm", "previous successful deploy")
+            self.previous_revision = git(root, "rev-parse", "HEAD")
+            git(root, "commit", "--allow-empty", "-qm", "new deploy")
+            self.target_revision = git(root, "rev-parse", "HEAD")
+            marker = root / ".git/cappers-deployed-revision"
+            marker.write_text(self.previous_revision + "\n")
             (root / "deploy").mkdir()
             (root / ".env").touch()
             (root / "entrypoint.sh").touch()
@@ -26,6 +42,8 @@ class DeployTests(unittest.TestCase):
                 "    log.write(json.dumps(sys.argv[1:]) + '\\n')\n"
                 "if 'run' in sys.argv and 'migrate' in sys.argv:\n"
                 "    sys.exit(int(os.environ['DEPLOY_TEST_MIGRATION_FAILS']))\n"
+                "if '--wait' in sys.argv and 'web' in sys.argv:\n"
+                "    sys.exit(int(os.environ['DEPLOY_TEST_SERVICE_FAILS']))\n"
             )
             executable.chmod(0o755)
             log = root / "commands.jsonl"
@@ -39,23 +57,26 @@ class DeployTests(unittest.TestCase):
                 "PATH": f"{root}{os.pathsep}{os.environ['PATH']}",
                 "DEPLOY_TEST_LOG": str(log),
                 "DEPLOY_TEST_MIGRATION_FAILS": str(int(migration_fails)),
+                "DEPLOY_TEST_SERVICE_FAILS": str(int(service_fails)),
             }
             result = subprocess.run(
                 ["bash", "deploy/deploy.sh"], cwd=root, env=env,
                 capture_output=True, text=True,
             )
             commands = [json.loads(line) for line in log.read_text().splitlines()]
+            self.deployed_revision = marker.read_text().strip()
         return result, commands
 
     def test_code_deploy_reloads_app_and_live_services_without_building(self):
         result, commands = self.run_deploy(DEPLOY_RESTART_APP="1", DEPLOY_LIVE_WS="1")
         self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(self.deployed_revision, self.target_revision)
         self.assertFalse(any("build" in cmd or "--build" in cmd for cmd in commands))
         migration = next(i for i, cmd in enumerate(commands) if "run" in cmd and "migrate" in cmd)
         for service in ("web", "celery", "celery-beat", "telegram-bot", "neurokeff-live", "neurokeff-odds"):
             index, command = next((i, cmd) for i, cmd in enumerate(commands) if service in cmd)
             self.assertGreater(index, migration)
-            for option in ("--no-build", "--force-recreate", "--no-deps"):
+            for option in ("--no-build", "--force-recreate", "--no-deps", "--wait"):
                 self.assertIn(option, command)
 
     def test_requested_build_and_full_deploy_build_once_before_migrations(self):
@@ -76,7 +97,16 @@ class DeployTests(unittest.TestCase):
             migration_fails=True,
         )
         self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.deployed_revision, self.previous_revision)
         self.assertFalse(any("web" in cmd or "neurokeff-live" in cmd or "prune" in cmd for cmd in commands))
+
+    def test_unhealthy_web_does_not_mark_the_revision_as_deployed(self):
+        result, commands = self.run_deploy(
+            DEPLOY_RESTART_APP="1", DEPLOY_LIVE_WS="1", service_fails=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertEqual(self.deployed_revision, self.previous_revision)
+        self.assertFalse(any("neurokeff-live" in cmd for cmd in commands))
 
     def test_no_app_changes_only_ensures_live_services_are_running(self):
         result, commands = self.run_deploy(DEPLOY_LIVE_WS="1")
@@ -86,6 +116,40 @@ class DeployTests(unittest.TestCase):
         live = next(cmd for cmd in commands if "neurokeff-live" in cmd)
         self.assertIn("--no-build", live)
         self.assertIn("--no-deps", live)
+
+
+class DeployScopeTests(unittest.TestCase):
+    def test_cancelled_deploy_is_compared_to_last_success_instead_of_checkout(self):
+        workflow = Path(__file__).parents[1] / ".github/workflows/deploy.yml"
+        step = workflow.read_text().split("      - name: Compute Deploy Scope\n", 1)[1]
+        script = textwrap.dedent(step.split("        run: |\n", 1)[1].split("      - name:", 1)[0])
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            git(root, "init", "-q")
+            git(root, "commit", "--allow-empty", "-qm", "last success")
+            last_success = git(root, "rev-parse", "HEAD")
+            (root / "cabinet").mkdir()
+            (root / "cabinet/views.py").write_text("# app update from cancelled deploy\n")
+            git(root, "add", ".")
+            git(root, "commit", "-qm", "cancelled deploy checked out this revision")
+            cancelled_revision = git(root, "rev-parse", "HEAD")
+            (root / "ReadMe.md").write_text("# workflow-only follow-up\n")
+            git(root, "add", ".")
+            git(root, "commit", "-qm", "new deploy")
+            for baseline, expected_restart in ((last_success, "1"), (cancelled_revision, "0")):
+                with self.subTest(baseline=baseline):
+                    output = root / "github-output"
+                    output.write_text("")
+                    result = subprocess.run(
+                        ["bash", "-euo", "pipefail", "-c", script], cwd=root,
+                        env={**os.environ, "DEPLOYED_REV": baseline,
+                             "GITHUB_SHA": git(root, "rev-parse", "HEAD"), "GITHUB_OUTPUT": str(output)},
+                        capture_output=True, text=True,
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    values = dict(line.split("=", 1) for line in output.read_text().splitlines())
+                    self.assertEqual(values["restart_app"], expected_restart)
+                    self.assertEqual(values["build"], "0")
 
 
 if __name__ == "__main__":

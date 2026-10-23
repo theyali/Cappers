@@ -24,6 +24,9 @@ fi
 
 chmod +x entrypoint.sh deploy/*.sh
 
+target_revision="$(git rev-parse HEAD)"
+deployed_revision_file="$(git rev-parse --git-path cappers-deployed-revision)"
+
 # Build once, only when the workflow requests it (or for a full deploy).
 # Source changes are already mounted into /app and only need fresh processes.
 if [ "${DEPLOY_BUILD}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ]; then
@@ -33,7 +36,7 @@ compose up -d --no-build --remove-orphans db redis pgbouncer
 
 compose run --rm migrate
 
-app_up_options=(-d --no-build --no-deps)
+app_up_options=(-d --no-build --no-deps --wait --wait-timeout 120)
 if [ "${DEPLOY_RESTART_APP}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ] || [ "${DEPLOY_BUILD}" = "1" ]; then
   # up alone does not restart unchanged containers after a bind-mounted code update.
   # Dependencies and migrations have already been started above.
@@ -99,3 +102,9 @@ if [ "${DEPLOY_PRUNE}" = "1" ]; then
 fi
 
 compose ps
+
+# Only this marker represents a successfully applied revision. Keep the previous
+# value if building, migrations, service readiness or nginx validation fails.
+printf '%s\n' "${target_revision}" > "${deployed_revision_file}.tmp"
+mv "${deployed_revision_file}.tmp" "${deployed_revision_file}"
+echo "Successfully deployed revision: ${target_revision}"
