@@ -1,0 +1,5 @@
+{% for section in document_sections %}
+<a class="legal-toc-link{% if forloop.first %} is-active{% endif %}" href="#{{ section.anchor }}" data-document-link="{{ section.anchor }}"{% if forloop.first %} aria-current="location"{% endif %}>
+    <span>{{ section.number }}</span><strong>{{ section.title }}</strong>
+</a>
+{% endfor %}

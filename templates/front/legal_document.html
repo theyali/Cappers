@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}{{ document.document_title }} — КапперХаб{% endblock %}
+{% block content %}
+<article class="legal-document container" data-legal-document>
+    <header class="legal-header">
+        <nav class="legal-breadcrumbs" aria-label="{{ document_labels.group }}">
+            <a class="legal-home-crumb" href="{% url 'front:index' %}">{{ document_labels.home }}</a>
+            <span class="legal-home-crumb">{% include "front/includes/_document_icon.html" with icon="chevron" only %}</span>
+            <span>{{ document_labels.group }}</span>
+            <span>{% include "front/includes/_document_icon.html" with icon="chevron" only %}</span>
+            <span aria-current="page">{{ document.document_title }}</span>
+        </nav>
+        <div class="legal-heading">
+            <span class="legal-document-icon">{% include "front/includes/_document_icon.html" with icon=document.document_icon only %}</span>
+            <div class="legal-heading-copy">
+                <h1>{{ document.document_title }}</h1>
+                {% if document.document_subtitle %}<p class="legal-subtitle">{{ document.document_subtitle }}</p>{% endif %}
+                <div class="legal-meta">
+                    {% if document.document_updated_on %}<span>{% include "front/includes/_document_icon.html" with icon="clock" only %}{{ document_labels.updated }} <time datetime="{{ document.document_updated_on|date:'Y-m-d' }}">{{ document.document_updated_on|date:"j E Y" }}</time></span>{% endif %}
+                    {% if document.document_revision %}<span class="legal-revision"><span class="legal-revision-label">{{ document_labels.revision }}</span><span class="legal-revision-mobile-label">{{ document_labels.revision_mobile }}</span> {{ document.document_revision }}</span>{% endif %}
+                </div>
+            </div>
+            {% if document.document_pdf %}<a class="legal-button legal-pdf" href="{{ document.document_pdf.url }}" download>{% include "front/includes/_document_icon.html" with icon="download" only %}{{ document_labels.pdf }}</a>{% endif %}
+        </div>
+    </header>
+    {% if document_sections %}
+    <details class="legal-mobile-toc" data-document-mobile-toc>
+        <summary><span class="legal-toc-menu-icon">{% include "front/includes/_document_icon.html" with icon="menu" only %}</span><span><small>{{ document_labels.contents }}</small><strong data-document-current>{{ document_sections.0.number }} · {{ document_sections.0.title }}</strong></span><span class="legal-toc-chevron">{% include "front/includes/_document_icon.html" with icon="chevron" only %}</span></summary>
+        <nav aria-label="{{ document_labels.contents }}">{% include "front/includes/_document_toc.html" %}</nav>
+    </details>
+    {% endif %}
+    <div class="legal-layout">
+        {% if document_sections %}<aside class="legal-toc"><nav aria-label="{{ document_labels.contents }}"><p>{{ document_labels.contents }}</p>{% include "front/includes/_document_toc.html" %}</nav></aside>{% endif %}
+        <div class="legal-content">
+            {% for section in document_sections %}
+            <section class="legal-section" id="{{ section.anchor }}" data-document-section data-document-title="{{ section.number }} · {{ section.title }}" aria-labelledby="{{ section.anchor }}-title">
+                <div class="legal-section-heading"><span>{{ section.number }}</span><h2 id="{{ section.anchor }}-title">{{ section.title }}</h2></div>
+                {% if section.content %}<div class="legal-richtext">{{ section.content|safe }}</div>{% endif %}
+                {% if section.kind == 'cookie_categories' %}
+                <div class="legal-cookie-options">
+                    {% for category in document_cookies %}
+                    <label class="legal-cookie-option">
+                        <span class="legal-cookie-copy"><span class="legal-cookie-title"><strong>{{ category.title }}</strong>{% if category.required_label %}<small>{{ category.required_label }}</small>{% endif %}</span><span>{{ category.description }}</span>{% if category.examples %}<small>{{ category.examples }}</small>{% endif %}</span>
+                        <input class="legal-cookie-switch" type="checkbox" aria-label="{{ category.title }}"{% if category.category == 'necessary' %} checked disabled{% else %} data-document-cookie="{{ category.category }}"{% endif %}>
+                    </label>
+                    {% endfor %}
+                </div>
+                {% elif section.kind == 'cookie_actions' %}
+                <div class="legal-cookie-actions" data-document-cookie-actions>
+                    <button class="legal-button is-primary" type="button" data-document-cookie-save>{{ document_labels.save_cookies }}</button>
+                    <button class="legal-button" type="button" data-cookie-choice="accepted">{{ document_labels.accept_cookies }}</button>
+                    <button class="legal-button" type="button" data-cookie-choice="declined">{{ document_labels.necessary_cookies }}</button>
+                </div>
+                <p class="legal-cookie-status" role="status" data-document-cookie-status data-saved-label="{{ document_labels.cookies_saved }}"></p>
+                {% endif %}
+            </section>
+            {% endfor %}
+            {% if document_sections %}<nav class="legal-section-pager" aria-label="{{ document_labels.contents }}"><a class="legal-button" href="#{{ document_sections.0.anchor }}" data-document-previous>{{ document_labels.previous }}</a><a class="legal-button" href="#{{ document_sections.0.anchor }}" data-document-next>{{ document_labels.next }}</a></nav>{% endif %}
+            <footer class="legal-document-footer">
+                {% if document_related %}<nav class="legal-related" aria-label="{{ document_labels.group }}">{% for item in document_related %}<a href="{{ item.url }}"><span>{% include "front/includes/_document_icon.html" with icon=item.icon only %}</span><strong>{{ item.title }}</strong><span>{% include "front/includes/_document_icon.html" with icon="chevron" only %}</span></a>{% endfor %}</nav>{% endif %}
+                {% if document.document_support_title %}<div class="legal-support"><span class="legal-support-icon">{% include "front/includes/_document_icon.html" with icon="mail" only %}</span><div><strong>{{ document.document_support_title }}</strong>{% if document.document_support_text %}<p>{{ document.document_support_text }}</p>{% endif %}</div>{% if document.document_support_url and document.document_support_button %}<a class="legal-button is-primary" href="{{ document.document_support_url }}">{{ document.document_support_button }}</a>{% endif %}</div>{% endif %}
+            </footer>
+        </div>
+    </div>
+</article>
+{% endblock %}
+{% block extra_js %}<script src="{% static 'front/js/legal-document.js' %}" defer></script>{% endblock %}

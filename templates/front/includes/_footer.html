@@ -120,6 +120,7 @@
         </div>
 
         <div class="site-footer-legal-copy">
+            {% if not request.user.is_authenticated or page_class == 'legal-document-page' %}<button class="site-footer-cookie-settings" type="button" data-cookie-settings>Настройки cookie</button>{% endif %}
             <p>{{ website_settings.footer_legal_text|default:"Официальные документы сервиса" }}</p>
             {% if website_settings.footer_disclaimer_text %}<p>{{ website_settings.footer_disclaimer_text }}</p>{% endif %}
             {% if website_settings.footer_address_text %}<p>{{ website_settings.footer_address_text }}</p>{% endif %}

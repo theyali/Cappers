@@ -1,0 +1,96 @@
+<div class="publication-detail" data-publication-detail>
+    <div class="publication-mobile-bar">
+        <a href="{{ article_back_url }}" aria-label="{{ article_back_label|default:'Все статьи' }}">{% include 'front/includes/_publication_icon.html' with name='back' only %}</a>
+        <span>{{ article.title }}</span>
+        <button type="button" data-publication-share aria-label="Поделиться материалом">{% include 'front/includes/_publication_icon.html' with name='share' only %}</button>
+        <progress class="publication-progress" max="100" value="0" aria-label="Прогресс чтения" data-publication-progress></progress>
+    </div>
+    <header class="publication-heading">
+        <nav class="publication-breadcrumbs" aria-label="Хлебные крошки"><a href="/">Главная</a><span>/</span><a href="{{ article_back_url }}">{% if publication_is_news %}Новости{% else %}Статьи{% endif %}</a>{% if article.category %}<span>/</span><a href="{{ publication_category_url }}" aria-current="page">{{ article.category.name }}</a>{% endif %}</nav>
+        <div class="publication-meta">
+            {% if article.category %}<a class="publication-category" href="{{ publication_category_url }}">{{ article.category.name }}</a>{% endif %}
+            <time datetime="{{ article.published_at|default:article.created_at|date:'c' }}">{% include 'front/includes/_publication_icon.html' with name='clock' size=15 weight=1.9 only %}{{ article.published_at|default:article.created_at|date:'j E' }}</time>
+            {% if article.reading_time_minutes %}<span>{% include 'front/includes/_publication_icon.html' with name='bookmark' size=15 weight=1.9 only %}{{ article.reading_time_minutes }} мин чтения</span>{% endif %}
+            <span>{% include 'front/includes/_publication_icon.html' with name='eye' size=15 weight=1.9 only %}{{ article.views_count }}</span>
+        </div>
+        <h1>{{ article.title }}</h1>
+        {% if article.description %}<p class="publication-description">{{ article.description }}</p>{% endif %}
+        {% if publication_author %}
+        <div class="publication-byline">
+            <a href="{{ publication_author.url }}" aria-label="{{ publication_author.name }}">{% include 'front/includes/_publication_avatar.html' with person=publication_author.user avatar_name=publication_author.name only %}</a>
+            <div class="publication-author-info">
+                <div class="publication-author-name"><a href="{{ publication_author.url }}">{{ publication_author.name }}</a>{% if publication_author.verified %}{% include 'cabinet/includes/_capper_verified_badge.html' %}{% endif %}{% if publication_author.vip %}<span class="publication-vip">VIP</span>{% endif %}</div>
+                <div class="publication-author-stats"><span><b data-author-followers-count="{{ publication_author.user.pk }}">{{ publication_author.followers }}</b> подписчиков</span><span>ROI <b class="{% if publication_author.roi >= 0 %}is-positive{% else %}is-negative{% endif %}">{% if publication_author.roi > 0 %}+{% endif %}{{ publication_author.roi }}%</b></span><span>{{ publication_author.predictions }} прогнозов</span></div>
+            </div>
+            {% include 'front/includes/_publication_follow.html' %}
+        </div>
+        {% endif %}
+    </header>
+    {% if article.image %}<div class="publication-hero" data-skeleton-image><img src="{{ article.image.url }}" alt="{{ article.title }}" width="820" height="380" fetchpriority="high" decoding="async"></div>{% endif %}
+    {% if publication_toc %}
+    <details class="publication-toc" open data-publication-toc>
+        <summary><span>Содержание {% if publication_is_news %}новости{% else %}статьи{% endif %}</span><small>{{ publication_toc_count_label }}</small>{% include 'front/includes/_publication_icon.html' with name='down' size=16 only %}</summary>
+        <ol>{% for section in publication_toc %}<li><a href="#{{ section.anchor }}"><span>{{ forloop.counter }}</span>{{ section.title }}</a></li>{% endfor %}</ol>
+    </details>
+    {% endif %}
+    <div class="publication-body" data-publication-body>
+        {% for block in publication_blocks %}
+        {% if block.kind == 'html' %}{{ block.html|safe }}
+        {% elif block.kind == 'image' %}<figure class="publication-figure"><div data-skeleton-image><img src="{{ article.inline_image.url }}" alt="{{ article.inline_image_caption }}" width="820" height="200" loading="lazy" decoding="async"></div>{% if article.inline_image_caption %}<figcaption>{{ article.inline_image_caption }}</figcaption>{% endif %}</figure>
+        {% elif block.kind == 'quote' %}<blockquote class="publication-quote"><div><p>{{ article.pull_quote|linebreaksbr }}</p>{% if publication_author %}<cite>{{ publication_author.name }}, автор</cite>{% endif %}</div></blockquote>
+        {% elif block.kind == 'link' %}<a class="publication-inline-link" href="{{ article.related_link_url }}">{% if article.related_link_image %}<img src="{{ article.related_link_image.url }}" alt="" width="56" height="56" loading="lazy">{% endif %}<span>ЧИТАЙТЕ ТАКЖЕ</span><strong>{{ article.related_link_title }}</strong>{% include 'front/includes/_publication_icon.html' with size=17 only %}</a>
+        {% elif block.kind == 'summary' %}<aside class="publication-summary"><span class="publication-summary-icon">{% include 'front/includes/_publication_icon.html' with name='bulb' only %}</span><div><strong>Коротко</strong><p>{{ article.summary|linebreaksbr }}</p></div></aside>
+        {% elif block.kind == 'prediction' %}
+        <a class="publication-prediction" href="{{ publication_prediction.url }}">
+            <div class="publication-prediction-top"><span class="publication-category">{% include 'front/includes/_publication_icon.html' with name='fire' size=14 only %}Прогноз из {% if publication_is_news %}новости{% else %}статьи{% endif %}</span><time>{{ publication_prediction.match.starts_at|date:'d.m, H:i' }}</time></div>
+            <div class="publication-prediction-match">
+                <span class="publication-prediction-sport">{% include 'front/includes/_sport_icon.html' with code=publication_prediction.sport_code only %}</span>
+                <div><strong>{{ publication_prediction.match.home_team_name }} — {{ publication_prediction.match.away_team_name }}</strong><span>{% if publication_prediction.match.league_name %}{{ publication_prediction.match.league_name }} · {% endif %}{{ publication_prediction.selection }}</span></div>
+                {% if publication_prediction.coefficient %}<b>{{ publication_prediction.coefficient|floatformat:2 }}</b>{% endif %}
+            </div>
+        </a>
+        {% endif %}
+        {% endfor %}
+    </div>
+    {% if article.tag_list %}<div class="publication-tags" aria-label="Теги">{% for tag in article.tag_list %}<a href="{{ article_back_url }}?q={{ tag|urlencode }}">#{{ tag }}</a>{% endfor %}</div>{% endif %}
+    <div class="publication-actions">
+        {% if request.user.is_authenticated %}<form method="post" action="{{ article.get_absolute_url }}" data-publication-reaction="like" data-no-transition>{% csrf_token %}<button type="submit" name="action" value="like" class="publication-action{% if publication_liked %} is-active{% endif %}" aria-label="Нравится" aria-pressed="{{ publication_liked|yesno:'true,false' }}">{% include 'front/includes/_publication_icon.html' with name='like' size=17 only %}<span data-publication-likes>{{ publication_likes }}</span></button></form>{% else %}<a class="publication-action" href="{{ publication_login_url }}" aria-label="Войти и поставить лайк">{% include 'front/includes/_publication_icon.html' with name='like' size=17 only %}<span>{{ publication_likes }}</span></a>{% endif %}
+        {% if article.comments_enabled %}<a class="publication-action" href="#publication-comments" aria-label="Комментарии">{% include 'front/includes/_publication_icon.html' with name='comment' size=17 only %}{{ publication_comments_count }}</a>{% endif %}
+        {% if request.user.is_authenticated %}<form method="post" action="{{ article.get_absolute_url }}" data-publication-reaction="bookmark" data-no-transition>{% csrf_token %}<button class="publication-action{% if publication_bookmarked %} is-active{% endif %}" type="submit" name="action" value="bookmark" aria-label="Сохранить в избранное" aria-pressed="{{ publication_bookmarked|yesno:'true,false' }}">{% include 'front/includes/_publication_icon.html' with name='bookmark' size=17 only %}</button></form>{% else %}<a class="publication-action" href="{{ publication_login_url }}" aria-label="Войти и сохранить в избранное">{% include 'front/includes/_publication_icon.html' with name='bookmark' size=17 only %}</a>{% endif %}
+        <button class="publication-action publication-share" type="button" data-publication-share>{% include 'front/includes/_publication_icon.html' with name='share' size=17 only %}<span>Поделиться</span></button>
+    </div>
+    <p class="publication-status" role="status" data-publication-status hidden></p>
+    <div class="publication-divider"></div>
+    {% if publication_author %}
+    <section class="publication-author-card" aria-label="Об авторе">
+        <div class="publication-author-card-top"><a href="{{ publication_author.url }}" aria-label="{{ publication_author.name }}">{% include 'front/includes/_publication_avatar.html' with person=publication_author.user avatar_name=publication_author.name only %}</a><div class="publication-author-info"><div class="publication-author-name"><a href="{{ publication_author.url }}">{{ publication_author.name }}</a>{% if publication_author.verified %}{% include 'cabinet/includes/_capper_verified_badge.html' %}{% endif %}</div><p>Автор{% if publication_author.specialization %} · {{ publication_author.specialization }}{% endif %} · {{ publication_author.articles_count }} статей</p></div></div>
+        {% if publication_author.bio %}<p class="publication-author-bio">{{ publication_author.bio|linebreaksbr }}</p>{% endif %}
+        <div class="publication-author-buttons">{% include 'front/includes/_publication_follow.html' %}<a class="publication-secondary-button" href="{{ publication_author.articles_url }}">Все статьи автора</a></div>
+    </section>
+    {% endif %}
+    {% if publication_previous or publication_next %}
+    <nav class="publication-neighbors" aria-label="Соседние материалы">
+        {% if publication_previous %}<a href="{{ publication_previous.get_absolute_url }}">{% include 'front/includes/_publication_icon.html' with name='back' only %}<span><small>ПРЕДЫДУЩАЯ</small><strong>{{ publication_previous.title }}</strong></span></a>{% endif %}
+        {% if publication_next %}<a class="is-next" href="{{ publication_next.get_absolute_url }}"><span><small>СЛЕДУЮЩАЯ</small><strong>{{ publication_next.title }}</strong></span>{% include 'front/includes/_publication_icon.html' only %}</a>{% endif %}
+    </nav>
+    {% endif %}
+    {% if related_articles %}
+    <section class="publication-related" aria-labelledby="publication-related-title"><div class="publication-section-head"><h2 id="publication-related-title">{% if publication_is_news %}Похожие новости{% else %}Похожие статьи{% endif %}</h2><a href="{{ publication_category_url }}">{% if publication_is_news %}Все новости{% else %}Все статьи раздела{% endif %} →</a></div><div class="publication-related-grid">
+        {% for related in related_articles %}<article class="publication-related-card">{% if related.image %}<a class="publication-related-image" href="{{ related.get_absolute_url }}" tabindex="-1" aria-hidden="true" data-skeleton-image><img src="{{ related.image.url }}" alt="" width="264" height="126" loading="lazy" decoding="async"></a>{% endif %}<div class="publication-related-text">{% if related.category %}<span class="publication-related-category">{{ related.category.name }}</span>{% endif %}<h3><a href="{{ related.get_absolute_url }}">{{ related.title }}</a></h3><div class="publication-related-meta">{% if not publication_is_news and related.author and related.author.analyst_profile.is_public %}<span>{{ related.author.analyst_profile }}</span>{% endif %}<span>{{ related.reading_time_minutes }} мин чтения</span></div></div></article>{% endfor %}
+    </div></section>
+    {% endif %}
+    {% if publication_more_author %}
+    <section class="publication-more-author" aria-labelledby="publication-more-title"><div class="publication-section-head"><h2 id="publication-more-title">Ещё от автора</h2><a href="{{ publication_author.articles_url }}">Все {{ publication_author.articles_count }} →</a></div>{% for item in publication_more_author %}<a class="publication-more-row" href="{{ item.get_absolute_url }}"><span>{{ forloop.counter }}</span><div><strong>{{ item.title }}</strong><small>{{ item.published_at|default:item.created_at|date:'j M' }} · {{ item.reading_time_minutes }} мин</small></div>{% include 'front/includes/_publication_icon.html' with size=16 only %}</a>{% endfor %}</section>
+    {% endif %}
+    {% if article.comments_enabled %}
+    <section class="publication-comments" id="publication-comments" aria-labelledby="publication-comments-title"><div class="publication-section-head"><h2 id="publication-comments-title">Комментарии <span>{{ publication_comments_count }}</span></h2><span>Сначала новые</span></div>
+        {% if request.user.is_authenticated %}
+        <form class="publication-comment-form" method="post" action="{{ article.get_absolute_url }}#publication-comments" data-publication-comment-form>{% csrf_token %}<input type="hidden" name="action" value="comment"><input type="hidden" name="parent_id" value="" data-publication-parent><label for="publication-comment-text" class="publication-visually-hidden">Ваш комментарий</label>{% include 'front/includes/_publication_avatar.html' with person=request.user only %}<div class="publication-comment-input"><span data-publication-reply-label hidden></span><textarea id="publication-comment-text" name="text" rows="1" maxlength="1000" required placeholder="Написать комментарий…">{{ publication_comment_draft }}</textarea></div><button type="submit" class="publication-follow">Отправить</button></form>
+        {% else %}<p class="publication-comment-login"><a href="{{ publication_login_url }}">Войдите</a>, чтобы написать комментарий.</p>{% endif %}
+        {% for comment in publication_comments %}
+        <article class="publication-comment" id="publication-comment-{{ comment.pk }}">{% include 'front/includes/_publication_avatar.html' with person=comment.user only %}<div class="publication-comment-content"><div class="publication-comment-heading"><strong>{% if comment.user.analyst_profile.is_public %}{{ comment.user.analyst_profile }}{% else %}{{ comment.user.username }}{% endif %}</strong><time datetime="{{ comment.created_at|date:'c' }}">{{ comment.created_at|date:'d.m.Y, H:i' }}</time></div>{% if comment.parent %}<span class="publication-comment-parent">Ответ для {{ comment.parent.user.username }}</span>{% endif %}<p>{{ comment.text|linebreaksbr }}</p><div class="publication-comment-actions">{% if request.user.is_authenticated %}<form method="post" action="{{ article.get_absolute_url }}#publication-comments">{% csrf_token %}<input type="hidden" name="action" value="comment_like"><input type="hidden" name="comment_id" value="{{ comment.pk }}"><button type="submit" class="{% if comment.is_liked %}is-active{% endif %}" aria-label="Нравится комментарий" aria-pressed="{{ comment.is_liked|yesno:'true,false' }}">{% include 'front/includes/_publication_icon.html' with name='like' size=14 only %}{{ comment.likes }}</button></form><button type="button" data-publication-reply="{{ comment.pk }}" data-comment-name="{{ comment.user.username }}">Ответить</button>{% else %}<span>{% include 'front/includes/_publication_icon.html' with name='like' size=14 only %}{{ comment.likes }}</span>{% endif %}</div></div></article>
+        {% empty %}<p class="publication-comments-empty">Комментариев пока нет. Начните обсуждение.</p>{% endfor %}
+        {% if publication_comments.has_other_pages %}<nav class="publication-comments-pagination" aria-label="Страницы комментариев">{% if publication_comments.has_previous %}<a href="?comments_page={{ publication_comments.previous_page_number }}#publication-comments">← Предыдущие</a>{% endif %}<span>{{ publication_comments.number }} / {{ publication_comments.paginator.num_pages }}</span>{% if publication_comments.has_next %}<a href="?comments_page={{ publication_comments.next_page_number }}#publication-comments">Показать ещё комментарии →</a>{% endif %}</nav>{% endif %}
+    </section>
+    {% endif %}
+</div>

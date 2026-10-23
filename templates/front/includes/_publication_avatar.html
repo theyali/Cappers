@@ -1,0 +1,1 @@
+<span class="publication-avatar">{% if person.avatar %}<img src="{{ person.avatar.url }}" alt="" width="52" height="52" loading="lazy" decoding="async">{% else %}<span>{{ avatar_name|default:person.username|slice:':1'|upper }}</span>{% endif %}</span>

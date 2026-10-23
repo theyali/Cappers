@@ -1,3 +1,4 @@
+from django.contrib.contenttypes.models import ContentType
 from django.core.paginator import Paginator
 from django.db.models import BooleanField, CharField, DateTimeField, F, Q, Value
 from django.db.models.functions import Coalesce
@@ -5,10 +6,13 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.views.decorators.cache import never_cache
+from django.views.decorators.http import require_http_methods
 
 from cabinet.models import CapperArticle, User
 
-from .models import Article, ArticleCategory, News, NewsCategory
+from .models import Article, ArticleCategory, News, NewsCategory, PublicationSlug
+from .publications import build_publication_context, publication_action
 
 
 ARTICLES_PAGE_SIZE = 9
@@ -87,10 +91,13 @@ def _public_capper_articles():
     )
 
 
-def _article_rows(source: str):
+def _article_rows(source: str, author_username=""):
     def rows(category, query):
         editorial = Article.objects.filter(is_published=True)
         cappers = _public_capper_articles()
+        if author_username:
+            editorial = editorial.filter(author__username=author_username)
+            cappers = cappers.filter(author__username=author_username)
         if category:
             editorial = editorial.filter(category=category)
             cappers = cappers.filter(category=category)
@@ -165,7 +172,7 @@ def articles(request):
         source = ""
     listing_context = _filter_publications(
         request,
-        rows=_article_rows(source),
+        rows=_article_rows(source, request.GET.get("author", "")),
         category_model=ArticleCategory,
     )
     page_obj = listing_context["page_obj"]
@@ -224,12 +231,16 @@ def sports_news(request):
     )
 
 
+@never_cache
+@require_http_methods(["GET", "POST"])
 def news_detail(request, slug: str):
-    article = get_object_or_404(
-        News.objects.select_related("category"),
-        slug=slug,
-        is_published=True,
-    )
+    rows = News.objects.select_related("category", "featured_prediction").filter(is_published=True)
+    article = rows.filter(slug=slug).first()
+    if article is None:
+        previous = get_object_or_404(PublicationSlug, content_type=ContentType.objects.get_for_model(News), slug=slug)
+        return redirect(get_object_or_404(rows, pk=previous.object_id).get_absolute_url(), permanent=True)
+    if request.method == "POST":
+        return publication_action(request, article)
     related_articles = (
         News.objects.filter(is_published=True)
         .select_related("category")
@@ -241,7 +252,7 @@ def news_detail(request, slug: str):
         "front/article_detail.html",
         {
             "article": article,
-            "related_articles": related_articles,
+            **build_publication_context(request, article, related_articles),
             "article_back_url_name": "front:sports_news",
             "article_back_label": "Все новости",
             "article_detail_source": "Новости спорта",
@@ -252,12 +263,16 @@ def news_detail(request, slug: str):
     )
 
 
+@never_cache
+@require_http_methods(["GET", "POST"])
 def article_detail(request, slug: str):
-    article = get_object_or_404(
-        Article.objects.select_related("category"),
-        slug=slug,
-        is_published=True,
-    )
+    rows = Article.objects.select_related("category", "author", "author__analyst_profile", "featured_prediction").filter(is_published=True)
+    article = rows.filter(slug=slug).first()
+    if article is None:
+        previous = get_object_or_404(PublicationSlug, content_type=ContentType.objects.get_for_model(Article), slug=slug)
+        return redirect(get_object_or_404(rows, pk=previous.object_id).get_absolute_url(), permanent=True)
+    if request.method == "POST":
+        return publication_action(request, article)
     related_articles = (
         Article.objects.filter(is_published=True)
         .select_related("category")
@@ -269,11 +284,13 @@ def article_detail(request, slug: str):
         "front/article_detail.html",
         {
             "article": article,
-            "related_articles": related_articles,
+            **build_publication_context(request, article, related_articles),
         },
     )
 
 
+@never_cache
+@require_http_methods(["GET", "POST"])
 def capper_article_detail(request, username: str, article_id: int, slug: str):
     article = get_object_or_404(
         _public_capper_articles().select_related("category", "author", "author__analyst_profile"),
@@ -282,6 +299,8 @@ def capper_article_detail(request, username: str, article_id: int, slug: str):
     )
     if article.slug != slug:
         return redirect(article.get_absolute_url(), permanent=True)
+    if request.method == "POST":
+        return publication_action(request, article)
 
     related_articles = (
         _public_capper_articles().filter(author=article.author)
@@ -294,7 +313,7 @@ def capper_article_detail(request, username: str, article_id: int, slug: str):
         "front/article_detail.html",
         {
             "article": article,
-            "related_articles": related_articles,
+            **build_publication_context(request, article, related_articles),
             "article_detail_source": author_name,
             "article_author_url": reverse("front:expert_profile", args=[username]),
             "related_eyebrow": "Ещё от каппера",

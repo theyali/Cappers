@@ -136,6 +136,20 @@
                             </div>
                             {% for error in form.content.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
                         </div>
+                        <details class="article-editor-extras"{% if form.errors %} open{% endif %}>
+                            <summary>Дополнительные блоки статьи</summary>
+                            <p>Заполненные блоки появятся в тексте после выбранного абзаца. Пустые блоки скрыты. Для содержания укажите заголовки H2/H3 из текста, по одному в строке.</p>
+                            <div class="article-editor-extras-fields">
+                                {% for field in form.extra_content_fields %}
+                                <div class="article-editor-field{% if field.errors %} is-invalid{% endif %}">
+                                    <label class="article-editor-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.help_text %}<p class="article-editor-help">{{ field.help_text }}</p>{% endif %}
+                                    {% for error in field.errors %}<p class="article-editor-error">{{ error }}</p>{% endfor %}
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </details>
                     </div>
 
                     <details class="article-editor-card article-ready" open data-article-ready>

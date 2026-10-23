@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericForeignKey
 from django.core.exceptions import ValidationError
 from django.db import models, transaction
 from django.urls import reverse
@@ -6,6 +7,7 @@ from django.utils.text import slugify
 from tinymce.models import HTMLField
 
 from game.models import PredictionCoupon
+from cappers.publication_models import PublicationContent
 
 
 SELF_REACTION_ERROR = "Нельзя лайкать или сохранять собственный прогноз."
@@ -306,9 +308,10 @@ class ExpertAllTimeBadgeTenure(models.Model):
         return f"{self.analyst_id} · {self.get_tier_display()} · {self.started_at:%Y-%m-%d}"
 
 
-class Article(models.Model):
+class Article(PublicationContent):
     title = models.CharField("Заголовок", max_length=220)
-    slug = models.SlugField("Slug", max_length=240, unique=True)
+    slug = models.SlugField("Slug", max_length=240, unique=True, blank=True)
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="editorial_articles", verbose_name="Автор-каппер", limit_choices_to={"role": "analyst"})
     category = models.ForeignKey(
         ArticleCategory,
         on_delete=models.SET_NULL,
@@ -356,9 +359,9 @@ class Article(models.Model):
         return reverse("front:article_detail", kwargs={"slug": self.slug})
 
 
-class News(models.Model):
+class News(PublicationContent):
     title = models.CharField("Заголовок", max_length=220)
-    slug = models.SlugField("Slug", max_length=240, unique=True)
+    slug = models.SlugField("Slug", max_length=240, unique=True, blank=True)
     category = models.ForeignKey(
         NewsCategory,
         on_delete=models.SET_NULL,
@@ -404,6 +407,28 @@ class News(models.Model):
 
     def get_absolute_url(self) -> str:
         return reverse("front:news_detail", kwargs={"slug": self.slug})
+
+
+class PublicationReaction(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="publication_reactions")
+    content_type = models.ForeignKey("contenttypes.ContentType", on_delete=models.CASCADE)
+    object_id = models.PositiveBigIntegerField()
+    target = GenericForeignKey("content_type", "object_id")
+    is_liked = models.BooleanField(default=False)
+    is_bookmarked = models.BooleanField(default=False)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("user", "content_type", "object_id"), name="publication_reaction_unique")]
+
+
+class PublicationSlug(models.Model):
+    content_type = models.ForeignKey("contenttypes.ContentType", on_delete=models.CASCADE)
+    object_id = models.PositiveBigIntegerField()
+    target = GenericForeignKey("content_type", "object_id")
+    slug = models.SlugField(max_length=240)
+
+    class Meta:
+        constraints = [models.UniqueConstraint(fields=("content_type", "slug"), name="publication_previous_slug_unique")]
 
 
 class StaticPage(models.Model):
