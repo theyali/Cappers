@@ -19,6 +19,11 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check deploy script
+        run: |
+          bash -n deploy/deploy.sh
+          python3 -m unittest discover -s deploy -p 'test_*.py' -v
+
       - name: Configure SSH
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}

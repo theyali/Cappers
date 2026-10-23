@@ -24,24 +24,26 @@ fi
 
 chmod +x entrypoint.sh deploy/*.sh
 
-if [ "${DEPLOY_FULL_RECREATE}" = "1" ]; then
-  compose up -d --build --remove-orphans db redis pgbouncer
-elif [ "${DEPLOY_BUILD}" = "1" ]; then
+# Build once, only when the workflow requests it (or for a full deploy).
+# Source changes are already mounted into /app and only need fresh processes.
+if [ "${DEPLOY_BUILD}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ]; then
   compose build
-  compose up -d --remove-orphans db redis pgbouncer
-else
-  compose up -d --remove-orphans db redis pgbouncer
 fi
+compose up -d --no-build --remove-orphans db redis pgbouncer
 
 compose run --rm migrate
 
+app_up_options=(-d --no-build --no-deps)
 if [ "${DEPLOY_RESTART_APP}" = "1" ] || [ "${DEPLOY_FULL_RECREATE}" = "1" ] || [ "${DEPLOY_BUILD}" = "1" ]; then
-  compose up -d --build --remove-orphans web celery celery-beat telegram-bot
+  # up alone does not restart unchanged containers after a bind-mounted code update.
+  # Dependencies and migrations have already been started above.
+  app_up_options+=(--force-recreate)
+  compose up "${app_up_options[@]}" web celery celery-beat telegram-bot
 fi
 
 # Ensure both consumers run even when this deploy does not restart the app.
 if [ "${DEPLOY_LIVE_WS}" = "1" ]; then
-  compose up -d --build neurokeff-live neurokeff-odds
+  compose up "${app_up_options[@]}" neurokeff-live neurokeff-odds
 fi
 
 if [ "${DEPLOY_RESTART_NGINX}" = "1" ] && command -v nginx >/dev/null 2>&1; then
