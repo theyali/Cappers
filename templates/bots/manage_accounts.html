@@ -20,7 +20,7 @@
                     <div>
                         <p class="eyebrow">Администрирование · {{ bots_count }} ботов</p>
                         <h1>Пользователи-боты</h1>
-                        <p>Редактируйте данные прямо в строке. Изображение загружается сразу после выбора файла.</p>
+                        <p>Быстрые правки доступны в строке. Страна, описание и соцсети — в разделе «Редактировать профиль».</p>
                     </div>
                 </div>
 
@@ -93,6 +93,7 @@
                                 </div>
 
                                 <div class="profile-copy-actions">
+                                    <a class="profile-row-action bot-profile-edit-link" href="{% url 'bots:edit_account' row.bot.pk %}">Редактировать профиль</a>
                                     <button class="profile-row-action" type="submit">Сохранить</button>
                                 </div>
 

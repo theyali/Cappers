@@ -12456,6 +12456,22 @@ body.register footer {
         background 0.18s;
 }
 .profile-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.bot-profile-editor { display: grid; gap: 28px; min-width: 0; }
+.bot-profile-editor .profile-section-heading { margin-bottom: 0; }
+.bot-profile-editor h1 { overflow-wrap: anywhere; }
+.bot-profile-editor h2 { margin: 0; font-size: 18px; }
+.bot-profile-editor .avatar-upload-input { display: block; }
+.bot-profile-editor .bot-profile-avatar { object-fit: cover; border-radius: 14px; }
+.bot-profile-editor .profile-field textarea { resize: none; }
+.bot-profile-editor .profile-edit-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; }
+.bot-profile-editor .profile-save-button:focus-visible,
+.bot-profile-editor .profile-row-action:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
+.bot-profile-editor .profile-save-button:disabled { cursor: wait; opacity: 0.65; }
+.bot-profile-editor .profile-row-action,
+.bot-profile-edit-link { display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.bot-profile-editor .profile-row-action:hover,
+.bot-profile-edit-link:hover { background: #2469ff; }
+.bot-profile-edit-link:focus-visible { outline: 2px solid var(--yellow); outline-offset: 3px; }
 .profile-field input,
 .profile-field select,
 .profile-field textarea,

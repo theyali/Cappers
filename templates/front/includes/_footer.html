@@ -65,7 +65,7 @@
         {% if footer_buttons.social %}
         <div class="site-footer-socials" aria-label="Социальные сети">
             {% for item in footer_buttons.social %}
-            <a class="site-footer-social" href="{{ item.url|default:'#' }}" title="{{ item.title }}"{% if item.url %} target="_blank" rel="nofollow noopener noreferrer"{% endif %}>
+            <a class="site-footer-social" href="{{ item.url }}" title="{{ item.title }}" target="_blank" rel="nofollow noopener noreferrer">
                 <span class="site-footer-social-icon" aria-hidden="true">
                     {% if item.icon %}
                         <img src="{{ item.icon.url }}" width="24" height="24" alt="" loading="lazy" decoding="async">

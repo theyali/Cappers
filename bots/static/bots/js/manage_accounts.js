@@ -4,6 +4,35 @@
     if (!$) return;
 
     $(function () {
+        const editor = document.querySelector("[data-bot-profile-editor]");
+        if (editor) {
+            let dirty = false;
+            let submitting = false;
+            editor.addEventListener("input", function () { dirty = true; });
+            editor.addEventListener("change", function () { dirty = true; });
+            window.addEventListener("beforeunload", function (event) {
+                if (!dirty || submitting) return;
+                event.preventDefault();
+                event.returnValue = "";
+            });
+            editor.addEventListener("submit", function (event) {
+                if (submitting) {
+                    event.preventDefault();
+                    return;
+                }
+                submitting = true;
+                editor.setAttribute("aria-busy", "true");
+                editor.querySelector('button[type="submit"]').disabled = true;
+            });
+            window.addEventListener("pageshow", function () {
+                submitting = false;
+                editor.removeAttribute("aria-busy");
+                editor.querySelector('button[type="submit"]').disabled = false;
+            });
+            const errors = editor.querySelector("[data-bot-form-errors]");
+            if (errors) errors.focus();
+        }
+
         $(document).on("change", "[data-bot-row] .avatar-upload-input", function () {
             const input = this;
             const file = input.files && input.files[0];

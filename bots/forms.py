@@ -1,5 +1,6 @@
 from django import forms
 
+from cabinet.forms import AnalystProfileForm, UserProfileForm
 from cabinet.models import AnalystProfile, User
 
 from .models import BotAccount
@@ -78,9 +79,6 @@ class BotAccountProfileForm(forms.ModelForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        if not commit:
-            return user
-
         avatar = self.cleaned_data.get("avatar")
         remove_avatar = self.cleaned_data.get("remove_avatar", False)
 
@@ -89,11 +87,55 @@ class BotAccountProfileForm(forms.ModelForm):
         elif remove_avatar:
             user.avatar = None
 
+        if not commit:
+            return user
         user.save()
 
         if user.role == User.Role.ANALYST:
             analyst_profile, _ = AnalystProfile.objects.get_or_create(user=user)
-            analyst_profile.display_name = user.get_full_name() or user.username
-            analyst_profile.save(update_fields=("display_name", "updated_at"))
+            if not analyst_profile.display_name:
+                analyst_profile.display_name = user.get_full_name() or user.username
+                analyst_profile.save(update_fields=("display_name", "updated_at"))
 
         return user
+
+
+class BotAccountDetailsForm(BotAccountProfileForm):
+    gender = UserProfileForm.base_fields["gender"]
+    country = UserProfileForm.base_fields["country"]
+
+    class Meta(BotAccountProfileForm.Meta):
+        fields = (*BotAccountProfileForm.Meta.fields, "gender", "country", "email", "telegram_username")
+        labels = {"email": "Email", "telegram_username": "Логин Telegram"}
+
+    def clean_email(self):
+        email = (self.cleaned_data.get("email") or "").strip()
+        if email and User.objects.filter(email__iexact=email).exclude(pk=self.instance.pk).exists():
+            raise forms.ValidationError("Этот email уже используется другим пользователем.")
+        return email
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        if "email" in self.changed_data:
+            user.email_verified = False
+        if commit:
+            user.save()
+        return user
+
+
+class BotPublicProfileForm(forms.ModelForm):
+    class Meta:
+        model = AnalystProfile
+        fields = (
+            "display_name", "specialization", "bio", "favorite_sports", "favorite_leagues",
+            "telegram_channel", "telegram_account", "instagram", "threads", "youtube",
+            "tiktok", "facebook", "x", "is_public", "is_verified", "is_recommended",
+        )
+        widgets = AnalystProfileForm.Meta.widgets
+
+
+class BotSettingsForm(forms.ModelForm):
+    class Meta:
+        model = BotAccount
+        fields = ("persona", "is_active")
+        labels = {"persona": "Персона бота", "is_active": "Автоматическая активность бота включена"}
