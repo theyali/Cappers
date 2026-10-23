@@ -111,6 +111,11 @@
         <div id="profile-sidebar-tools-title">Инструменты</div>
         <nav class="profile-sidebar-nav" aria-label="Инструменты">
             {% if request.user.is_staff or request.user.is_superuser %}
+            <a class="profile-sidebar-link{% if active_tab == 'admin_users' %} is-active{% endif %}" href="{% url 'cabinet:admin_users' %}"{% if active_tab == 'admin_users' %} aria-current="page"{% endif %}>
+                <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="profile" %}</span>
+                <span>Пользователи</span>
+                <span class="profile-sidebar-chevron" aria-hidden="true"></span>
+            </a>
             <a class="profile-sidebar-link{% if bots_admin_active %} is-active{% endif %}" href="{% url 'bots:manage_accounts' %}"{% if bots_admin_active %} aria-current="page"{% endif %}>
                 <span class="profile-sidebar-link-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="bots" %}</span>
                 <span>Боты</span>

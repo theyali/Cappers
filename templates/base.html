@@ -2,6 +2,14 @@
 <!doctype html>
 <html lang="ru">
 <head>
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-Q6ET5T8ZGN"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'G-Q6ET5T8ZGN');
+    </script>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>{% if seo_meta.title %}{{ seo_meta.title }}{% else %}{% block title %}КапперХаб{% endblock %}{% endif %}</title>

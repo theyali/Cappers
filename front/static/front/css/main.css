@@ -14964,6 +14964,13 @@ ul.profile-email-modal-copy { padding-left: 18px; }
 .earnings-source-progress.is-tournaments::-moz-progress-bar { background: var(--yellow); }
 .earnings-source-progress.is-referrals::-moz-progress-bar { background: #6864cf; }
 .earnings-source-progress.is-other::-moz-progress-bar { background: #e8e9ec; }
+.admin-users-table caption { padding: 12px 14px; text-align: left; color: #bfc1c6; }
+.admin-users-table a { color: var(--yellow); cursor: pointer; }
+.admin-users-table a:hover { text-decoration: underline; }
+.admin-users-table a:focus-visible,
+.earnings-table-wrap:focus-visible { outline: 2px solid var(--yellow); outline-offset: 2px; }
+.admin-user-presence { color: #bfc1c6; }
+.admin-user-presence.is-online { color: #5be38a; }
 .earnings-table-card { padding-bottom: 12px; }
 .earnings-table-wrap { margin-top: 9px; overflow-x: auto; border-radius: 10px; background: var(--ink); }
 .earnings-table { width: 100%; min-width: 760px; border-collapse: collapse; color: #bfc1c6; font-size: 12px; }

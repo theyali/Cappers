@@ -67,6 +67,10 @@
     <span class="nav-profile-dropdown-dot{% if not notification_section_badges.referrals %} is-empty{% endif %}" data-notification-section-badge="referrals" aria-hidden="true"></span>
 </a>
 {% if request.user.is_staff or request.user.is_superuser %}
+<a class="{{ profile_tab_link_class }}{% if active_tab == 'admin_users' %} is-active{% endif %}" href="{% url 'cabinet:admin_users' %}"{% if active_tab == 'admin_users' %} aria-current="page"{% endif %}>
+    <span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="profile" %}</span>
+    <span class="matches-table-scope-copy">Пользователи</span>
+</a>
 <a class="{{ profile_tab_link_class }}{% if bots_admin_active %} is-active{% endif %}" href="{% url 'bots:manage_accounts' %}"{% if bots_admin_active %} aria-current="page"{% endif %}>
     <span class="matches-table-scope-icon" aria-hidden="true">{% include "front/includes/_solar_icon.html" with name="bots" %}</span>
     <span class="matches-table-scope-copy">Боты</span>

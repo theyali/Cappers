@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}Пользователи — Cappers{% endblock %}
+
+{% block content %}
+<section class="profile-page matches-page container">
+    <div class="matches-shell">
+        {% include "cabinet/includes/_profile_tabs_sidebar.html" %}
+        <section class="matches-list-panel profile-page">
+            <div class="matches-mobile-scope-panel" aria-label="Разделы профиля на мобильных устройствах">
+                <nav class="matches-tabs" aria-label="Разделы профиля">
+                    {% include "cabinet/includes/_profile_tab_links.html" with profile_tab_link_class="" %}
+                </nav>
+            </div>
+            <div class="profile-list-card">
+                <div class="profile-section-heading">
+                    <div>
+                        <p class="eyebrow">Администрирование · Всего: {{ users_page.paginator.count }}</p>
+                        <h1>Пользователи</h1>
+                        <p>Без ботов и администраторов. В сети — активность за последние 5 минут.</p>
+                        <p>Вложения — успешные платежи без тестовых и возвращённых. Рефералы — уникальные регистрации.</p>
+                        <p>Данные на {{ updated_at|date:"d.m.Y H:i" }} · {{ display_timezone }}. Обновите страницу для актуального статуса.</p>
+                    </div>
+                </div>
+                {% if rows %}
+                <div class="earnings-table-wrap" tabindex="0" role="region" aria-label="Статистика пользователей, таблицу можно прокручивать по горизонтали">
+                    <table class="earnings-table admin-users-table">
+                        <caption>Регистрация, активность, вложения и рефералы пользователей</caption>
+                        <thead>
+                            <tr>
+                                <th scope="col">Пользователь</th>
+                                <th scope="col">Регистрация</th>
+                                <th scope="col">Последняя активность</th>
+                                <th scope="col">Сейчас</th>
+                                <th scope="col">Вложено, ₽</th>
+                                <th scope="col">Рефералы</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in rows %}
+                            <tr>
+                                <td><a href="{{ row.profile_url }}">@{{ row.username }}</a></td>
+                                <td><time datetime="{{ row.registered_at|date:'c' }}">{{ row.registered_at|date:"d.m.Y H:i" }}</time></td>
+                                <td>{% if row.last_seen_at %}<time datetime="{{ row.last_seen_at|date:'c' }}">{{ row.last_seen_at|date:"d.m.Y H:i" }}</time>{% else %}Нет данных{% endif %}</td>
+                                <td><span class="admin-user-presence{% if row.is_online %} is-online{% endif %}">{{ row.status_label }}</span></td>
+                                <td>{{ row.invested_display }}</td>
+                                <td>{{ row.referrals_count }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="copybetting-pagination">
+                    <span>{{ users_page.start_index }}–{{ users_page.end_index }} из {{ users_page.paginator.count }}</span>
+                    <nav aria-label="Страницы пользователей">
+                        {% if users_page.has_previous %}<a href="?page={{ users_page.previous_page_number }}">Назад</a>{% endif %}
+                        <span aria-current="page">{{ users_page.number }} / {{ users_page.paginator.num_pages }}</span>
+                        {% if users_page.has_next %}<a href="?page={{ users_page.next_page_number }}">Далее</a>{% endif %}
+                    </nav>
+                </div>
+                {% else %}
+                <div class="profile-empty-state"><p>Пользователей пока нет.</p></div>
+                {% endif %}
+            </div>
+        </section>
+    </div>
+</section>
+{% endblock %}
